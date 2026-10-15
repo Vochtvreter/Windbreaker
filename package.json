@@ -10,6 +10,7 @@
     "test": "node --test tests/*.test.js",
     "solve": "node tools/solve.js",
     "show": "node tools/show.js",
+    "e2e": "node tools/e2e.js",
     "serve": "npx http-server -c-1 -p 8080 ."
   }
 }

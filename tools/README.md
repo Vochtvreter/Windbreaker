@@ -279,6 +279,40 @@ components; walls separate, doorways join), `levelFacts(def)`,
 `jsonErrorOffset(text)`, `parseArgs`, and formatting helpers
 (`pieceShort`, `piecesShort`, `inventoryString`, `windLong`, ...).
 
+## e2e.js - browser end-to-end test
+
+```
+node tools/e2e.js [--levels file.js] [--only home,walk,interact,touch,mobile,storage,file]
+                  [--full-motion] [--headed] [--no-shots]
+```
+
+Plays the real game in headless Chromium (Playwright, global install is fine)
+with real mouse, touch (CDP touch events) and keyboard input. It starts its own
+static server on a free port and mounts the site under `/windbreaker/`, like
+GitHub Pages, so an absolute path would 404. The game is only read through
+`window.__wb` (`cell(x, y)` -> client coordinates, `state()` -> snapshot).
+
+* `home`: level select, locked levels not clickable or deep-linkable, `?unlock`.
+* `walk`: every level in `js/levels.js` (or `--levels`): checks the top bar,
+  tray, goals, tip and "New" card, asks for a hint (must be the first
+  reference piece), places the reference solution by tapping chips and cells
+  and turning pieces, waits for the win card, clicks Next. Then progress after
+  a reload. Reduced motion for speed unless `--full-motion` (~1.2 s a level).
+* `interact` (two fixture levels inside the script): tray drag, move by drag,
+  turn by click and `R`, right-click remove, drag off the board and onto the
+  tray, undo/redo (button, Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y), reset + Undo, number
+  keys, Esc, keyboard-only placement, hint conflicts and "Remove it", saved
+  board after reload, win card, Next pill, Continue, last level, help, sound
+  setting, reset progress.
+* `touch` (390x844): taps, long-press remove, drags from the tray and of pieces.
+* `mobile`: 360x740, 768x1024, 844x390 (dark): no horizontal scroll, house in
+  view and clear of the "New" card, chips >= 44 px, levels played by touch.
+* `storage`: `localStorage` throws on every access; still playable.
+* `file`: `index.html` from `file://`.
+
+Fails (exit 1) on any failed check, console error, uncaught error or failed
+request. Screenshots go to `screenshots/e2e/` (git-ignored).
+
 ## Tests
 
 `tests/tools.test.js` (fixtures in `tests/fixtures/`): lib (numbering,
