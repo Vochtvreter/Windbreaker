@@ -1235,12 +1235,16 @@ kbd {
     flex: none;
     transform: none;
     width: auto;
+    flex-wrap: wrap;
     padding: 7px;
-    gap: 8px;
+    gap: 6px 8px;
     box-shadow: var(--shadow);
     animation: newtool-in-side .35s ease-out;
   }
   .side .newtool.is-leaving { transform: translateY(-6px); }
+  .side .newtool-text { flex: 1 1 140px; }
+  .side .newtool .btn { margin-left: auto; }
+  .side .newtool-desc { -webkit-line-clamp: 4; }
   /* toasts float in the top bar, over the level title, never over the house */
   .toast, .toast.at-top {
     position: fixed;

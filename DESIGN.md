@@ -190,9 +190,14 @@ filter, and don't let smoky air hit a wall.*
 | Pinwheel | `p` | `f ≥ 1` | 1  |
 | Candle   | `c` | `f = 0` | 3  |
 | Stove    | `s` | its smoke is cleared | 8 |
-| Laundry  | `l` | `f ≥ 2` | 13 |
+| Laundry  | `l` | `f ≥ 2` **and** no smoky air at its cell | 13 |
 | Papers   | `n` | `f ≤ 1` | 18 |
 | Fern     | `f` | `f = 1` | 23 |
+
+Laundry needs **clean** air: if any active tree crosses the laundry's cell
+while carrying smoke (smoke that has not been through a filter), the laundry
+is dirty — state `bad`, whatever its flow. Smoke carried only by a stalled
+inlet does not count.
 
 The level is solved when **every** object is happy at the same time. The flow
 is recomputed instantly after every move, so the player gets live feedback; the
@@ -318,10 +323,10 @@ WB.isSolved(L, pieces) -> boolean
     ends: [{ x, y, type: 'outlet'|'blocked' }],     // terminal points (cell units)
   }],
   stoves: [{ x, y, reached, cleared }],
-  goals:  [{ type, x, y, flow, ok, state }],
+  goals:  [{ type, x, y, flow, ok, state, smoky? }],   // smoky: laundry only
   //  state: 'idle' | 'happy' | 'bad'
   //  idle = needs more air; happy = ok; bad = harmed (candle blown out,
-  //  papers scattered, fern battered, smoke trapped)
+  //  papers scattered, fern battered, smoke trapped, laundry dirtied by smoke)
   solved: boolean
 }
 ```

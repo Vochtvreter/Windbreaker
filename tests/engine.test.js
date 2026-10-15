@@ -1763,3 +1763,45 @@ describe('differential test against the original engine', function () {
     });
   });
 });
+
+describe('laundry needs clean air (DESIGN.md §5)', function () {
+  // Calm room: a fan blows E across the stove at 2,1 and the laundry at 4,1, out of a window at 6,1.
+  const def = { map: ['#######', '#.s.l.#', '#.....#', '#######'], wind: { from: 'W', strength: 0 }, fixed: [], inventory: {} };
+  const L = WB.parseLevel(def);
+  const laundry = function (R) { return R.goals.filter(function (g) { return g.type === 'laundry'; })[0]; };
+
+  it('smoky air through the laundry makes it dirty (bad), even when strong enough', function () {
+    const pieces = [{ type: 'fan', x: 1, y: 1, d: 1 }, { type: 'fan', x: 3, y: 1, d: 1 }, { type: 'window', x: 6, y: 1 }];
+    const R = WB.simulate(L, pieces);
+    const g = laundry(R);
+    assert.equal(g.flow, 2);
+    assert.equal(g.smoky, true);
+    assert.equal(g.state, 'bad');
+    assert.equal(g.ok, false);
+    assert.equal(R.solved, false);
+    assert.equal(WB.isSolved(L, pieces), false);
+  });
+
+  it('a filter between the stove and the laundry keeps it clean', function () {
+    const pieces = [{ type: 'fan', x: 1, y: 1, d: 1 }, { type: 'filter', x: 3, y: 1 }, { type: 'fan', x: 5, y: 1, d: 3 },
+      { type: 'window', x: 6, y: 1 }];
+    // the second fan faces W back into the laundry: clean air from the E side too
+    const R = WB.simulate(L, pieces);
+    const g = laundry(R);
+    assert.equal(g.smoky, false);
+    assert.notEqual(g.state, 'bad');
+  });
+
+  it('clean strong air is happy; smoke only counts from active trees', function () {
+    // Wind from the W through a stove row that is stalled (no outlet): its smoke does not dirty anything.
+    const d2 = { map: ['#######', '#.s...#', '#....l#', '#######'], wind: { from: 'W', strength: 2 }, fixed: [], inventory: {} };
+    const L2 = WB.parseLevel(d2);
+    const pieces = [{ type: 'window', x: 0, y: 1 }, { type: 'window', x: 0, y: 2 }, { type: 'window', x: 6, y: 2 }];
+    const R = WB.simulate(L2, pieces);
+    const g = R.goals.filter(function (x) { return x.type === 'laundry'; })[0];
+    assert.equal(R.trees[0].active, false, 'the stove row inlet is stalled');
+    assert.equal(g.flow, 2);
+    assert.equal(g.smoky, false);
+    assert.equal(g.state, 'happy');
+  });
+});

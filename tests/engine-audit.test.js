@@ -618,7 +618,7 @@ function specModel(def, pieces) {
   for (let y = 0; y < H; y++) for (let x = 0; x < Wd; x++) if (map[y][x] === 's') stoves.push(x + ',' + y);
 
   function trace(starts) {
-    const nodes = new Map(), cellFlow = new Map(), ends = [];
+    const nodes = new Map(), cellFlow = new Map(), smokyCells = new Set(), ends = [];
     let reached = 0, outlet = false, nSegs = 0;
     const stack = starts.map(function (s) { return { x: s[0], y: s[1], d: s[2], s: s[3], m: 0, parent: null }; }).reverse();
     while (stack.length) {
@@ -642,6 +642,7 @@ function specModel(def, pieces) {
         cellFlow.set(ci, Math.max(cellFlow.get(ci) || 0, s));
         const k = stoves.indexOf(x + ',' + y);
         if (k >= 0) { m |= 1 << k; reached |= 1 << k; node.m = m; }
+        if (m) smokyCells.add(ci); // laundry here gets dirty (DESIGN.md §5)
         const t = p ? p.type : null;
         if (t === 'fan') succ.push([p.d, s]);
         else if (t === 'deflector') succ.push([p.d === 0 ? [E, N, W, S][d] : [W, S, E, N][d], s]);
@@ -665,16 +666,20 @@ function specModel(def, pieces) {
     nodes.forEach(function (n, k) {
       if (!n.m) return;
       if (n.term === 'blocked') failed |= n.m;
-      const seen = new Set(), todo = n.next.slice(); // does this smoky state reach itself?
-      while (todo.length) {
-        const v = todo.pop();
-        if (v === k) { failed |= n.m; break; }
-        if (seen.has(v)) continue;
-        seen.add(v);
-        todo.push.apply(todo, nodes.get(v).next);
+      // per stove: does this state reach itself through states that all carry that stove's smoke?
+      for (let b = 1; b <= n.m; b <<= 1) {
+        if (!(n.m & b) || (failed & b)) continue;
+        const seen = new Set(), todo = n.next.filter(function (v) { return nodes.get(v).m & b; });
+        while (todo.length) {
+          const v = todo.pop();
+          if (v === k) { failed |= b; break; }
+          if (seen.has(v)) continue;
+          seen.add(v);
+          nodes.get(v).next.forEach(function (w) { if (nodes.get(w).m & b) todo.push(w); });
+        }
       }
     });
-    return { cellFlow: cellFlow, reached: reached, failed: failed, outlet: outlet, ends: ends.sort(), nSegs: nSegs };
+    return { cellFlow: cellFlow, smokyCells: smokyCells, reached: reached, failed: failed, outlet: outlet, ends: ends.sort(), nSegs: nSegs };
   }
 
   const trees = [];
@@ -702,9 +707,11 @@ function specModel(def, pieces) {
   });
   const flow = new Array(Wd * H).fill(0);
   let reached = 0, failed = 0;
+  const smoky = new Set();
   trees.forEach(function (t) {
     if (!t.active) return;
     t.cellFlow.forEach(function (s, ci) { flow[ci] += s; });
+    t.smokyCells.forEach(function (ci) { smoky.add(ci); });
     reached |= t.reached; failed |= t.failed;
   });
   const stoveList = stoves.map(function (key, k) {
@@ -717,7 +724,7 @@ function specModel(def, pieces) {
       const type = WB.OBJECT_BY_CHAR[map[y][x]];
       if (!type) continue;
       const f = flow[y * Wd + x];
-      const ok = type === 'pinwheel' ? f >= 1 : type === 'candle' ? f === 0 : type === 'laundry' ? f >= 2
+      const ok = type === 'pinwheel' ? f >= 1 : type === 'candle' ? f === 0 : type === 'laundry' ? f >= 2 && !smoky.has(y * Wd + x)
         : type === 'papers' ? f <= 1 : type === 'fern' ? f === 1 : stoveList[stoves.indexOf(x + ',' + y)].cleared;
       goals.push({ type: type, x: x, y: y, flow: f, ok: ok });
     }
@@ -773,7 +780,7 @@ function checkResult(L, R) {
     const f = g.flow;
     const want = {
       pinwheel: f >= 1 ? 'happy' : 'idle',
-      laundry: f >= 2 ? 'happy' : 'idle',
+      laundry: g.smoky ? 'bad' : f >= 2 ? 'happy' : 'idle',
       candle: f === 0 ? 'happy' : 'bad',
       papers: f <= 1 ? 'happy' : 'bad',
       fern: f === 1 ? 'happy' : f === 0 ? 'idle' : 'bad'
@@ -812,7 +819,8 @@ describe('audit: differential tests (reference engine and spec model)', function
     const pieces = [pc('window', 0, 3), pc('splitter', 4, 3), pc('deflector', 4, 5, 1), pc('deflector', 6, 5, 0),
       pc('deflector', 6, 3, 1), pc('window', 4, 0), pc('filter', 6, 4)];
     const m = specModel(def, pieces);
-    assert.deepEqual(m.stoves, [{ x: 5, y: 5, reached: true, cleared: false }]);
+    // the loop passes the filter, so no loop stays smoky: cleared (DESIGN.md §4 Smoke)
+    assert.deepEqual(m.stoves, [{ x: 5, y: 5, reached: true, cleared: true }]);
     assert.deepEqual(m.trees, [{ kind: 'inlet', active: true, ends: ['outlet@4.5,0'], nSegs: 17 }]);
   });
 

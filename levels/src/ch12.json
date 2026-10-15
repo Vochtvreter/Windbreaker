@@ -3,23 +3,29 @@
   "title": "Greenhouse",
   "levels": [
     {
-      "name": "Fern and Flame",
-      "tip": "Every fern wants a breeze of exactly 1, and each half of a split stream keeps at least 1.",
+      "name": "Eddy",
+      "tip": "Where a breeze meets its own path again, it does not add to itself.",
       "wind": { "from": "N", "strength": 2 },
       "map": [
-        "~~#####~~",
-        "~~#.p.#~~",
-        "###...###",
-        "%c.f...f#",
-        "%oo...oo#",
-        "#########"
+        "%%%#%%%%%%",
+        "%o.l..oo.%",
+        "#p...p...%",
+        "%o..####.%",
+        "%..f####f%",
+        "%o..####.%",
+        "%....f...%",
+        "%%%%%%%%%%"
       ],
-      "fixed": [{ "type": "window", "x": 4, "y": 0 }],
-      "inventory": { "window": 1, "splitter": 1, "curtain": 1 },
+      "fixed": [
+        { "type": "window", "x": 3, "y": 0 },
+        { "type": "deflector", "x": 8, "y": 2, "d": 1 },
+        { "type": "deflector", "x": 8, "y": 6, "d": 0 }
+      ],
+      "inventory": { "window": 1, "splitter": 1, "deflector": 1 },
       "solution": [
-        { "type": "splitter", "x": 4, "y": 3 },
-        { "type": "curtain", "x": 2, "y": 3 },
-        { "type": "window", "x": 8, "y": 3 }
+        { "type": "window", "x": 0, "y": 2 },
+        { "type": "splitter", "x": 3, "y": 2 },
+        { "type": "deflector", "x": 3, "y": 6, "d": 1 }
       ]
     },
     {

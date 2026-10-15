@@ -52,28 +52,30 @@
       ]
     },
     {
-      "name": "Two into One",
+      "name": "Broadside",
+      "tip": "The splitter is bolted down. If it won't move, the wind will have to.",
       "wind": { "from": "W", "strength": 1 },
       "map": [
-        "%%%%%%%%%%%%",
-        "%o...c%....%",
-        "#.f...#.l..#",
-        "%..o..%o...%",
-        "%%%%%.%%%%%%",
-        "#.s.o...#~~~",
-        "%o...o..%~~~",
-        "%%%%%%%%%~~~"
+        "%%%%%%%%%%%",
+        "%.o.%%%o..%",
+        "%.l.%c%...%",
+        "%...%.%.o.%",
+        "#.......l.#",
+        "%.o.%.%...%",
+        "%...%.%.o.%",
+        "%..f..%o..%",
+        "%%%%%%%%%%%"
       ],
       "fixed": [
-        { "type": "window", "x": 0, "y": 2 },
-        { "type": "window", "x": 0, "y": 5 }
+        { "type": "window", "x": 0, "y": 4 },
+        { "type": "splitter", "x": 5, "y": 4 }
       ],
-      "inventory": { "window": 1, "deflector": 2, "fan": 1, "vent": 1 },
+      "inventory": { "deflector": 2, "fan": 1, "window": 1, "curtain": 1 },
       "solution": [
-        { "type": "window", "x": 11, "y": 2 },
-        { "type": "deflector", "x": 5, "y": 5, "d": 0 },
-        { "type": "fan", "x": 5, "y": 2, "d": 1 },
-        { "type": "vent", "x": 6, "y": 2 }
+        { "type": "deflector", "x": 2, "y": 4, "d": 1 },
+        { "type": "deflector", "x": 2, "y": 7, "d": 1 },
+        { "type": "fan", "x": 5, "y": 7, "d": 0 },
+        { "type": "window", "x": 10, "y": 4 }
       ]
     },
     {

@@ -63,18 +63,18 @@
       "map": [
         "#######",
         "#..f..#",
-        "#.s...#",
+        "#.....#",
         "#.....#",
         "###.###",
         "#.....#",
-        "#..l..#",
-        "#######"
+        "#s.l..#",
+        "#%%%%%#"
       ],
       "fixed": [{ "type": "window", "x": 0, "y": 2 }],
       "inventory": { "window": 1, "splitter": 1, "extractor": 1 },
       "solution": [
         { "type": "splitter", "x": 3, "y": 2 },
-        { "type": "extractor", "x": 3, "y": 7 },
+        { "type": "extractor", "x": 0, "y": 6 },
         { "type": "window", "x": 3, "y": 0 }
       ]
     },

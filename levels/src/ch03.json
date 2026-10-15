@@ -79,10 +79,11 @@
     },
     {
       "name": "Crossroads",
+      "tip": "Laundry needs clean air: smoke drifting through it leaves it dirty, however strong the breeze.",
       "wind": { "from": "N", "strength": 1 },
       "map": [
         "##########",
-        "#.s..#.c.#",
+        "#c...#.s.#",
         "#....#...#",
         "##.####.##",
         "#........#",
@@ -92,6 +93,7 @@
       "fixed": [
         { "type": "window", "x": 2, "y": 0 },
         { "type": "window", "x": 7, "y": 0 },
+        { "type": "window", "x": 9, "y": 4 },
         { "type": "window", "x": 7, "y": 6 }
       ],
       "inventory": { "fan": 1, "deflector": 1 },

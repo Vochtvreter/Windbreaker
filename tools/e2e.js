@@ -433,31 +433,32 @@ async function sectionHome() {
       eq((await page.textContent('#btn-play')).trim(), 'Play', 'play button on a fresh start');
       const chapters = await page.$$eval('#chapters > section', (s) => s.length);
       eq(chapters, data.chapters.length, 'one block per chapter');
-      const first = await page.$eval('.lvl[data-level="' + data.levels[0].id + '"]', (b) => ({ disabled: b.disabled, cls: b.className }));
+      const first = await page.$eval('.lvl[data-level="' + data.levels[0].id + '"]', (b) => ({ disabled: b.getAttribute('aria-disabled') === 'true', cls: b.className }));
       assert(!first.disabled && /is-next/.test(first.cls), 'first level is open and highlighted: ' + JSON.stringify(first));
       const toolIcons = await page.$$eval('#chapters .ch-icon', (c) => c.filter((x) => x.width > 0).length);
       assert(toolIcons >= Math.min(data.chapters.length, 1), 'chapter icons are drawn');
       await shot(page, 'home');
     });
-    await step('locked levels are not clickable', async () => {
+    await step('locked levels do not open, a tap says why', async () => {
       const second = data.levels[1];
       if (!second) throw new Skip('only one level');
-      const b = await page.$eval('.lvl[data-level="' + second.id + '"]', (e) => ({ disabled: e.disabled, label: e.getAttribute('aria-label') }));
+      const b = await page.$eval('.lvl[data-level="' + second.id + '"]', (e) => ({ disabled: e.getAttribute('aria-disabled') === 'true', label: e.getAttribute('aria-label') }));
       assert(b.disabled && /locked/.test(b.label), 'level ' + second.id + ' is locked: ' + JSON.stringify(b));
       const c = await center(page, '.lvl[data-level="' + second.id + '"]');
       await page.mouse.click(c.x, c.y);
       await sleep(150);
-      assert(await page.isVisible('#home') && await page.isHidden('#game'), 'clicking a locked level does nothing');
+      assert(await page.isVisible('#home') && await page.isHidden('#game'), 'clicking a locked level does not open it');
+      assert(/Solve level \d+ to unlock/.test(await page.textContent('#home-toast')) && await page.isVisible('#home-toast'), 'it says which level to solve first');
       // a deep link to a locked level lands on the level select
       await page.goto(BASE + '#' + second.id);
       await page.waitForSelector('#home:not([hidden]) .lvl');
       assert(await page.isHidden('#game'), 'a locked level cannot be opened by URL');
-      const enabled = await page.$$eval('.lvl', (bs) => bs.filter((x) => !x.disabled).length);
+      const enabled = await page.$$eval('.lvl', (bs) => bs.filter((x) => x.getAttribute('aria-disabled') !== 'true').length);
       eq(enabled, 1, 'only one level open on a fresh start');
     });
     await step('?unlock opens every level', async () => {
       await openHome(page, '?unlock');
-      const r = await page.$$eval('.lvl', (bs) => ({ n: bs.length, disabled: bs.filter((x) => x.disabled).length }));
+      const r = await page.$$eval('.lvl', (bs) => ({ n: bs.length, disabled: bs.filter((x) => x.getAttribute('aria-disabled') === 'true').length }));
       eq(r, { n: data.levels.length, disabled: 0 }, 'every level button present and enabled');
       const last = data.levels[data.levels.length - 1];
       await page.click('.lvl[data-level="' + last.id + '"]');
@@ -476,7 +477,8 @@ async function sectionHome() {
 async function sectionWalk() {
   await section('walk', async (step) => {
     const page = await newPage({ label: 'walk', reduced: !OPTS.fullMotion });
-    let data, solvedIds = [];
+    // levels solved after a failure are played with ?unlock, which keeps its own progress
+    let data, solvedIds = [], solvedUnlocked = [];
     const problems = [];
     await step('open level 1 from Play', async () => {
       await openHome(page);
@@ -486,6 +488,13 @@ async function sectionWalk() {
     });
     if (!data) return;
     const chapterOf = (id) => data.chapters.find((c) => id >= c.first && id <= c.last);
+    // things that arrive without a tool get a "New" card on the first level they appear in
+    const THINGS = [['c', 'Candle'], ['s', 'Stove'], ['o', 'Table'], ['l', 'Laundry'], ['n', 'Papers'], ['f', 'Fern']];
+    const thingIntro = {};
+    THINGS.forEach(([ch, name]) => {
+      const lv = data.levels.find((l) => l.map.join('').includes(ch));
+      if (lv && !thingIntro[lv.id]) thingIntro[lv.id] = name;
+    });
     let unlocked = false; // set after a failure, to keep walking
     for (let i = 0; i < data.levels.length; i++) {
       const lv = data.levels[i];
@@ -513,7 +522,7 @@ async function sectionWalk() {
         const ch = chapterOf(lv.id);
         const intro = ch && ch.tool && ch.first === lv.id && !unlocked;
         if (intro) eq(ui.newtool, WB.TOOLS[ch.tool].name, title + ': "New: tool" card');
-        else if (!unlocked) eq(ui.newtool, null, title + ': no "New" card');
+        else if (!unlocked) eq(ui.newtool, thingIntro[lv.id] || null, title + (thingIntro[lv.id] ? ': "New: ' + thingIntro[lv.id] + '" card' : ': no "New" card'));
         if (i === 0) await shot(page, 'walk-level-' + lv.id + '-start');
 
         const sol = lv.solution || [];
@@ -535,7 +544,7 @@ async function sectionWalk() {
         await page.waitForSelector('#win:not([hidden])', { timeout: 6000 }).catch(() => fail(title + ': no win card after placing the reference solution'));
         const s = await state(page);
         assert(s.won && s.solved, title + ': state says won');
-        solvedIds.push(lv.id);
+        (unlocked ? solvedUnlocked : solvedIds).push(lv.id);
         const sub = await page.textContent('#win-sub');
         assert(sub.includes('Level ' + lv.id), title + ': win card names the level (' + sub + ')');
         if (i === 0) await shot(page, 'walk-level-' + lv.id + '-win');
@@ -548,7 +557,7 @@ async function sectionWalk() {
         } else {
           assert(await page.isVisible('#win-final'), title + ': last level shows the final message');
           assert(await page.isHidden('#win-next'), title + ': no Next on the last level');
-          if (!problems.length) assert(/all \d+ levels/i.test(await page.textContent('#win-final')), 'final message says all levels are done');
+          if (!problems.length && !unlocked) assert(/all \d+ levels/i.test(await page.textContent('#win-final')), 'final message says all levels are done');
           await shot(page, 'walk-final-win');
           await page.click('#win-levels');
           await page.waitForSelector('#home:not([hidden])');
@@ -574,6 +583,10 @@ async function sectionWalk() {
       eq(done.sort((a, b) => a - b), solvedIds.slice().sort((a, b) => a - b), 'solved levels are marked done after a reload');
       const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('windbreaker.v1')));
       eq(saved.completed.slice().sort((a, b) => a - b), solvedIds.slice().sort((a, b) => a - b), 'windbreaker.v1 completed list');
+      if (solvedUnlocked.length) {
+        const qa = await page.evaluate(() => JSON.parse(localStorage.getItem('windbreaker.v1.unlock') || '{"completed":[]}'));
+        eq(qa.completed.slice().sort((a, b) => a - b), solvedUnlocked.slice().sort((a, b) => a - b), 'levels solved with ?unlock are kept apart (windbreaker.v1.unlock)');
+      }
       assert(typeof saved.sound === 'boolean' && saved.boards && Array.isArray(saved.seenTools), 'storage shape { completed, boards, sound, seenTools }');
       const all = solvedIds.length === data.levels.length;
       const play = (await page.textContent('#btn-play')).trim();
@@ -765,7 +778,7 @@ async function sectionInteract() {
       assert(done.completed.includes(1) && !done.boards['1'], 'level marked complete, its board forgotten');
       await page.mouse.click(640, 60); // the backdrop
       await page.waitForSelector('#win', { state: 'hidden' });
-      assert(await page.isVisible('#btn-next'), 'a "Next level" button replaces Hint');
+      assert(await page.isVisible('#btn-next'), 'a "Next level" button takes the tray\'s place');
       const p = await at(4, 4);
       await page.mouse.click(p.x, p.y);
       await piecesAre([{ type: 'fan', x: 1, y: 4, d: 3 }, { type: 'window', x: 9, y: 2 }], 'the solved board stays put');
@@ -774,7 +787,7 @@ async function sectionInteract() {
       await page.click('#btn-back');
       await page.waitForSelector('#home:not([hidden])');
       eq(await page.$eval('.lvl[data-level="1"]', (b) => /is-done/.test(b.className)), true, 'level 1 shown as done');
-      eq(await page.$eval('.lvl[data-level="2"]', (b) => !b.disabled && /is-next/.test(b.className)), true, 'level 2 unlocked and highlighted');
+      eq(await page.$eval('.lvl[data-level="2"]', (b) => b.getAttribute('aria-disabled') !== 'true' && /is-next/.test(b.className)), true, 'level 2 unlocked and highlighted');
       eq((await page.textContent('#btn-play')).trim(), 'Continue · Level 2', 'Continue button');
       await page.click('#btn-play');
       await expectState(page, (s) => s.screen === 'game' && s.id === 2, 'level 2 opens');
@@ -838,7 +851,7 @@ async function sectionInteract() {
       await page.click('#confirm-yes');
       await page.waitForSelector('#confirm', { state: 'hidden' });
       eq(await page.$$eval('.lvl.is-done', (b) => b.length), 0, 'progress reset');
-      eq(await page.$eval('.lvl[data-level="2"]', (b) => b.disabled), true, 'level 2 locked again');
+      eq(await page.$eval('.lvl[data-level="2"]', (b) => b.getAttribute('aria-disabled') === 'true'), true, 'level 2 locked again');
       eq((await page.textContent('#btn-play')).trim(), 'Play', 'Play');
     });
     await page.context().close();

@@ -621,8 +621,11 @@
     var sw1 = lean + amp * Math.sin(t * (2.1 + f * 1.4));
     var sw2 = lean + amp * 1.15 * Math.sin(t * (2.4 + f * 1.5) + 1.3);
     var damp = 1 - dry;
-    var shirtCol = mix(P('o-sky'), mix(P('o-sky'), P('smoke'), 0.55), damp);
-    var towelCol = mix(P('o-coral'), mix(P('o-coral'), P('smoke'), 0.55), damp);
+    var soot = a.soot || 0; // smoky air has reached it: grey, smudged garments
+    var sootCol = darker(P('smoke'), 0.18);
+    var shirtCol = mix(mix(P('o-sky'), mix(P('o-sky'), P('smoke'), 0.55), damp), sootCol, 0.62 * soot);
+    var towelCol = mix(mix(P('o-coral'), mix(P('o-coral'), P('smoke'), 0.55), damp), sootCol, 0.62 * soot);
+    var smudge = alpha(darker(P('smoke'), 0.45), 0.85 * soot);
     var sx = small ? -0.2 : -0.17, tx = small ? 0.21 : 0.18;
     var py = lineY + (small ? 0.05 : 0.055);
     ctx.save();
@@ -632,6 +635,11 @@
     tshirt(ctx);
     ctx.fillStyle = shirtCol;
     ctx.fill();
+    if (soot > 0.02) {
+      ctx.beginPath(); ctx.ellipse(0.035, 0.17, 0.045, 0.032, 0.4, 0, TAU); circle(ctx, -0.05, 0.24, 0.022);
+      ctx.fillStyle = smudge;
+      ctx.fill();
+    }
     ctx.restore();
     ctx.save();
     ctx.translate(tx, py + 0.01);
@@ -641,14 +649,28 @@
     ctx.fillStyle = towelCol;
     ctx.fill();
     ctx.beginPath(); line(ctx, -tw, th * 0.78, tw, th * 0.78);
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.strokeStyle = 'rgba(255,255,255,' + (0.6 - 0.35 * soot) + ')';
     ctx.lineWidth = small ? 0.045 : 0.03;
     ctx.stroke();
+    if (soot > 0.02) {
+      ctx.beginPath(); ctx.ellipse(-tw * 0.15, th * 0.4, tw * 0.55, th * 0.1, -0.3, 0, TAU);
+      ctx.fillStyle = smudge;
+      ctx.fill();
+    }
     ctx.restore();
     if (!small) {
       ctx.beginPath(); circle(ctx, sx, py, 0.025); circle(ctx, tx, py + 0.01, 0.025);
       ctx.fillStyle = P('table-edge');
       ctx.fill();
+    }
+    // a small grey wisp curling off the line
+    if (soot > 0.02 && !small) {
+      for (var k = 0; k < 2; k++) {
+        var wp = (t * 0.5 + k * 0.5) % 1;
+        ctx.beginPath(); circle(ctx, 0.02 + Math.sin(wp * 4 + k) * 0.04, lineY - 0.04 - wp * 0.16, 0.035 + 0.04 * wp);
+        ctx.fillStyle = alpha(P('smoke'), 0.5 * soot * (1 - wp));
+        ctx.fill();
+      }
     }
     if (damp > 0.05) {
       ctx.fillStyle = alpha(P('air-deep'), 0.75 * damp);
@@ -916,7 +938,8 @@
     ctx.lineWidth = 1;
     ctx.strokeStyle = alpha(P('ink'), 0.16);
     ctx.stroke();
-    var fillCol = state === 'happy' ? P('good') : P('air-deep');
+    // laundry is only ever 'bad' when smoky air reaches it: its meter fills grey
+    var fillCol = state === 'happy' ? P('good') : state === 'bad' && type === 'laundry' ? darker(P('smoke'), 0.12) : P('air-deep');
     var ringW = Math.max(1.2, dr * 0.42);
     var x = -W / 2 + padX;
     ctx.lineCap = 'round';
@@ -1648,7 +1671,7 @@
     return {
       angle: Math.random() * TAU, spd: 0, lit: f > 0 ? 0 : 1, dry: f >= 2 ? 1 : 0,
       scatter: f >= 2 ? 1 : 0, flutter: f === 1 ? 1 : 0, bend: f >= 2 ? 1 : 0, sway: f === 1 ? 1 : 0,
-      state: gl.state, stateT: -1e9, flow: f, haze: gl.state !== 'happy' ? 1 : 0,
+      state: gl.state, stateT: -1e9, flow: f, haze: gl.state !== 'happy' ? 1 : 0, soot: gl.smoky ? 1 : 0,
       dirx: 0, diry: 0, small: false, px: 0
     };
   }
@@ -1817,6 +1840,7 @@
       an.flutter = approach(an.flutter, fo >= 1 ? 1 : 0, 4, dt);
       an.bend = approach(an.bend, fo >= 2 ? 1 : 0, 3, dt);
       an.sway = approach(an.sway, fo >= 1 ? 1 : 0, 3, dt);
+      an.soot = approach(an.soot || 0, gl.smoky ? 1 : 0, 3, dt);
 
       var cx = (ob.x + 0.5) * T, cy = (ob.y + 0.5) * T;
       var hop = 0;

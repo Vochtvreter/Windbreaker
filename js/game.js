@@ -17,20 +17,16 @@
   var DIR_WORD = ['north', 'east', 'south', 'west'];
   var STRENGTH_WORD = ['calm', 'gentle', 'strong', 'gale'];
   var NEED = {
-    pinwheel: 'needs a breeze', candle: 'keep the air away', laundry: 'needs a breeze of 2+',
+    pinwheel: 'needs a breeze', candle: 'keep the air away', laundry: 'needs a clean breeze of 2+',
     papers: 'a breeze of 1 at most', fern: 'wants a breeze of exactly 1', stove: ''
   };
   function breezeWord(f) { return f > 0 ? 'breeze ' + f : 'still air'; }
   // Things that arrive without a new tool get the same "New" card on the first
   // level they appear in (the key is stored in seenTools, next to the tools).
-  var NEW_THING = {
-    candle: 'Keep it out of any airflow, or it blows out.',
-    stove: 'Its smoke must be blown outside or through a filter, never into a wall.',
-    table: 'Air passes over it, but nothing can be placed on it.',
-    laundry: 'Needs a strong breeze: 2 or more.',
-    papers: 'A gentle breeze is fine, but no more than 1.',
-    fern: 'Wants exactly a gentle breeze: 1.'
-  };
+  // Objects are described by the engine; tables are map cells, described here.
+  var NEW_THINGS = ['candle', 'stove', 'table', 'laundry', 'papers', 'fern'];
+  var TABLE_DESC = 'Air passes over it, but nothing can be placed on it.';
+  function thingDesc(k) { return WB.TOOLS[k] ? WB.TOOLS[k].desc : WB.OBJECTS[k] ? WB.OBJECTS[k].desc : k === 'table' ? TABLE_DESC : ''; }
 
   // ================================================================== helpers
 
@@ -341,8 +337,8 @@
   var CHECK_SVG = '<svg class="ico check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 
   // The two tools a mastery chapter leans on most (by inventory), for its icon.
-  // `used` holds pairs earlier chapters already show: the best pair not yet
-  // taken is picked, so no two chapters share an icon.
+  // `used` holds pairs earlier chapters already show (in either order): the
+  // best pair not yet taken is picked, so no two chapters share an icon.
   function chapterPair(ch, used) {
     var count = {};
     for (var n = ch.first; n <= ch.last; n++) {
@@ -359,9 +355,10 @@
       for (var j = i + 1; j < ids.length; j++) cands.push({ k: ids[i] + '+' + ids[j], score: count[ids[i]] + count[ids[j]], r: i + j });
     }
     cands.sort(function (a, b) { return b.score - a.score || a.r - b.r; });
-    for (var c = 0; c < cands.length; c++) if (!used || !used[cands[c].k]) return cands[c].k;
+    for (var c = 0; c < cands.length; c++) if (!used || !used[pairKey(cands[c].k)]) return cands[c].k;
     return cands[0].k;
   }
+  function pairKey(k) { return k.split('+').sort().join('+'); }
 
   function renderHome() {
     var frag = document.createDocumentFragment();
@@ -379,7 +376,7 @@
       if (ch.tool) R.icon(ic, 'tool', ch.tool, 40);
       else {
         var pair = chapterPair(ch, usedPairs);
-        usedPairs[pair] = true;
+        usedPairs[pairKey(pair)] = true;
         R.icon(ic, 'pair', pair, 40);
       }
 
@@ -662,8 +659,10 @@
   function newThingHere() {
     var ch = G.chapter;
     if (ch && ch.tool && G.id === ch.first) return ch.tool;
-    var keys = Object.keys(NEW_THING);
-    for (var i = 0; i < keys.length; i++) if (firstLevelWith(keys[i]) === G.id) return keys[i];
+    for (var i = 0; i < NEW_THINGS.length; i++) {
+      var k = NEW_THINGS[i];
+      if (firstLevelWith(k) === G.id && store.seenTools.indexOf(k) < 0) return k;
+    }
     return null;
   }
   function thingName(k) { return WB.TOOLS[k] ? WB.TOOLS[k].name : WB.OBJECTS[k] ? WB.OBJECTS[k].name : k === 'table' ? 'Table' : k; }
@@ -684,8 +683,8 @@
     var isTool = !!WB.TOOLS[thing];
     dom.newtool.setAttribute('aria-label', isTool ? 'New tool' : 'New in the house');
     dom.newtoolTitle.textContent = thingName(thing);
-    dom.newtoolDesc.textContent = isTool ? firstSentence(WB.TOOLS[thing].desc) : NEW_THING[thing];
-    dom.newtool.title = isTool ? WB.TOOLS[thing].desc : NEW_THING[thing];
+    dom.newtoolDesc.textContent = isTool ? firstSentence(thingDesc(thing)) : thingDesc(thing);
+    dom.newtool.title = thingDesc(thing);
     paintNewIcon();
     dom.newtool.hidden = false;
   }
@@ -911,7 +910,7 @@
   function goalText(g) {
     var name = WB.OBJECTS[g.type].name;
     if (g.type === 'stove') return name + ' — ' + (g.state === 'happy' ? 'smoke is cleared' : g.state === 'bad' ? 'smoke is trapped' : 'smoke needs a way out');
-    return name + ' — ' + NEED[g.type] + ' · ' + breezeWord(g.flow);
+    return name + ' — ' + (g.smoky ? 'smoky air makes it dirty' : NEED[g.type]) + ' · ' + breezeWord(g.flow);
   }
   function focusGoal(type) {
     var goals = G.sim.goals.filter(function (g) { return g.type === type; });
@@ -1213,7 +1212,9 @@
       var how = '';
       if (nextP.type === 'fan') how = ', blowing ' + DIR_WORD[nextP.d];
       else if (nextP.type === 'deflector') how = nextP.d === 0 ? ', slanted like /' : ', slanted like \\';
-      showToast('Try a ' + toolName(nextP.type).toLowerCase() + ' here' + how + '.', null, null, { kind: 'hint', near: nextP });
+      var canTap = remaining(nextP.type) > 0 && WB.canPlace(G.L, allPieces(), nextP.type, nextP.x, nextP.y);
+      showToast('Try a ' + toolName(nextP.type).toLowerCase() + ' here' + how + '.' + (canTap ? ' ' + (usingTouch() ? 'Tap' : 'Click') + ' it to place it.' : ''),
+        null, null, { kind: 'hint', near: nextP });
     }
   }
 
@@ -1303,7 +1304,7 @@
         var st = g.state === 'happy' ? 'smoke is cleared' : g.state === 'bad' ? 'smoke is trapped' : 'smoke needs a way out';
         return '<b>' + oname + '</b> — ' + st;
       }
-      return '<b>' + oname + '</b> — ' + NEED[ob.type] + ' <span class="tt-dim">· ' + breezeWord(g.flow) + '</span>';
+      return '<b>' + oname + '</b> — ' + (g.smoky ? 'smoky air makes it dirty' : NEED[ob.type]) + ' <span class="tt-dim">· ' + breezeWord(g.flow) + '</span>';
     }
     if (ch === '.') return '<b>Floor</b> — ' + breezeWord(f);
     if (ch === 'o') return '<b>Table</b> — air passes over <span class="tt-dim">· ' + breezeWord(f) + ' · nothing can be placed here</span>';
@@ -1816,6 +1817,7 @@
   }
 
   function openHelp() {
+    updateSoundButton();
     var n = reachedLevel();
     var h = [];
     var inLevel = {};
@@ -1831,11 +1833,11 @@
     h.push('<li><span class="rule-ico">' + cv('ui', 'inlet', 34) + '</span><span>A <b>window facing the wind</b> is an inlet: a bright pane with arrows pointing in. Every other window is an <b>outlet</b> ' + cv('ui', 'outlet', 22, 'inl') + ' that lets air out.</span></li>');
     h.push('<li><span class="rule-ico">' + cv('ui', 'stall', 34) + '</span><span><b>A breeze only flows if it has a way out.</b> An inlet with no outlet stays still: its path is a faint dashed line ending in a red ×.</span></li>');
     h.push('<li><span class="rule-ico">' + cv('ui', 'lanes-2', 34) + '</span><span><b>Strength</b> is the number of lines in a stream: one is a gentle breeze, two is strong, three is a gale. Where breezes from different sources meet on the same spot, from any direction, they add up (a breeze crossing its own path does not add to itself).</span></li>');
-    if (n >= WB.OBJECTS.stove.intro || inLevel.stove) h.push('<li><span class="rule-ico">' + cv('object', 'stove', 30) + '</span><span><b>Smoke</b> from a stove must be carried outside (or through a filter), never blown into a wall.</span></li>');
+    if (n >= WB.OBJECTS.stove.intro || inLevel.stove) h.push('<li><span class="rule-ico">' + cv('object', 'stove', 30) + '</span><span><b>Smoke</b> from a stove must be carried outside (or through a filter), never blown into a wall, and never across the laundry.</span></li>');
     h.push('<li><span class="rule-ico">' + cv('ui', 'pip-happy', 30) + '</span><span>The dot on each object shows how it feels: ' + cv('ui', 'pip-idle', 18, 'inl') + ' wants air, ' + cv('ui', 'pip-happy', 18, 'inl') + ' happy, ' + cv('ui', 'pip-bad', 18, 'inl') + ' unhappy.</span></li>');
     if (has('laundry') || has('papers') || has('fern')) {
       var ms = [];
-      if (has('laundry')) ms.push(cv('ui', 'meter-laundry-1-idle', 34, 'inl') + ' laundry wants two or more');
+      if (has('laundry')) ms.push(cv('ui', 'meter-laundry-1-idle', 34, 'inl') + ' laundry wants two or more, of clean air');
       if (has('papers')) ms.push(cv('ui', 'meter-papers-0-happy', 34, 'inl') + ' papers take one at most');
       if (has('fern')) ms.push(cv('ui', 'meter-fern-1-happy', 34, 'inl') + ' a fern wants exactly one');
       h.push('<li><span class="rule-ico">' + cv('ui', 'meter-laundry-2-happy', 34) + '</span><span>Some things are picky. Their <b>meter</b> fills with the air that reaches them: ' + ms.join(', ') + '. A red dot means too much.</span></li>');
@@ -1858,7 +1860,7 @@
       });
       var tl = firstLevelWith('table');
       if ((tl != null && tl <= n) || (G.L && G.L.cells && G.L.cells.indexOf('o') >= 0)) {
-        h.push('<li>' + cv('ui', 'table', 40) + '<div><div class="gloss-name">Table</div><div class="gloss-desc">' + NEW_THING.table + '</div></div></li>');
+        h.push('<li>' + cv('ui', 'table', 40) + '<div><div class="gloss-name">Table</div><div class="gloss-desc">' + TABLE_DESC + '</div></div></li>');
       }
       h.push('</ul>');
     }

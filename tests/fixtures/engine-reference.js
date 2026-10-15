@@ -329,6 +329,7 @@
     function trace(source, kind, starts) {
       var nodes = new Map(); // key -> node
       var cellFlow = new Map(); // cell index -> max strength
+      var smokyCells = new Set(); // cells crossed while carrying smoke
       var segments = [];
       var ends = [];
       var reached = 0; // mask of stoves reached
@@ -400,6 +401,7 @@
             reached |= bit;
             node.m = m;
           }
+          if (m) smokyCells.add(ci);
           var t = piece ? piece.type : null;
           if (t === 'fan') {
             succ.push([piece.d, s]);
@@ -462,6 +464,7 @@
         segments: segments,
         ends: ends,
         cellFlow: cellFlow,
+        smokyCells: smokyCells,
         reached: reached,
         failed: failed
       };
@@ -505,9 +508,11 @@
 
     var flow = new Int32Array(N);
     var reachedAll = 0, failedAll = 0;
+    var smoky = new Set();
     trees.forEach(function (t) {
       if (!t.active) return;
       t.cellFlow.forEach(function (s, ci) { flow[ci] += s; });
+      t.smokyCells.forEach(function (ci) { smoky.add(ci); });
       reachedAll |= t.reached;
       failedAll |= t.failed;
     });
@@ -523,7 +528,9 @@
       var ok, state;
       switch (o.type) {
         case 'pinwheel': ok = f >= 1; state = ok ? 'happy' : 'idle'; break;
-        case 'laundry': ok = f >= 2; state = ok ? 'happy' : 'idle'; break;
+        case 'laundry':
+          var dirty = smoky.has(o.y * W + o.x);
+          ok = f >= 2 && !dirty; state = dirty ? 'bad' : (ok ? 'happy' : 'idle'); break;
         case 'candle': ok = f === 0; state = ok ? 'happy' : 'bad'; break;
         case 'papers': ok = f <= 1; state = ok ? 'happy' : 'bad'; break;
         case 'fern': ok = f === 1; state = ok ? 'happy' : (f === 0 ? 'idle' : 'bad'); break;
@@ -532,10 +539,12 @@
           ok = st.cleared; state = ok ? 'happy' : (st.reached ? 'bad' : 'idle'); break;
         default: ok = true; state = 'happy';
       }
-      return { type: o.type, x: o.x, y: o.y, flow: f, ok: ok, state: state };
+      var goal = { type: o.type, x: o.x, y: o.y, flow: f, ok: ok, state: state };
+      if (o.type === 'laundry') goal.smoky = dirty;
+      return goal;
     });
 
-    trees.forEach(function (t) { delete t.cellFlow; delete t.reached; delete t.failed; });
+    trees.forEach(function (t) { delete t.cellFlow; delete t.smokyCells; delete t.reached; delete t.failed; });
 
     return {
       flow: flow,

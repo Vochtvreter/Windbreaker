@@ -74,7 +74,7 @@
     pinwheel: { char: 'p', name: 'Pinwheel', intro: 1, desc: 'Needs a breeze.' },
     candle: { char: 'c', name: 'Candle', intro: 3, desc: 'Keep it out of any airflow.' },
     stove: { char: 's', name: 'Stove', intro: 8, desc: 'Its smoke must be blown outside or through a filter, never into a wall.' },
-    laundry: { char: 'l', name: 'Laundry', intro: 13, desc: 'Needs a strong breeze (2 or more).' },
+    laundry: { char: 'l', name: 'Laundry', intro: 13, desc: 'Needs a strong breeze (2 or more) of clean air. Smoky air makes it dirty.' },
     papers: { char: 'n', name: 'Papers', intro: 18, desc: 'A gentle breeze is fine, but no more than 1.' },
     fern: { char: 'f', name: 'Fern', intro: 23, desc: 'Wants exactly a gentle breeze (1).' }
   };
@@ -350,6 +350,7 @@
   // Scratch buffers, grown on demand and reused across calls.
   var SC = {
     cellCap: 0, kind: null, stoveAt: null, pgrid: null, tflowI: null, tflowF: null, tstamp: null, touched: null, flow: null,
+    tsmStamp: null, tsmoky: null, smokeMark: null, callGen: 0,
     pieceCap: 0, ptype: null, px: null, py: null, pd: null, pinlet: null,
     keyCap: 0, kstamp: null, knode: null,
     gen: 0,
@@ -368,6 +369,7 @@
     SC.tflowI = new Int32Array(c); SC.tflowF = new Float64Array(c);
     SC.tstamp = new Int32Array(c); SC.touched = new Int32Array(c);
     SC.flow = new Int32Array(c);
+    SC.tsmStamp = new Int32Array(c); SC.tsmoky = new Int32Array(c); SC.smokeMark = new Int32Array(c); SC.callGen = 0;
     SC.cellCap = c;
     lvL = null; // the cached cell kinds lived in the old array
   }
@@ -404,6 +406,7 @@
       SC.gen = 0;
       if (SC.kstamp) SC.kstamp.fill(0);
       if (SC.tstamp) SC.tstamp.fill(0);
+      if (SC.tsmStamp) SC.tsmStamp.fill(0);
     }
     return ++SC.gen;
   }
@@ -440,7 +443,7 @@
   // Per-call context shared by run() and traceTree().
   var cx_W = 0, cx_H = 0, cx_table = true, cx_SK = 64, cx_MS = 1, cx_nStoves = 0;
   // Per-tree results of traceTree().
-  var tr_outlet = false, tr_reached = 0, tr_failed = 0, tr_touched = 0;
+  var tr_outlet = false, tr_reached = 0, tr_failed = 0, tr_touched = 0, tr_smoky = 0;
 
   // outwardDir() on the kind array.
   function outDirK(kind, W, H, x, y) {
@@ -462,6 +465,7 @@
     var kind = SC.kind, pgrid = SC.pgrid, stoveAt = SC.stoveAt;
     var ptype = SC.ptype, pd = SC.pd, pinlet = SC.pinlet;
     var tflow = table ? SC.tflowI : SC.tflowF, tstamp = SC.tstamp, touched = SC.touched;
+    var tsmStamp = SC.tsmStamp, tsmoky = SC.tsmoky, nSmoky = 0;
     var kstamp = SC.kstamp, knode = SC.knode;
     var qCap = SC.qCap, qx = SC.qx, qy = SC.qy, qd = SC.qd, qs = table ? SC.qsI : SC.qsF, qm = SC.qm, qp = SC.qp;
     var qfx = SC.qfx, qfy = SC.qfy, qdist = SC.qdist;
@@ -542,6 +546,8 @@
           m |= bit; reached |= bit;
           nm[node] = m;
         }
+        // cells this tree crosses while carrying smoke (laundry there gets dirty)
+        if (m !== 0 && tsmStamp[ci] !== gen) { tsmStamp[ci] = gen; tsmoky[nSmoky++] = ci; }
         if (pt === T_FAN) {
           nd0 = pd[pi] & 3;
         } else if (pt === T_DEFLECTOR) {
@@ -584,7 +590,7 @@
     // Without merge edges the state graph is a forest, so there is no cycle.
     if (cx_nStoves && reached && merges) failed |= cycleSmoke(nNodes, reached);
 
-    tr_outlet = outlet; tr_reached = reached; tr_failed = failed; tr_touched = nTouched;
+    tr_outlet = outlet; tr_reached = reached; tr_failed = failed; tr_touched = nTouched; tr_smoky = nSmoky;
   }
 
   // Mask of stoves whose smoke is trapped circling: stove b is trapped when the
@@ -684,6 +690,8 @@
     if (!full) flow.fill(0, 0, N);
     var trees = full ? [] : null;
     var reachedAll = 0, failedAll = 0;
+    var smokeMark = SC.smokeMark, callStamp = ++SC.callGen;
+    if (callStamp >= 0x3fffffff) { smokeMark.fill(0); SC.callGen = callStamp = 1; }
     var qx = SC.qx, qy = SC.qy, qd = SC.qd, qs = table ? SC.qsI : SC.qsF, qm = SC.qm, qp = SC.qp;
     var qfx = SC.qfx, qfy = SC.qfy, qdist = SC.qdist;
 
@@ -735,6 +743,8 @@
       if (active) {
         var touched = SC.touched, tflow = table ? SC.tflowI : SC.tflowF;
         for (k = 0; k < tr_touched; k++) flow[touched[k]] += tflow[touched[k]];
+        var tsmoky = SC.tsmoky;
+        for (k = 0; k < tr_smoky; k++) smokeMark[tsmoky[k]] = callStamp;
         reachedAll |= tr_reached;
         failedAll |= tr_failed;
       }
@@ -751,7 +761,7 @@
         f = flow[ob.y * W + ob.x];
         switch (ob.type) {
           case 'pinwheel': if (!(f >= 1)) return false; break;
-          case 'laundry': if (!(f >= 2)) return false; break;
+          case 'laundry': if (!(f >= 2) || smokeMark[ob.y * W + ob.x] === callStamp) return false; break;
           case 'candle': if (f !== 0) return false; break;
           case 'papers': if (!(f <= 1)) return false; break;
           case 'fern': if (f !== 1) return false; break;
@@ -778,7 +788,9 @@
       var ok, state;
       switch (ob.type) {
         case 'pinwheel': ok = f >= 1; state = ok ? 'happy' : 'idle'; break;
-        case 'laundry': ok = f >= 2; state = ok ? 'happy' : 'idle'; break;
+        case 'laundry':
+          var dirty = smokeMark[ob.y * W + ob.x] === callStamp;
+          ok = f >= 2 && !dirty; state = dirty ? 'bad' : (ok ? 'happy' : 'idle'); break;
         case 'candle': ok = f === 0; state = ok ? 'happy' : 'bad'; break;
         case 'papers': ok = f <= 1; state = ok ? 'happy' : 'bad'; break;
         case 'fern': ok = f === 1; state = ok ? 'happy' : (f === 0 ? 'idle' : 'bad'); break;
@@ -787,7 +799,9 @@
           ok = st.cleared; state = ok ? 'happy' : (st.reached ? 'bad' : 'idle'); break;
         default: ok = true; state = 'happy';
       }
-      goals.push({ type: ob.type, x: ob.x, y: ob.y, flow: f, ok: ok, state: state });
+      var goal = { type: ob.type, x: ob.x, y: ob.y, flow: f, ok: ok, state: state };
+      if (ob.type === 'laundry') goal.smoky = dirty;
+      goals.push(goal);
       if (!ok) solved = false;
     }
 

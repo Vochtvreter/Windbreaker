@@ -26,7 +26,7 @@ the laundry dry, keep the candles lit and get the kitchen smoke outside.
   | Pinwheel | any breeze |
   | Candle | no air at all |
   | Stove | its smoke blown outside or through a filter, never into a wall |
-  | Laundry | a strong breeze (2+) |
+  | Laundry | a strong breeze (2+) of clean air — smoke makes it dirty |
   | Papers | at most a gentle breeze (1) |
   | Fern | exactly a gentle breeze (1) |
 

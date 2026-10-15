@@ -580,10 +580,11 @@ test('audit: solver == brute force on 250 seeded random levels (all tools, 5 gen
 });
 
 test('audit: solver == brute force on random levels whose fewest-piece solution needs 3-4 pieces', () => {
-  // Seeds found by searching the generator (focus, maxInv 4, maxObj 4, planted 0.95).
+  // Seeds found by searching the generator (focus, maxInv 4, maxObj 4, planted 0.95);
+  // pull 1643 and smoke 1150 replaced seeds whose levels changed with the clean-laundry rule.
   const HARD = {
-    passive: [140, 389, 2195, 3410], stalled: [62, 179, 318, 820], pull: [221, 280, 343, 1568],
-    smoke: [38, 790, 895, 1071], null: [472, 564, 860, 912]
+    passive: [140, 389, 2195, 3410], stalled: [62, 179, 318, 820], pull: [221, 343, 1568, 1643],
+    smoke: [38, 790, 895, 1150], null: [472, 564, 860, 912]
   };
   for (const [f, seeds] of Object.entries(HARD)) {
     for (const seed of seeds) {
