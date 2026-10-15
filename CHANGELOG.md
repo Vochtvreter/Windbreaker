@@ -4,6 +4,19 @@ Every release is merged to `main` with a version bump; work in progress lives
 on the `dev` branch. The version is shown at the bottom of the level-select
 screen.
 
+## v0.3 — Refined UI after design review
+
+* Three independent reviews (visual design, gameplay UX, robustness)
+  applied: airflow strength drawn as parallel lanes, clearer inlet vs
+  outlet windows, strength meters under laundry/papers/ferns, simpler
+  glyphs on small tiles, darker walls in dark mode, AA button contrast.
+* Win card is a bottom sheet with chapter progress; new-tool cards no
+  longer move the board; landscape phones get a two-column layout.
+* Better touch handling: drag anchoring, tap tolerance, snapping,
+  long-press remove; tray scrolls the selected tool into view.
+* Flat memory use, ~0.6 ms per frame; no console errors at 5 viewports in
+  both themes, with reduced motion and from file://.
+
 ## v0.2 — Audited engine and level tools
 
 * Engine is 4-10x faster (typed-array tracing); 208 rule tests, two
