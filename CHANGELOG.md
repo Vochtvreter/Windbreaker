@@ -4,6 +4,21 @@ Every release is merged to `main` with a version bump; work in progress lives
 on the `dev` branch. The version is shown at the bottom of the level-select
 screen.
 
+## v0.5 — All 100 levels
+
+* The full game: 100 levels in 20 chapters. Chapters 1-10 introduce a
+  new tool every 5 levels (window, fan, deflector, curtain, wall vent,
+  splitter, extractor, skylight, air filter, ceiling fan); chapters 11-20
+  are themed mastery chapters (Drafts, Greenhouse, Library, Kitchen Rush,
+  Laundry Day, Old Manor, Still Air, Storm Season, Crosswinds, Fresh Air).
+* Every chapter designed, independently reviewed and revised.
+* All 100 pass every level check; 96 are proven exhaustively by the
+  solver (almost all with a single solution); the 4 hardest are proven to
+  have no shorter solution up to 5 pieces.
+* End-to-end test plays all 100 through the real UI; added redo
+  (Ctrl/Cmd+Shift+Z, Ctrl+Y) and fixed Next skipping across gaps.
+* Next: game-wide curation of names, order and difficulty curve.
+
 ## v0.4 — First 60 levels
 
 * 60 real levels in 12 chapters replace the placeholders: all 10 tools
