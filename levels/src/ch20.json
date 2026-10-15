@@ -56,32 +56,6 @@
       ]
     },
     {
-      "name": "Long Draw",
-      "wind": { "from": "N", "strength": 3 },
-      "map": [
-        "%%#%%%%%%%%%%",
-        "#.s.#.o.....#",
-        "#.l.#....o.l#",
-        "##.#######.##",
-        "#c.f..n.....#",
-        "##.#######.##",
-        "#...o..p....#",
-        "#############"
-      ],
-      "fixed": [
-        { "type": "window", "x": 2, "y": 0 }
-      ],
-      "inventory": { "extractor": 1, "filter": 1, "deflector": 3, "window": 1, "splitter": 1 },
-      "solution": [
-        { "type": "extractor", "x": 12, "y": 4 },
-        { "type": "filter", "x": 2, "y": 4 },
-        { "type": "deflector", "x": 2, "y": 6, "d": 1 },
-        { "type": "deflector", "x": 10, "y": 6, "d": 0 },
-        { "type": "deflector", "x": 10, "y": 2, "d": 0 },
-        { "type": "window", "x": 12, "y": 2 }
-      ]
-    },
-    {
       "name": "Pushback",
       "wind": { "from": "W", "strength": 3 },
       "map": [
@@ -108,7 +82,33 @@
       ]
     },
     {
-      "name": "Fresh Air",
+      "name": "Long Draw",
+      "wind": { "from": "N", "strength": 3 },
+      "map": [
+        "%%#%%%%%%%%%%",
+        "#.s.#.o.....#",
+        "#.l.#....o.l#",
+        "##.#######.##",
+        "#c.f..n.....#",
+        "##.#######.##",
+        "#...o..p....#",
+        "#############"
+      ],
+      "fixed": [
+        { "type": "window", "x": 2, "y": 0 }
+      ],
+      "inventory": { "extractor": 1, "filter": 1, "deflector": 3, "window": 1, "splitter": 1 },
+      "solution": [
+        { "type": "extractor", "x": 12, "y": 4 },
+        { "type": "filter", "x": 2, "y": 4 },
+        { "type": "deflector", "x": 2, "y": 6, "d": 1 },
+        { "type": "deflector", "x": 10, "y": 6, "d": 0 },
+        { "type": "deflector", "x": 10, "y": 2, "d": 0 },
+        { "type": "window", "x": 12, "y": 2 }
+      ]
+    },
+    {
+      "name": "Spring Cleaning",
       "tip": "Spring cleaning day: open up the whole house so every room gets just the air it needs.",
       "wind": { "from": "W", "strength": 3 },
       "map": [
