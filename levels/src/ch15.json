@@ -3,31 +3,8 @@
   "title": "Laundry Day",
   "levels": [
     {
-      "name": "Airing Cupboard",
-      "tip": "Laundry needs a breeze of 2 or more, and separate breezes on the same line add up.",
-      "wind": { "from": "N", "strength": 1 },
-      "map": [
-        "#########",
-        "#.l.#.l.#",
-        "#.l.#.l.#",
-        "#...#...#",
-        "#......l#",
-        "#########"
-      ],
-      "fixed": [
-        { "type": "window", "x": 2, "y": 0 },
-        { "type": "window", "x": 6, "y": 0 },
-        { "type": "window", "x": 6, "y": 5 }
-      ],
-      "inventory": { "window": 1, "deflector": 1, "ceilingfan": 1 },
-      "solution": [
-        { "type": "deflector", "x": 2, "y": 4, "d": 1 },
-        { "type": "ceilingfan", "x": 6, "y": 4 },
-        { "type": "window", "x": 8, "y": 4 }
-      ]
-    },
-    {
       "name": "Delicates",
+      "tip": "Washing day! Papers and ferns want a soft touch, but the wash still needs a breeze of 2 or more.",
       "wind": { "from": "E", "strength": 2 },
       "map": [
         "~~~#####",
@@ -44,6 +21,29 @@
         { "type": "deflector", "x": 4, "y": 1, "d": 0 },
         { "type": "fan", "x": 4, "y": 4, "d": 3 },
         { "type": "window", "x": 0, "y": 4 }
+      ]
+    },
+    {
+      "name": "Airing Cupboard",
+      "wind": { "from": "N", "strength": 1 },
+      "map": [
+        "#########",
+        "#.l.#.l.#",
+        "#.l.#.l.#",
+        "#...#...#",
+        "#......l#",
+        "#########"
+      ],
+      "fixed": [
+        { "type": "window", "x": 2, "y": 0 },
+        { "type": "window", "x": 6, "y": 0 }
+      ],
+      "inventory": { "window": 2, "deflector": 1, "ceilingfan": 1 },
+      "solution": [
+        { "type": "deflector", "x": 2, "y": 4, "d": 1 },
+        { "type": "ceilingfan", "x": 6, "y": 4 },
+        { "type": "window", "x": 6, "y": 5 },
+        { "type": "window", "x": 8, "y": 4 }
       ]
     },
     {
@@ -69,36 +69,16 @@
       ]
     },
     {
-      "name": "Tumble Dry",
-      "wind": { "from": "W", "strength": 1 },
-      "map": [
-        "##########",
-        "#lll.....#",
-        "#....#...#",
-        "#.c..#.f.#",
-        "#......ll#",
-        "##########"
-      ],
-      "fixed": [{ "type": "window", "x": 0, "y": 1 }],
-      "inventory": { "window": 1, "deflector": 2, "ceilingfan": 1 },
-      "solution": [
-        { "type": "deflector", "x": 6, "y": 1, "d": 1 },
-        { "type": "deflector", "x": 6, "y": 4, "d": 1 },
-        { "type": "ceilingfan", "x": 6, "y": 3 },
-        { "type": "window", "x": 9, "y": 4 }
-      ]
-    },
-    {
       "name": "Three Sheets",
       "wind": { "from": "E", "strength": 3 },
       "map": [
-        "#########",
-        "##ll.ll##",
+        "~#######~",
+        "~#ll.ll#~",
+        "~#.....#~",
+        "~###n###~",
+        "~~~#..#~~",
+        "~###.###~",
         "##.....##",
-        "####n####",
-        "####..#~~",
-        "####.####",
-        "##..f..##",
         "#.ll....#",
         "#########"
       ],
@@ -112,6 +92,26 @@
         { "type": "splitter", "x": 4, "y": 1 },
         { "type": "deflector", "x": 4, "y": 7, "d": 0 },
         { "type": "extractor", "x": 0, "y": 7 }
+      ]
+    },
+    {
+      "name": "Tumble Dry",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "##########",
+        "#lll.....#",
+        "#........#",
+        "#......f.#",
+        "#....c.ll#",
+        "##########"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 1 }],
+      "inventory": { "window": 1, "deflector": 2, "ceilingfan": 1 },
+      "solution": [
+        { "type": "deflector", "x": 6, "y": 1, "d": 1 },
+        { "type": "deflector", "x": 6, "y": 4, "d": 1 },
+        { "type": "ceilingfan", "x": 6, "y": 3 },
+        { "type": "window", "x": 9, "y": 4 }
       ]
     }
   ]

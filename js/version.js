@@ -1,6 +1,6 @@
 /* Windbreaker version — bumped with every release merged to main (see CHANGELOG.md). */
 (function (root) {
-  var VERSION = '0.3';
+  var VERSION = '0.4';
   root.WB = root.WB || {};
   root.WB.VERSION = VERSION;
   if (typeof document === 'undefined') return;

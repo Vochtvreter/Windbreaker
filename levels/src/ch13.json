@@ -3,57 +3,21 @@
   "title": "Library",
   "levels": [
     {
-      "name": "Reading Nook",
-      "wind": { "from": "W", "strength": 2 },
-      "map": [
-        "%%%%%%%%%%%",
-        "%c.n.p.o.c%",
-        "%#########%",
-        "#.o.....oc#",
-        "#..o.n.o..#",
-        "###########"
-      ],
-      "fixed": [{ "type": "window", "x": 0, "y": 3 }],
-      "inventory": { "splitter": 1, "vent": 1, "window": 1 },
-      "solution": [
-        { "type": "splitter", "x": 5, "y": 3 },
-        { "type": "vent", "x": 5, "y": 2 },
-        { "type": "window", "x": 5, "y": 5 }
-      ]
-    },
-    {
-      "name": "Velvet Curtain",
-      "wind": { "from": "W", "strength": 2 },
-      "map": [
-        "%%%%%%%%%%%",
-        "%c.op.o...%",
-        "%p.......p%",
-        "%.o...o.o.%",
-        "#l.......n#",
-        "%.o.c.o.o.%",
-        "%%%%%%%%%%%"
-      ],
-      "fixed": [{ "type": "window", "x": 0, "y": 4 }],
-      "inventory": { "ceilingfan": 1, "curtain": 1, "window": 1 },
-      "solution": [
-        { "type": "ceilingfan", "x": 4, "y": 2 },
-        { "type": "curtain", "x": 4, "y": 4 },
-        { "type": "window", "x": 10, "y": 4 }
-      ]
-    },
-    {
       "name": "Wet Cloak",
+      "tip": "Shh, this is a library: candles want still air, and papers a gentle breeze at most.",
       "wind": { "from": "W", "strength": 1 },
       "map": [
-        "%%%#####%%%",
-        "%c.o...o.c%",
-        "%.o.o.o.o.%",
+        "%%%%###%%%%",
+        "%c.%...%..%",
+        "%.o%.o.%o.%",
         "#.n..l..n.#",
-        "%.o.o.o.o.%",
-        "%c.o.c.o.c%",
-        "%%%#####%%%"
+        "%.o%...%o.%",
+        "%..%.c.%.c%",
+        "%%%%###%%%%"
       ],
-      "fixed": [{ "type": "window", "x": 0, "y": 3 }],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 3 }
+      ],
       "inventory": { "extractor": 1, "filter": 1, "window": 1 },
       "solution": [
         { "type": "extractor", "x": 5, "y": 0 },
@@ -62,7 +26,51 @@
       ]
     },
     {
-      "name": "Three Aisles",
+      "name": "Velvet Curtain",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "%%%%%%%%%%%",
+        "%..op.....%",
+        "%p.......p%",
+        "%.o.....o.%",
+        "#l.......n#",
+        "%.o.c...o.%",
+        "%%%%%%%%%%%"
+      ],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 4 }
+      ],
+      "inventory": { "ceilingfan": 1, "curtain": 1, "window": 1 },
+      "solution": [
+        { "type": "ceilingfan", "x": 4, "y": 2 },
+        { "type": "curtain", "x": 4, "y": 4 },
+        { "type": "window", "x": 10, "y": 4 }
+      ]
+    },
+    {
+      "name": "Reading Nook",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "%%%%%%%%%~",
+        "%p.n..c.#~",
+        "%%######%%",
+        "#.o......#",
+        "#..oc..o.#",
+        "##########"
+      ],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 3 }
+      ],
+      "inventory": { "splitter": 1, "vent": 1, "deflector": 1, "window": 1 },
+      "solution": [
+        { "type": "splitter", "x": 5, "y": 3 },
+        { "type": "vent", "x": 5, "y": 2 },
+        { "type": "deflector", "x": 5, "y": 1, "d": 1 },
+        { "type": "window", "x": 5, "y": 5 }
+      ]
+    },
+    {
+      "name": "The Stacks",
       "wind": { "from": "W", "strength": 1 },
       "map": [
         "%%%%%%%%%%%",

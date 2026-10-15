@@ -4,6 +4,19 @@ Every release is merged to `main` with a version bump; work in progress lives
 on the `dev` branch. The version is shown at the bottom of the level-select
 screen.
 
+## v0.4 — First 60 levels
+
+* 60 real levels in 12 chapters replace the placeholders: all 10 tools
+  are introduced (one every 5 levels) and the first two mastery chapters
+  (Drafts, Greenhouse) mix them.
+* Every chapter was designed, independently reviewed (shortcut hunt +
+  first-time-player playthrough) and revised.
+* All 60 pass every level check; the solver proves each one exhaustively,
+  most have a single solution, and the fewest pieces always equals the
+  intended solution. Difficulty rises from 4.5 to ~26.
+* All 60 are solved through the real UI by the end-to-end test
+  (tools/e2e.js), served under a sub-path like GitHub Pages.
+
 ## v0.3 — Refined UI after design review
 
 * Three independent reviews (visual design, gameplay UX, robustness)

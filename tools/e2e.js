@@ -321,15 +321,19 @@ async function touch(page, type, pt) {
   const s = await cdp(page);
   await s.send('Input.dispatchTouchEvent', { type, touchPoints: pt ? [{ x: pt.x, y: pt.y, id: 1, radiusX: 4, radiusY: 4, force: 1 }] : [] });
 }
+// Like a finger: ease in and out, rest on the target before lifting (a fast
+// release is a fling, and Chrome then swallows the next tap), then a short pause.
 async function touchDrag(page, from, to, steps) {
   steps = steps || 14;
   await touch(page, 'touchStart', from);
   for (let i = 1; i <= steps; i++) {
-    await touch(page, 'touchMove', { x: from.x + (to.x - from.x) * i / steps, y: from.y + (to.y - from.y) * i / steps });
-    await sleep(8);
+    const k = 0.5 - Math.cos(Math.PI * i / steps) / 2;
+    await touch(page, 'touchMove', { x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k });
+    await sleep(12);
   }
-  await sleep(30);
+  for (let i = 0; i < 4; i++) { await touch(page, 'touchMove', to); await sleep(25); }
   await touch(page, 'touchEnd', null);
+  await sleep(120);
 }
 async function longPress(page, pt, ms) {
   await touch(page, 'touchStart', pt);
