@@ -3,22 +3,22 @@
   "title": "Greenhouse",
   "levels": [
     {
-      "name": "Twin Ferns",
-      "tip": "In the greenhouse every fern wants a breeze of exactly 1, no more and no less.",
+      "name": "Fern and Flame",
+      "tip": "Every fern wants a breeze of exactly 1, and each half of a split stream keeps at least 1.",
       "wind": { "from": "N", "strength": 2 },
       "map": [
-        "#########",
-        "%...p...#",
+        "~~#####~~",
+        "~~#.p.#~~",
+        "###...###",
+        "%c.f...f#",
         "%oo...oo#",
-        "%f.....f#",
-        "%oo.c.oo#",
         "#########"
       ],
-      "fixed": [],
-      "inventory": { "window": 2, "splitter": 1 },
+      "fixed": [{ "type": "window", "x": 4, "y": 0 }],
+      "inventory": { "window": 1, "splitter": 1, "curtain": 1 },
       "solution": [
-        { "type": "window", "x": 4, "y": 0 },
         { "type": "splitter", "x": 4, "y": 3 },
+        { "type": "curtain", "x": 2, "y": 3 },
         { "type": "window", "x": 8, "y": 3 }
       ]
     },
@@ -48,7 +48,7 @@
         "%%%%%%%%%%%",
         "#..#oofoo.#",
         "#..#......#",
-        "#.p.......#",
+        "#.p......c#",
         "#..#......#",
         "#..#oo..l.#",
         "###########"
@@ -59,30 +59,6 @@
         { "type": "splitter", "x": 6, "y": 3 },
         { "type": "fan", "x": 6, "y": 5, "d": 1 },
         { "type": "window", "x": 10, "y": 5 }
-      ]
-    },
-    {
-      "name": "Quiet Wing",
-      "wind": { "from": "N", "strength": 3 },
-      "map": [
-        "%%#%%%#%%%",
-        "#...#...o%",
-        "#.f.#.l.o%",
-        "#...#...o%",
-        "#.o.#....%",
-        "#..oc...p#",
-        "#####%%%%%"
-      ],
-      "fixed": [
-        { "type": "window", "x": 2, "y": 0 },
-        { "type": "window", "x": 6, "y": 0 },
-        { "type": "deflector", "x": 2, "y": 5, "d": 1 }
-      ],
-      "inventory": { "window": 1, "fan": 2 },
-      "solution": [
-        { "type": "fan", "x": 6, "y": 5, "d": 1 },
-        { "type": "window", "x": 9, "y": 5 },
-        { "type": "fan", "x": 2, "y": 3, "d": 0 }
       ]
     },
     {
@@ -104,6 +80,31 @@
         { "type": "curtain", "x": 3, "y": 3 },
         { "type": "splitter", "x": 5, "y": 3 },
         { "type": "window", "x": 5, "y": 0 }
+      ]
+    },
+    {
+      "name": "Quiet Wing",
+      "tip": "A window whose wind finds no way out adds nothing, but a fan's own breeze always blows.",
+      "wind": { "from": "N", "strength": 3 },
+      "map": [
+        "%%#%%%#%%%",
+        "#...#...o%",
+        "#.f.#.l.o%",
+        "#...#...o%",
+        "#.o.#....%",
+        "#..oc...p#",
+        "#####%%%%%"
+      ],
+      "fixed": [
+        { "type": "window", "x": 2, "y": 0 },
+        { "type": "window", "x": 6, "y": 0 },
+        { "type": "deflector", "x": 2, "y": 5, "d": 1 }
+      ],
+      "inventory": { "window": 1, "fan": 2 },
+      "solution": [
+        { "type": "fan", "x": 6, "y": 5, "d": 1 },
+        { "type": "window", "x": 9, "y": 5 },
+        { "type": "fan", "x": 2, "y": 3, "d": 0 }
       ]
     }
   ]

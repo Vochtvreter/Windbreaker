@@ -1,0 +1,136 @@
+{
+  "chapter": 19,
+  "title": "Crosswinds",
+  "levels": [
+    {
+      "name": "Double Duty",
+      "tip": "Where two breezes cross, a single piece works on both of them.",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "%%%%%#%%%%",
+        "%o..#s.o.%",
+        "%...#n...%",
+        "#..l#.f..#",
+        "%...#o...%",
+        "%.o.#c..o%",
+        "%%%%%%%%%%"
+      ],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 3 }
+      ],
+      "inventory": { "vent": 1, "window": 1, "extractor": 1, "curtain": 1, "deflector": 1, "filter": 1 },
+      "solution": [
+        { "type": "vent", "x": 4, "y": 3 },
+        { "type": "window", "x": 9, "y": 3 },
+        { "type": "extractor", "x": 5, "y": 0 },
+        { "type": "curtain", "x": 5, "y": 3 }
+      ]
+    },
+    {
+      "name": "Trading Places",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "%%%%%%%%%%%%",
+        "%o..%....o.%",
+        "%...%..s...%",
+        "%..o#..f...%",
+        "#.s.#....f.#",
+        "%...%..l..o%",
+        "%o..%......%",
+        "%%%%%%%#%%%%"
+      ],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 4 },
+        { "type": "fan", "x": 7, "y": 1, "d": 2 }
+      ],
+      "inventory": { "deflector": 1, "window": 2, "vent": 1, "curtain": 1, "splitter": 1 },
+      "solution": [
+        { "type": "vent", "x": 4, "y": 4 },
+        { "type": "deflector", "x": 7, "y": 4, "d": 1 },
+        { "type": "window", "x": 7, "y": 7 },
+        { "type": "window", "x": 11, "y": 4 }
+      ]
+    },
+    {
+      "name": "Two into One",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "%%%%%%%%%%%%",
+        "%o...c%..o.%",
+        "#.f...#.l..#",
+        "%..o..%...o%",
+        "%%%%%.%%%%%%",
+        "#.s........%",
+        "%o...o...o.%",
+        "%%%%%%%%%%%%"
+      ],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 2 },
+        { "type": "window", "x": 0, "y": 5 }
+      ],
+      "inventory": { "window": 1, "deflector": 2, "fan": 1, "curtain": 1, "vent": 1 },
+      "solution": [
+        { "type": "window", "x": 11, "y": 2 },
+        { "type": "deflector", "x": 5, "y": 5, "d": 0 },
+        { "type": "fan", "x": 5, "y": 2, "d": 1 },
+        { "type": "vent", "x": 6, "y": 2 }
+      ]
+    },
+    {
+      "name": "Roof Hatch",
+      "wind": { "from": "N", "strength": 2 },
+      "map": [
+        "%%%#%%%#%%",
+        "%o.l.%..o%",
+        "%...o%.n.%",
+        "%o...%.s.%",
+        "%.s.l....%",
+        "%.oo.%.c.%",
+        "%..f.%...%",
+        "%.oo.%.o.%",
+        "%%%#%%%%%%"
+      ],
+      "fixed": [
+        { "type": "window", "x": 3, "y": 0 },
+        { "type": "window", "x": 7, "y": 0 },
+        { "type": "fan", "x": 1, "y": 4, "d": 1 }
+      ],
+      "inventory": { "deflector": 1, "skylight": 1, "curtain": 2, "window": 1, "filter": 1 },
+      "solution": [
+        { "type": "deflector", "x": 3, "y": 4, "d": 1 },
+        { "type": "skylight", "x": 7, "y": 4 },
+        { "type": "curtain", "x": 7, "y": 1 },
+        { "type": "window", "x": 3, "y": 8 }
+      ]
+    },
+    {
+      "name": "Every Which Way",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "%%%%%%%%%~~~~",
+        "#oooo...%~~~~",
+        "%o..%.s.%%%%%",
+        "#.o..l.oooof#",
+        "%.o.%...%%%%%",
+        "#.fs.o.o...l#",
+        "%o.o%.c.%.o.%",
+        "%%%%%%%%%%%%%"
+      ],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 1 },
+        { "type": "window", "x": 0, "y": 3 },
+        { "type": "window", "x": 0, "y": 5 },
+        { "type": "fan", "x": 6, "y": 1, "d": 2 }
+      ],
+      "inventory": { "deflector": 1, "fan": 1, "window": 2, "curtain": 1, "skylight": 1, "filter": 1 },
+      "solution": [
+        { "type": "skylight", "x": 5, "y": 1 },
+        { "type": "deflector", "x": 6, "y": 3, "d": 1 },
+        { "type": "fan", "x": 6, "y": 5, "d": 1 },
+        { "type": "curtain", "x": 1, "y": 5 },
+        { "type": "window", "x": 12, "y": 3 },
+        { "type": "window", "x": 12, "y": 5 }
+      ]
+    }
+  ]
+}

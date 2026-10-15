@@ -23,21 +23,21 @@
       "wind": { "from": "E", "strength": 1 },
       "map": [
         "#########",
-        "#...oco.#",
-        "#.......#",
+        "#..oco..#",
+        "#......c#",
         "#p......#",
         "#########"
       ],
       "fixed": [{ "type": "window", "x": 8, "y": 1 }, { "type": "window", "x": 0, "y": 3 }],
       "inventory": { "deflector": 2 },
       "solution": [
-        { "type": "deflector", "x": 7, "y": 1, "d": 0 },
-        { "type": "deflector", "x": 7, "y": 3, "d": 0 }
+        { "type": "deflector", "x": 6, "y": 1, "d": 0 },
+        { "type": "deflector", "x": 6, "y": 3, "d": 0 }
       ]
     },
     {
       "name": "Clothesline",
-      "tip": "Laundry only dries in a strong breeze (2 or more). Air that reaches a fan gets pushed along.",
+      "tip": "Laundry needs a breeze of 2 or more to dry. Breezes that cross on the same spot add up.",
       "wind": { "from": "W", "strength": 1 },
       "map": [
         "#########",
@@ -45,17 +45,17 @@
         "###.##.##",
         "#.....l.#",
         "#.......#",
-        "%%%%%%%%%"
+        "#########"
       ],
-      "fixed": [{ "type": "window", "x": 0, "y": 1 }, { "type": "fan", "x": 3, "y": 3, "d": 1 }],
+      "fixed": [{ "type": "window", "x": 0, "y": 1 }, { "type": "fan", "x": 1, "y": 3, "d": 1 }],
       "inventory": { "deflector": 1, "window": 1 },
       "solution": [
-        { "type": "deflector", "x": 3, "y": 1, "d": 1 },
-        { "type": "window", "x": 8, "y": 3 }
+        { "type": "deflector", "x": 6, "y": 1, "d": 1 },
+        { "type": "window", "x": 6, "y": 5 }
       ]
     },
     {
-      "name": "One Way Out",
+      "name": "Confluence",
       "wind": { "from": "W", "strength": 1 },
       "map": [
         "######~~~~",

@@ -87,10 +87,13 @@
   }
   function isDone(id) { return store.completed.indexOf(id) >= 0; }
   function markDone(id) { if (!isDone(id)) store.completed.push(id); }
+  // Level n is playable when it is the first level, is solved, or the level
+  // before it in the list is solved (ids are 1..100; a gap never locks the rest).
   function isUnlocked(id) {
     if (UNLOCK_ALL) return true;
-    var first = LEVELS.length ? LEVELS[0].id : 1;
-    return id === first || id === 1 || isDone(id) || isDone(id - 1);
+    var i = levelIndex(id);
+    if (i < 0) return false;
+    return i === 0 || isDone(id) || isDone(LEVELS[i - 1].id);
   }
   function nextPlayableId() {
     for (var i = 0; i < LEVELS.length; i++) {
@@ -209,7 +212,7 @@
   var G = {
     screen: null,                    // 'home' | 'game'
     id: null, def: null, L: null, chapter: null, lastId: null,
-    fixed: [], pieces: [], history: [],
+    fixed: [], pieces: [], history: [], future: [],
     sim: null, version: 0,
     sel: null, valid: null, validWall: false, rot: {},
     hover: null, hoverMouse: false, cursor: null,
@@ -493,6 +496,7 @@
     G.fixed = G.L.fixed.map(norm);
     G.pieces = restoreBoard(id);
     G.history = [];
+    G.future = [];
     G.sel = null; G.valid = null; G.validWall = false; G.rot = {};
     G.hover = null; G.hoverMouse = false; G.cursor = null; G.ghost = null; G.hint = null; G.conflicts = null; G.lifted = null;
     G.previewSim = null; G.previewKey = null; G.dragBaseSim = null;
@@ -829,6 +833,7 @@
     if (!opts.noHistory) {
       G.history.push(snapshot());
       if (G.history.length > 200) G.history.shift();
+      G.future = [];
     }
     G.pieces = newPieces;
     afterChange(opts);
@@ -901,10 +906,19 @@
 
   function undo() {
     if (!G.history.length || I.drag) return;
+    G.future.push(snapshot());
     G.pieces = G.history.pop();
     afterChange({});
     Sound.whoosh();
     announce('Undone. ' + goalSummary());
+  }
+  function redo() {
+    if (!G.future.length || I.drag) return;
+    G.history.push(snapshot());
+    G.pieces = G.future.pop();
+    afterChange({});
+    Sound.tick();
+    announce('Redone. ' + goalSummary());
   }
   function resetLevel() {
     if (!G.pieces.length || I.drag) return;
@@ -1662,7 +1676,7 @@
     h.push('<dt><kbd>1</kbd>–<kbd>9</kbd>, <kbd>0</kbd></dt><dd>select a tool</dd>');
     h.push('<dt><kbd>R</kbd></dt><dd>turn the piece under the pointer</dd>');
     h.push('<dt><kbd>H</kbd></dt><dd>hint</dd>');
-    h.push('<dt><kbd>Ctrl</kbd> <kbd>Z</kbd></dt><dd>undo</dd>');
+    h.push('<dt><kbd>Ctrl</kbd> <kbd>Z</kbd></dt><dd>undo (add <kbd>Shift</kbd> to redo)</dd>');
     h.push('<dt><kbd>Esc</kbd></dt><dd>deselect / close</dd>');
     h.push('<dt>Arrows, <kbd>Enter</kbd></dt><dd>move around the board and place or turn</dd>');
     h.push('<dt><kbd>Delete</kbd></dt><dd>remove the piece under the keyboard cursor</dd>');
@@ -1729,6 +1743,7 @@
     Sound.unlock();
     var k = e.key;
     if ((e.ctrlKey || e.metaKey) && (k === 'z' || k === 'Z') && !e.shiftKey) { e.preventDefault(); if (!boardLocked()) undo(); return; }
+    if ((e.ctrlKey || e.metaKey) && (((k === 'z' || k === 'Z') && e.shiftKey) || k === 'y' || k === 'Y')) { e.preventDefault(); if (!boardLocked()) redo(); return; }
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (k === 'Escape') {
       if (I.drag) { cancelDrag(); return; }
@@ -1936,6 +1951,26 @@
     select: select,
     hint: hint,
     solve: function () { commit((G.def.solution || []).map(norm)); }
+  };
+
+  // Read-only view for the end-to-end test (tools/e2e.js), which drives the
+  // game only through real pointer and keyboard input.
+  window.__wb = {
+    // viewport (client) coordinates of a cell's centre on the board
+    cell: function (x, y) {
+      var r = dom.canvas.getBoundingClientRect(), c = board.cellRect(x, y);
+      return { x: r.left + c.left + c.size / 2, y: r.top + c.top + c.size / 2, size: c.size };
+    },
+    state: function () {
+      return {
+        screen: G.screen, id: G.id, sel: G.sel,
+        pieces: G.pieces.map(norm), fixed: G.fixed.map(norm),
+        undo: G.history.length, redo: G.future.length,
+        solved: !!(G.sim && G.sim.solved), won: G.won, celebrating: !!G.winCardTimer,
+        hint: G.hint ? norm(G.hint) : null, conflicts: G.conflicts ? G.conflicts.slice() : null,
+        dragging: !!I.drag, newTool: G.newTool, T: board.T
+      };
+    }
   };
 
   // ================================================================== boot
