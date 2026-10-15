@@ -4,6 +4,24 @@ Every release is merged to `main` with a version bump; work in progress lives
 on the `dev` branch. The version is shown at the bottom of the level-select
 screen.
 
+## v0.8 — Clean laundry, level redesigns, final UI polish
+
+* New rule (from playtest feedback on levels 48 and 51): laundry needs
+  clean air. Smoky air passing through it makes it dirty, shown as sooty
+  grey washing with a red mark. Help, tooltips and the laundry card say so.
+* The 15 levels whose solutions blew smoke through laundry were repaired
+  and independently reviewed; several now use the rule as their puzzle
+  (15 Crossroads, 34 Wash House, 48 Backdraft, 92 Trading Places).
+* Three levels that repeated earlier ideas were redesigned: 56 Eddy,
+  66 Back to Back, 93 Broadside.
+* 31 UI fixes from a new-player playthrough and a device audit: tooltips
+  no longer cover the result of a turn, fans describe their own breeze,
+  stream-end markers stay off objects, hint ghosts place the hinted piece,
+  intro cards for new objects and tables, mute button in help, bigger
+  board on large screens, locked levels explain how to unlock them.
+* All 100 levels pass every check; levels 96-100 proven unique by
+  exhaustive search; full end-to-end suite green (159 checks).
+
 ## v0.7 — Curated level progression
 
 * Game-wide curation: levels reordered within chapters so difficulty
