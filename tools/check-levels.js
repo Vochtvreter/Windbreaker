@@ -158,6 +158,21 @@ function checkLevel(entry, opts) {
   return rep;
 }
 
+/** checkLevel that turns an exception (engine/tool bug) into a FAIL for that level. */
+function safeCheck(entry, opts) {
+  try {
+    return checkLevel(entry, opts);
+  } catch (e) {
+    return {
+      n: entry.n, chapter: entry.chapter, index: entry.index,
+      file: entry.file ? path.basename(entry.file) : null, name: (entry.def && entry.def.name) || '',
+      facts: null, solver: null, excluded: null, difficulty: null, difficultyApprox: false,
+      errors: ['internal error while checking: ' + (e && e.stack ? e.stack.split('\n').slice(0, 2).join(' ') : e)],
+      warnings: [], ms: 0
+    };
+  }
+}
+
 /** Cross-level warnings (needs the reports in level order). */
 function addSequenceWarnings(reports) {
   const byN = new Map(reports.map((r) => [r.n, r]));
@@ -176,7 +191,7 @@ function addSequenceWarnings(reports) {
 // Parallel runner (worker_threads; each level is independent)
 
 function runParallel(entries, opts, jobs) {
-  if (jobs <= 1 || entries.length <= 1) return Promise.resolve(entries.map((e) => checkLevel(e, opts)));
+  if (jobs <= 1 || entries.length <= 1) return Promise.resolve(entries.map((e) => safeCheck(e, opts)));
   return new Promise((resolve, reject) => {
     const results = new Array(entries.length);
     let next = 0, done = 0, failed = false;
@@ -210,7 +225,7 @@ function runParallel(entries, opts, jobs) {
 
 if (!isMainThread && workerData && workerData.wbCheckWorker) {
   parentPort.on('message', (job) => {
-    parentPort.postMessage({ i: job.i, rep: checkLevel(job.entry, job.opts) });
+    parentPort.postMessage({ i: job.i, rep: safeCheck(job.entry, job.opts) });
   });
 }
 
@@ -259,13 +274,11 @@ function select(flags) {
   if (flags.level) {
     const want = parseList(flags.level);
     levels = levels.filter((e) => want.has(e.n));
-    if (!levels.length) throw new Error('no level matches --level ' + flags.level);
   }
   if (flags.chapter) {
     const want = parseList(flags.chapter);
     levels = levels.filter((e) => want.has(e.chapter));
     problems = problems.filter((p) => !/^ch\d+\.json/i.test(p.msg) || [...want].some((c) => p.msg.toLowerCase().startsWith('ch' + String(c).padStart(2, '0') + '.json')));
-    if (!levels.length) throw new Error('no level matches --chapter ' + flags.chapter);
   }
   return { problems, levels };
 }
@@ -318,6 +331,10 @@ async function main(argv) {
   const cores = typeof os.availableParallelism === 'function' ? os.availableParallelism() : os.cpus().length;
   const jobs = Math.max(1, Math.floor(lib.numFlag(a.flags, 'jobs', Math.min(4, Math.max(1, cores - 1)))));
   const opts = { fast: !!a.flags.fast, timeMs: lib.numFlag(a.flags, 'time', DEFAULT_TIME), targets: !!a.flags.targets };
+  if (!levels.length && !problems.some((p) => p.severity === 'error')) {
+    throw new Error('no levels to check' + (a.flags.level ? ' (--level ' + a.flags.level + ')' : '') +
+      (a.flags.chapter ? ' (--chapter ' + a.flags.chapter + ')' : ''));
+  }
   const reports = await runParallel(levels, opts, a.flags.fast ? 1 : jobs);
   addSequenceWarnings(reports);
 
@@ -353,6 +370,6 @@ async function main(argv) {
   return failures ? 1 : 0;
 }
 
-module.exports = { checkLevel, addSequenceWarnings, difficulty, introTool, runParallel, table, DEFAULT_TIME };
+module.exports = { checkLevel, safeCheck, addSequenceWarnings, difficulty, introTool, runParallel, table, DEFAULT_TIME };
 
 if (isMainThread && require.main === module) lib.runCli(main);

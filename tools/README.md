@@ -162,18 +162,20 @@ during development.
 
 | level | inventory | result |
 |---|---|---|
-| 1 First Breeze | 1 | exhaustive, 6 nodes, ~3 ms |
-| calm room, fan + window | 2 | exhaustive, 315 nodes, 9 ms |
-| two rooms, window 2 + vent + deflector | 4 | exhaustive (unsolvable), 1.3k nodes, 33 ms |
-| 13x9 sandbox, window 2 + deflector 2 + vent + filter | 6 | exhaustive (unsolvable), 107k nodes, 0.6 s |
-| 11x8, window + fan + deflector + splitter + skylight | 5 | exhaustive, 720 solutions, 3.5M nodes, 8.5 s |
-| 13x9, window 2 + fan + deflector 2 + curtain + filter | 7 | timeout at 10 s, exhaustive up to 4 pieces |
+| 1 First Breeze | 1 | exhaustive, 6 nodes, 4 ms |
+| 9x6 calm room: fan + window | 2 | exhaustive, 9 solutions, 315 nodes, 7 ms |
+| 11x6 two rooms: window 2 + vent + deflector | 4 | exhaustive (unsolvable), 1.3k nodes, 34 ms |
+| 11x7 calm: fan 2 + window + deflector | 4 | capped at 1000 solutions, 650k nodes, 1.1 s |
+| 13x9 two rooms: window 2 + deflector 2 + vent + filter | 6 | exhaustive (unsolvable), 107k nodes, 0.4 s |
+| 11x8: window + fan + deflector + splitter + skylight | 5 | exhaustive, 720 solutions, 3.5M nodes, 8.4 s |
+| 13x9: window 2 + fan + deflector 2 + curtain + filter | 7 | timeout at 10 s (4.4M nodes), exhaustive up to 4 pieces |
 
-Throughput is about 150k-480k configurations/s (most nodes are leaves checked
-with `WB.isSolved`). Each fan in the inventory multiplies the work by roughly
-4 x (floor cells); levels with 6+ pieces including fans usually time out -
-the verdict is then `unknown` but `minPieces` (if found) and "no solution with
-<= depth pieces" are still exact. Use `--time 60000` for important checks.
+Throughput is about 300k-570k configurations/s (most nodes are leaves checked
+with the cheap `WB.isSolved`; about 75% of the time is spent in the engine).
+Each fan in the inventory multiplies the work by roughly 4 x (floor cells);
+levels with 6+ pieces including fans usually time out - the verdict is then
+`unknown`, but `minPieces` (if found) and "no solution with <= depth pieces"
+are still exact. Use `--time 60000` for important checks.
 
 ## check-levels.js - all checks + stats
 

@@ -6,7 +6,7 @@
  * engine against the original implementation kept in
  * tests/fixtures/engine-reference.js.
  *
- * Run: node --test tests/
+ * Run: npm test   (node --test tests/*.test.js)
  */
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');

@@ -626,7 +626,10 @@
     opts = opts || {};
     G.version++;
     G.sim = WB.simulate(G.L, allPieces());
-    if (!opts.keepHint) G.hint = null;
+    if (!opts.keepHint) {
+      if (G.hint && dom.toastAction.hidden) hideToast();
+      G.hint = null;
+    }
     rebuildDrawPieces();
     if (G.sel) {
       if (remaining(G.sel) <= 0) deselect();

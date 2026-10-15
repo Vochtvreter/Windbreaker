@@ -171,7 +171,7 @@ test('lib: chapter loading reports structural problems', () => {
   const msgs = problems.map((p) => p.severity + ': ' + p.msg).join('\n');
   assert.match(msgs, /error: ch01\.json: has 6 levels, max 5/);
   assert.match(msgs, /error: ch02\.json: file name says chapter 2 but "chapter" is 3/);
-  assert.match(msgs, /error: .*ch04\.json: invalid JSON at line 2 col 15: "} "/);
+  assert.match(msgs, /error: .*ch04\.json: invalid JSON at line 2 col 15 near "} ": Unexpected token/);
   assert.match(msgs, /warn: ch02\.json: partial chapter/);
   assert.deepEqual(levels.map((e) => e.n), [1, 2, 3, 4, 5, 11], 'over-full chapter truncated to 5');
   fs.rmSync(dir, { recursive: true, force: true });

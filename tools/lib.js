@@ -95,8 +95,9 @@ function readJson(file) {
     return JSON.parse(text);
   } catch (e) {
     const pos = jsonErrorOffset(text);
-    const where = pos >= 0 ? ' at ' + lineCol(text, pos) + ': ' + JSON.stringify(text.slice(pos, pos + 20)) : '';
-    const err = new Error(displayPath(file) + ': invalid JSON' + where + ' (' + e.message + ')');
+    const why = e.message.replace(/ in JSON at position.*$/s, '').replace(/, ".*" is not valid JSON$/s, '');
+    const where = pos >= 0 ? ' at ' + lineCol(text, pos) + ' near ' + JSON.stringify(text.slice(pos, pos + 16)) : '';
+    const err = new Error(displayPath(file) + ': invalid JSON' + where + ': ' + why);
     err.code = 'EJSON';
     throw err;
   }

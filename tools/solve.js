@@ -526,7 +526,8 @@ function main(argv) {
     if (show) console.log(show.render(entry, withFixed(def, sol), { header: false, legend: i === 0 }).replace(/^/gm, '     '));
   });
   if (res.count > shown.length) console.log('  ... ' + (res.count - shown.length) + ' more (--list N)');
-  if (ref.length && res.status === 'exhaustive' && !res.solutions.some((s) => sameSolution(s, ref))) {
+  const restricted = opts.excludeTools.length || opts.maxPieces != null;
+  if (ref.length && !restricted && res.status === 'exhaustive' && !res.solutions.some((s) => sameSolution(s, ref))) {
     console.log('  note: ' + referenceNote(def, res));
   }
   return 0;
@@ -538,7 +539,6 @@ function referenceNote(def, res) {
   const fixed = def.fixed || [];
   const ref = def.solution || [];
   if (!WB.simulate(L, fixed.concat(ref)).solved) return 'reference solution does NOT solve the level';
-  if (res.maxDepth < ref.length) return 'reference uses ' + ref.length + ' pieces, search was limited to ' + res.maxDepth;
   if (ref.length > 12) return 'reference solution solves but was not counted (too long to analyse)';
   // Smallest proper subset that still solves (k <= 12, so at most 4095 subsets).
   let best = null;
