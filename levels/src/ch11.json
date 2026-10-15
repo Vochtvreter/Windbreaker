@@ -3,249 +3,102 @@
   "title": "Drafts",
   "levels": [
     {
-      "name": "Borrowed Breeze",
-      "wind": {
-        "from": "W",
-        "strength": 1
-      },
+      "name": "Split Decision",
+      "tip": "All ten tools are yours now. Each of these drafts hinges on two of them working together.",
+      "wind": { "from": "S", "strength": 2 },
       "map": [
         "###########",
-        "#...#...l.#",
-        "#.s.#....c#",
-        "#...#.....#",
-        "###########"
-      ],
-      "fixed": [
-        {
-          "type": "window",
-          "x": 0,
-          "y": 2
-        }
-      ],
-      "inventory": {
-        "vent": 1,
-        "fan": 1,
-        "window": 1
-      },
-      "solution": [
-        {
-          "type": "vent",
-          "x": 4,
-          "y": 2
-        },
-        {
-          "type": "fan",
-          "x": 8,
-          "y": 2,
-          "d": 0
-        },
-        {
-          "type": "window",
-          "x": 8,
-          "y": 0
-        }
-      ]
-    },
-    {
-      "name": "Fork in the Road",
-      "wind": {
-        "from": "N",
-        "strength": 2
-      },
-      "map": [
-        "~~~~###~~~~",
-        "~~~~#.#~~~~",
-        "~~~~#l#~~~~",
+        "#...ooo...#",
+        "#c.s...p.c#",
         "#####.#####",
-        "#c.sf..p.c#",
-        "#....c....#",
-        "###########"
+        "~~~~#l#~~~~",
+        "~~~~#.#~~~~",
+        "~~~~###~~~~"
       ],
-      "fixed": [
-        {
-          "type": "window",
-          "x": 5,
-          "y": 0
-        }
-      ],
-      "inventory": {
-        "splitter": 1,
-        "skylight": 1,
-        "curtain": 1
-      },
+      "fixed": [{ "type": "window", "x": 5, "y": 6 }],
+      "inventory": { "curtain": 1, "splitter": 1, "skylight": 1 },
       "solution": [
-        {
-          "type": "splitter",
-          "x": 5,
-          "y": 4
-        },
-        {
-          "type": "skylight",
-          "x": 2,
-          "y": 4
-        },
-        {
-          "type": "curtain",
-          "x": 8,
-          "y": 4
-        }
+        { "type": "splitter", "x": 5, "y": 2 },
+        { "type": "skylight", "x": 2, "y": 2 },
+        { "type": "curtain", "x": 8, "y": 2 }
       ]
     },
     {
-      "name": "Soft Pull",
-      "wind": {
-        "from": "N",
-        "strength": 2
-      },
+      "name": "Tailwind",
+      "wind": { "from": "E", "strength": 1 },
+      "map": [
+        "###########",
+        "#.l...#...#",
+        "#c....#.s.#",
+        "#.....#...#",
+        "###########"
+      ],
+      "fixed": [{ "type": "window", "x": 10, "y": 2 }],
+      "inventory": { "window": 1, "fan": 1, "vent": 1 },
+      "solution": [
+        { "type": "vent", "x": 6, "y": 2 },
+        { "type": "fan", "x": 2, "y": 2, "d": 0 },
+        { "type": "window", "x": 2, "y": 0 }
+      ]
+    },
+    {
+      "name": "Meeting Point",
+      "wind": { "from": "N", "strength": 1 },
+      "map": [
+        "###########",
+        "#.s..#.p..#",
+        "#....#.f..#",
+        "#....#....#",
+        "#....#.n..#",
+        "###########"
+      ],
+      "fixed": [{ "type": "window", "x": 2, "y": 0 }],
+      "inventory": { "window": 1, "deflector": 1, "vent": 1, "skylight": 1 },
+      "solution": [
+        { "type": "window", "x": 7, "y": 0 },
+        { "type": "deflector", "x": 2, "y": 3, "d": 1 },
+        { "type": "vent", "x": 5, "y": 3 },
+        { "type": "skylight", "x": 7, "y": 3 }
+      ]
+    },
+    {
+      "name": "Study Hall",
+      "wind": { "from": "N", "strength": 2 },
       "map": [
         "#####~~~~",
         "#...#~~~~",
-        "#.n.#~~~~",
+        "#ono#~~~~",
         "#.s.#####",
         "#...f.l.#",
         "#########"
       ],
-      "fixed": [
-        {
-          "type": "window",
-          "x": 2,
-          "y": 0
-        }
-      ],
-      "inventory": {
-        "curtain": 1,
-        "deflector": 1,
-        "filter": 1,
-        "extractor": 1
-      },
+      "fixed": [{ "type": "window", "x": 2, "y": 0 }],
+      "inventory": { "deflector": 1, "curtain": 1, "extractor": 1, "filter": 1 },
       "solution": [
-        {
-          "type": "curtain",
-          "x": 2,
-          "y": 1
-        },
-        {
-          "type": "deflector",
-          "x": 2,
-          "y": 4,
-          "d": 1
-        },
-        {
-          "type": "filter",
-          "x": 5,
-          "y": 4
-        },
-        {
-          "type": "extractor",
-          "x": 8,
-          "y": 4
-        }
+        { "type": "curtain", "x": 2, "y": 1 },
+        { "type": "deflector", "x": 2, "y": 4, "d": 1 },
+        { "type": "filter", "x": 5, "y": 4 },
+        { "type": "extractor", "x": 8, "y": 4 }
       ]
     },
     {
       "name": "Spin Cycle",
-      "wind": {
-        "from": "W",
-        "strength": 1
-      },
+      "wind": { "from": "W", "strength": 1 },
       "map": [
         "#########",
-        "#...c...#",
+        "#...c..s#",
+        "######.##",
+        "#.n...l.#",
         "#.......#",
-        "#.....l.#",
-        "#...s...#",
         "#########"
       ],
-      "fixed": [
-        {
-          "type": "window",
-          "x": 0,
-          "y": 3
-        }
-      ],
-      "inventory": {
-        "ceilingfan": 1,
-        "curtain": 1,
-        "window": 2
-      },
+      "fixed": [{ "type": "window", "x": 0, "y": 3 }],
+      "inventory": { "window": 2, "curtain": 1, "ceilingfan": 1 },
       "solution": [
-        {
-          "type": "ceilingfan",
-          "x": 4,
-          "y": 3
-        },
-        {
-          "type": "curtain",
-          "x": 4,
-          "y": 2
-        },
-        {
-          "type": "window",
-          "x": 4,
-          "y": 5
-        },
-        {
-          "type": "window",
-          "x": 8,
-          "y": 3
-        }
-      ]
-    },
-    {
-      "name": "Crosswinds",
-      "wind": {
-        "from": "N",
-        "strength": 1
-      },
-      "map": [
-        "###########",
-        "#.s..#....#",
-        "#......f..#",
-        "#....#.l..#",
-        "#....#....#",
-        "#.c..#.c..#",
-        "###########"
-      ],
-      "fixed": [
-        {
-          "type": "window",
-          "x": 2,
-          "y": 0
-        },
-        {
-          "type": "window",
-          "x": 7,
-          "y": 0
-        }
-      ],
-      "inventory": {
-        "deflector": 1,
-        "vent": 1,
-        "skylight": 1,
-        "window": 1
-      },
-      "solution": [
-        {
-          "type": "deflector",
-          "x": 2,
-          "y": 3,
-          "d": 1
-        },
-        {
-          "type": "vent",
-          "x": 5,
-          "y": 3
-        },
-        {
-          "type": "skylight",
-          "x": 7,
-          "y": 4
-        },
-        {
-          "type": "window",
-          "x": 10,
-          "y": 3
-        }
+        { "type": "ceilingfan", "x": 6, "y": 1 },
+        { "type": "curtain", "x": 5, "y": 1 },
+        { "type": "window", "x": 8, "y": 1 },
+        { "type": "window", "x": 8, "y": 3 }
       ]
     }
   ]

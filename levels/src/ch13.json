@@ -1,0 +1,113 @@
+{
+  "chapter": 13,
+  "title": "Library",
+  "levels": [
+    {
+      "name": "Reading Nook",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "%%%%%%%%%%%",
+        "%c.n.p.o.c%",
+        "%#########%",
+        "#.o.....oc#",
+        "#..o.n.o..#",
+        "###########"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 3 }],
+      "inventory": { "splitter": 1, "vent": 1, "window": 1 },
+      "solution": [
+        { "type": "splitter", "x": 5, "y": 3 },
+        { "type": "vent", "x": 5, "y": 2 },
+        { "type": "window", "x": 5, "y": 5 }
+      ]
+    },
+    {
+      "name": "Velvet Curtain",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "%%%%%%%%%%%",
+        "%c.op.o...%",
+        "%p.......p%",
+        "%.o...o.o.%",
+        "#l.......n#",
+        "%.o.c.o.o.%",
+        "%%%%%%%%%%%"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 4 }],
+      "inventory": { "ceilingfan": 1, "curtain": 1, "window": 1 },
+      "solution": [
+        { "type": "ceilingfan", "x": 4, "y": 2 },
+        { "type": "curtain", "x": 4, "y": 4 },
+        { "type": "window", "x": 10, "y": 4 }
+      ]
+    },
+    {
+      "name": "Wet Cloak",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "%%%#####%%%",
+        "%c.o...o.c%",
+        "%.o.o.o.o.%",
+        "#.n..l..n.#",
+        "%.o.o.o.o.%",
+        "%c.o.c.o.c%",
+        "%%%#####%%%"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 3 }],
+      "inventory": { "extractor": 1, "filter": 1, "window": 1 },
+      "solution": [
+        { "type": "extractor", "x": 5, "y": 0 },
+        { "type": "filter", "x": 5, "y": 4 },
+        { "type": "window", "x": 10, "y": 3 }
+      ]
+    },
+    {
+      "name": "Three Aisles",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "%%%%%%%%%%%",
+        "#.p..o...c%",
+        "%%%.%%.%%%%",
+        "#..p.o...c%",
+        "%%%%%%.%.%%",
+        "#..p.o...c%",
+        "%%%%%%%%%%%"
+      ],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 1 },
+        { "type": "window", "x": 0, "y": 3 },
+        { "type": "window", "x": 0, "y": 5 }
+      ],
+      "inventory": { "deflector": 2, "skylight": 1 },
+      "solution": [
+        { "type": "deflector", "x": 6, "y": 1, "d": 1 },
+        { "type": "deflector", "x": 6, "y": 5, "d": 0 },
+        { "type": "skylight", "x": 6, "y": 3 }
+      ]
+    },
+    {
+      "name": "Fireside",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "%%%%%%%%%%%",
+        "%p.no#o...%",
+        "%.o..#.so.%",
+        "%%%%%%%.%%%",
+        "#c.o.o..pn#",
+        "%.o...o.o.%",
+        "%%%%%%%%%%%"
+      ],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 4 },
+        { "type": "extractor", "x": 10, "y": 4 }
+      ],
+      "inventory": { "fan": 1, "deflector": 1, "vent": 1, "filter": 1 },
+      "solution": [
+        { "type": "fan", "x": 7, "y": 4, "d": 0 },
+        { "type": "deflector", "x": 7, "y": 1, "d": 1 },
+        { "type": "vent", "x": 5, "y": 1 },
+        { "type": "filter", "x": 2, "y": 1 }
+      ]
+    }
+  ]
+}

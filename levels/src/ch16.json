@@ -3,26 +3,28 @@
   "title": "Old Manor",
   "levels": [
     {
-      "name": "Reading Room",
+      "name": "Locked Study",
+      "tip": "The old study has been locked for years, but its window is still stuck open.",
       "wind": { "from": "W", "strength": 2 },
       "map": [
         "%%%%%%%%%%%%%",
-        "%o..o#...o..%",
-        "#.n..#oo....%",
-        "%o...#..l.o.%",
-        "%%.%%%%%.%%%%",
+        "%o..o#...o..#",
+        "#.n..#oo....#",
+        "%o...#..l.o.#",
+        "%%%%%%%%.%%%%",
         "%c......s...%",
-        "%%%%%%%%#%%%%"
+        "%..o.....o..%",
+        "%%%%##%%#%##%"
       ],
       "fixed": [
         { "type": "window", "x": 0, "y": 2 }
       ],
-      "inventory": { "curtain": 1, "fan": 1, "vent": 1, "window": 1, "skylight": 1 },
+      "inventory": { "curtain": 1, "fan": 1, "vent": 1, "window": 1 },
       "solution": [
         { "type": "curtain", "x": 1, "y": 2 },
         { "type": "vent", "x": 5, "y": 2 },
         { "type": "fan", "x": 8, "y": 2, "d": 2 },
-        { "type": "window", "x": 8, "y": 6 }
+        { "type": "window", "x": 8, "y": 7 }
       ]
     },
     {
@@ -39,7 +41,7 @@
         "%%%%%%%%%%%%%"
       ],
       "fixed": [],
-      "inventory": { "window": 2, "deflector": 3, "curtain": 1 },
+      "inventory": { "window": 3, "deflector": 3, "curtain": 1 },
       "solution": [
         { "type": "window", "x": 8, "y": 3 },
         { "type": "deflector", "x": 10, "y": 3, "d": 1 },
@@ -56,12 +58,12 @@
         "%%%%%%%%%%%%%",
         "%.o..p#.....#",
         "%.....#..o..#",
-        "%%%.%%%%.%%%%",
+        "%%%.%%%%%%.%%",
         "%c....l.s...#",
         "%%%%%%%%%%%%%"
       ],
       "fixed": [],
-      "inventory": { "window": 1, "vent": 1, "deflector": 2, "extractor": 1 },
+      "inventory": { "window": 2, "vent": 1, "deflector": 2, "extractor": 1 },
       "solution": [
         { "type": "window", "x": 12, "y": 1 },
         { "type": "vent", "x": 6, "y": 1 },
@@ -75,11 +77,12 @@
       "wind": { "from": "N", "strength": 2 },
       "map": [
         "%%%%###%%%%%%",
-        "%o...l..#.o.%",
+        "%o...l..#o..%",
         "%.......#.f.%",
-        "%..o....#.o.%",
-        "%%%.%%%%%%.%%",
+        "%..o....#..o%",
+        "%%%.%%%%%%%%%",
         "#s.........o%",
+        "%...o.......%",
         "%%%%%%%%%%%%%"
       ],
       "fixed": [],
@@ -98,7 +101,7 @@
       "wind": { "from": "N", "strength": 1 },
       "map": [
         "%%%%~~~~~%%%%",
-        "%..%~~~~~%..%",
+        "%o.%~~~~~%.o%",
         "%..%%%#%%%..%",
         "%.o..%.%..o.%",
         "%....%s%....%",

@@ -1,0 +1,121 @@
+{
+  "chapter": 18,
+  "title": "Storm Season",
+  "levels": [
+    {
+      "name": "Gale Warning",
+      "tip": "Storm season: the gale strikes at full strength until something softens it.",
+      "wind": { "from": "W", "strength": 3 },
+      "map": [
+        "###########",
+        "#...#..c..#",
+        "#...#.....#",
+        "#.l.......#",
+        "#...#..n..#",
+        "#...#..f..#",
+        "###########"
+      ],
+      "fixed": [],
+      "inventory": { "window": 2, "splitter": 1, "curtain": 1 },
+      "solution": [
+        { "type": "window", "x": 0, "y": 3 },
+        { "type": "splitter", "x": 7, "y": 3 },
+        { "type": "curtain", "x": 7, "y": 2 },
+        { "type": "window", "x": 7, "y": 6 }
+      ]
+    },
+    {
+      "name": "Stormy Hearth",
+      "wind": { "from": "E", "strength": 3 },
+      "map": [
+        "#########",
+        "#c..#.oo#",
+        "#.......#",
+        "#.sl....#",
+        "#.......%",
+        "#f..#o..%",
+        "%%%######"
+      ],
+      "fixed": [],
+      "inventory": { "window": 2, "splitter": 1, "skylight": 1, "filter": 1, "curtain": 1 },
+      "solution": [
+        { "type": "window", "x": 8, "y": 3 },
+        { "type": "splitter", "x": 1, "y": 3 },
+        { "type": "skylight", "x": 1, "y": 2 },
+        { "type": "filter", "x": 1, "y": 4 }
+      ]
+    },
+    {
+      "name": "Storm Shutters",
+      "wind": { "from": "W", "strength": 3 },
+      "map": [
+        "#############",
+        "#...#.......#",
+        "#.n...c...f.#",
+        "#...###.#####",
+        "#...#.......#",
+        "#.l.........#",
+        "#...#..f....#",
+        "#####%%%%%%%#"
+      ],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 2 },
+        { "type": "window", "x": 0, "y": 5 }
+      ],
+      "inventory": { "splitter": 1, "deflector": 1, "window": 1, "curtain": 1 },
+      "solution": [
+        { "type": "splitter", "x": 7, "y": 5 },
+        { "type": "deflector", "x": 7, "y": 2, "d": 0 },
+        { "type": "window", "x": 12, "y": 2 }
+      ]
+    },
+    {
+      "name": "Updraft",
+      "wind": { "from": "W", "strength": 3 },
+      "map": [
+        "#####%#####",
+        "#....f#...%",
+        "#.....#.l.%",
+        "#####.#...%",
+        "~~~~#n#...%",
+        "~~~~#..o.o%",
+        "~~~~###...%",
+        "~~~~~~#.l.%",
+        "~~~~~~#%%%#"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
+      "inventory": { "splitter": 2, "fan": 1, "deflector": 1, "window": 1 },
+      "solution": [
+        { "type": "splitter", "x": 5, "y": 2 },
+        { "type": "fan", "x": 5, "y": 5, "d": 1 },
+        { "type": "splitter", "x": 8, "y": 5 },
+        { "type": "window", "x": 8, "y": 0 }
+      ]
+    },
+    {
+      "name": "Squall Line",
+      "wind": { "from": "N", "strength": 3 },
+      "map": [
+        "%%%#%%#%%#%%%",
+        "#...#...#...#",
+        "#.n...l...n.#",
+        "#...#...#...#",
+        "#..c#.c.#s..#",
+        "####%%#%#####"
+      ],
+      "fixed": [
+        { "type": "window", "x": 3, "y": 0 },
+        { "type": "window", "x": 6, "y": 0 },
+        { "type": "window", "x": 9, "y": 0 }
+      ],
+      "inventory": { "splitter": 2, "curtain": 2, "window": 3 },
+      "solution": [
+        { "type": "splitter", "x": 3, "y": 2 },
+        { "type": "splitter", "x": 9, "y": 2 },
+        { "type": "curtain", "x": 3, "y": 3 },
+        { "type": "window", "x": 9, "y": 5 },
+        { "type": "window", "x": 12, "y": 2 }
+      ]
+    }
+  ]
+}

@@ -1,205 +1,88 @@
 {
- "chapter": 14,
- "title": "Kitchen Rush",
- "levels": [
-  {
-   "name": "Draft D3",
-   "wind": {
-    "from": "W",
-    "strength": 0
-   },
-   "map": [
-    "%%%%%%%%%%%%%",
-    "%.......%...%",
-    "%...s...%.o.%",
-    "%.......%.o.%",
-    "#.s.......c.%",
-    "%...f...%.o.%",
-    "%%%%%%%%%%%%%"
-   ],
-   "fixed": [],
-   "inventory": {
-    "fan": 1,
-    "filter": 1,
-    "extractor": 1
-   },
-   "solution": [
+  "chapter": 14,
+  "title": "Kitchen Rush",
+  "levels": [
     {
-     "type": "fan",
-     "x": 4,
-     "y": 1,
-     "d": 2
+      "name": "Back Door",
+      "tip": "A window's breeze only blows while it has somewhere to go.",
+      "wind": {"from": "W", "strength": 2},
+      "map": [
+        "###########",
+        "#.n...s...#",
+        "#.........#",
+        "#.#########",
+        "#.s.l...oc#",
+        "#.......oo#",
+        "###########"
+      ],
+      "fixed": [{"type": "window", "x": 0, "y": 1}, {"type": "window", "x": 10, "y": 1}, {"type": "window", "x": 0, "y": 4}],
+      "inventory": {"deflector": 2, "vent": 1},
+      "solution": [{"type": "deflector", "x": 5, "y": 4, "d": 0}, {"type": "vent", "x": 5, "y": 3}, {"type": "deflector", "x": 5, "y": 1, "d": 0}]
     },
     {
-     "type": "filter",
-     "x": 4,
-     "y": 4
+      "name": "Short Draw",
+      "wind": {"from": "W", "strength": 0},
+      "map": [
+        "%%%%%%%%%%%%%",
+        "#.......%...%",
+        "#...s...%.o.%",
+        "#.......%.o.%",
+        "#.s.......c.%",
+        "#...f...%.o.%",
+        "%%%%%%%%%%%%%"
+      ],
+      "fixed": [],
+      "inventory": {"fan": 1, "filter": 1, "extractor": 1},
+      "solution": [{"type": "fan", "x": 4, "y": 1, "d": 2}, {"type": "filter", "x": 4, "y": 4}, {"type": "extractor", "x": 0, "y": 4}]
     },
     {
-     "type": "extractor",
-     "x": 0,
-     "y": 4
+      "name": "Three Pans",
+      "wind": {"from": "W", "strength": 0},
+      "map": [
+        "%%%%%#%%%%%",
+        "#....s....#",
+        "#.........#",
+        "#.s......s#",
+        "#.........#",
+        "%...ooo...%",
+        "%...oco...%",
+        "%%%%%%%%%%%"
+      ],
+      "fixed": [],
+      "inventory": {"ceilingfan": 1, "curtain": 1, "window": 2, "filter": 1},
+      "solution": [{"type": "ceilingfan", "x": 5, "y": 3}, {"type": "curtain", "x": 5, "y": 4}, {"type": "window", "x": 5, "y": 0}, {"type": "window", "x": 10, "y": 3}, {"type": "filter", "x": 1, "y": 3}]
+    },
+    {
+      "name": "Tea Towels",
+      "wind": {"from": "N", "strength": 1},
+      "map": [
+        "###########",
+        "#.s.#.....#",
+        "#.........#",
+        "#...#....o#",
+        "#...#..l.c#",
+        "#...#....o#",
+        "###########"
+      ],
+      "fixed": [{"type": "window", "x": 2, "y": 0}],
+      "inventory": {"deflector": 1, "splitter": 1, "window": 1, "extractor": 1},
+      "solution": [{"type": "splitter", "x": 2, "y": 2}, {"type": "window", "x": 0, "y": 2}, {"type": "deflector", "x": 7, "y": 2, "d": 1}, {"type": "extractor", "x": 7, "y": 6}]
+    },
+    {
+      "name": "Dinner Rush",
+      "wind": {"from": "W", "strength": 3},
+      "map": [
+        "###########",
+        "#n.s....f.#",
+        "#.........#",
+        "#.#########",
+        "#.s.l.oco.#",
+        "#.....ooo.#",
+        "###########"
+      ],
+      "fixed": [{"type": "window", "x": 0, "y": 1}, {"type": "window", "x": 0, "y": 4}],
+      "inventory": {"deflector": 1, "vent": 1, "splitter": 1, "filter": 1, "skylight": 1},
+      "solution": [{"type": "deflector", "x": 5, "y": 4, "d": 0}, {"type": "vent", "x": 5, "y": 3}, {"type": "splitter", "x": 5, "y": 1}, {"type": "filter", "x": 2, "y": 1}, {"type": "skylight", "x": 9, "y": 1}]
     }
-   ]
-  },
-  {
-   "name": "Draft H2",
-   "wind": {
-    "from": "N",
-    "strength": 1
-   },
-   "map": [
-    "###########",
-    "#.s.#.....#",
-    "#.........#",
-    "#...#..o..#",
-    "#...#..l.c#",
-    "#...#.....#",
-    "###########"
-   ],
-   "fixed": [
-    {
-     "type": "window",
-     "x": 2,
-     "y": 0
-    }
-   ],
-   "inventory": {
-    "deflector": 1,
-    "splitter": 1,
-    "window": 1,
-    "extractor": 1
-   },
-   "solution": [
-    {
-     "type": "splitter",
-     "x": 2,
-     "y": 2
-    },
-    {
-     "type": "window",
-     "x": 0,
-     "y": 2
-    },
-    {
-     "type": "deflector",
-     "x": 7,
-     "y": 2,
-     "d": 1
-    },
-    {
-     "type": "extractor",
-     "x": 7,
-     "y": 6
-    }
-   ]
-  },
-  {
-   "name": "Draft I2",
-   "wind": {
-    "from": "W",
-    "strength": 2
-   },
-   "map": [
-    "###########",
-    "#.n...os..#",
-    "#.........#",
-    "#.#########",
-    "#.loo....c#",
-    "#.........#",
-    "###########"
-   ],
-   "fixed": [
-    {
-     "type": "window",
-     "x": 0,
-     "y": 1
-    },
-    {
-     "type": "window",
-     "x": 10,
-     "y": 1
-    },
-    {
-     "type": "window",
-     "x": 0,
-     "y": 4
-    }
-   ],
-   "inventory": {
-    "deflector": 2,
-    "vent": 1
-   },
-   "solution": [
-    {
-     "type": "deflector",
-     "x": 5,
-     "y": 4,
-     "d": 0
-    },
-    {
-     "type": "vent",
-     "x": 5,
-     "y": 3
-    },
-    {
-     "type": "deflector",
-     "x": 5,
-     "y": 1,
-     "d": 0
-    }
-   ]
-  },
-  {
-   "name": "Draft G2",
-   "wind": {
-    "from": "N",
-    "strength": 0
-   },
-   "map": [
-    "###########",
-    "#....s....#",
-    "#.........#",
-    "#.s......s#",
-    "#.........#",
-    "#...ooo...#",
-    "#...oco...#",
-    "###########"
-   ],
-   "fixed": [],
-   "inventory": {
-    "ceilingfan": 1,
-    "curtain": 1,
-    "window": 2,
-    "filter": 1
-   },
-   "solution": [
-    {
-     "type": "ceilingfan",
-     "x": 5,
-     "y": 3
-    },
-    {
-     "type": "curtain",
-     "x": 5,
-     "y": 4
-    },
-    {
-     "type": "window",
-     "x": 5,
-     "y": 0
-    },
-    {
-     "type": "window",
-     "x": 10,
-     "y": 3
-    },
-    {
-     "type": "filter",
-     "x": 1,
-     "y": 3
-    }
-   ]
-  }
- ]
+  ]
 }
