@@ -1,0 +1,35 @@
+{
+  "chapter": 1,
+  "title": "Open Windows",
+  "levels": [
+    {
+      "name": "First Breeze",
+      "tip": "Wind is blowing from the west. Open a window on the far side so the breeze has somewhere to go.",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "#########",
+        "#.......#",
+        "#...p...#",
+        "#.......#",
+        "#########"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
+      "inventory": { "window": 1 },
+      "solution": [{ "type": "window", "x": 8, "y": 2 }]
+    },
+    {
+      "name": "Two Pinwheels",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "#########",
+        "#...p...#",
+        "#.......#",
+        "#...p...#",
+        "#########"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 1 }, { "type": "window", "x": 0, "y": 3 }],
+      "inventory": { "window": 2 },
+      "solution": [{ "type": "window", "x": 8, "y": 1 }, { "type": "window", "x": 8, "y": 3 }]
+    }
+  ]
+}

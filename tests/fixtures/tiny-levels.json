@@ -1,0 +1,117 @@
+{
+  "chapter": 99,
+  "title": "Solver fixtures (tiny levels with known solution counts)",
+  "levels": [
+    {
+      "name": "T1 one outlet",
+      "wind": {"from": "W", "strength": 1},
+      "map": [
+        "#######",
+        "#.....#",
+        "#..p..#",
+        "#.....#",
+        "#######"
+      ],
+      "fixed": [{"type": "window", "x": 0, "y": 2}],
+      "inventory": {"window": 2},
+      "solution": [{"type": "window", "x": 6, "y": 2}]
+    },
+    {
+      "name": "T2 calm fan",
+      "wind": {"from": "N", "strength": 0},
+      "map": [
+        "#######",
+        "#.....#",
+        "#.p...#",
+        "#.....#",
+        "#######"
+      ],
+      "fixed": [],
+      "inventory": {"fan": 1, "window": 1},
+      "solution": [{"type": "fan", "x": 1, "y": 2, "d": 1}]
+    },
+    {
+      "name": "T3 two deflectors in order",
+      "wind": {"from": "W", "strength": 1},
+      "map": [
+        "#######",
+        "#.....#",
+        "#.....#",
+        "#.p...#",
+        "#######"
+      ],
+      "fixed": [{"type": "window", "x": 0, "y": 1}, {"type": "window", "x": 6, "y": 3}],
+      "inventory": {"deflector": 2},
+      "solution": [{"type": "deflector", "x": 1, "y": 1, "d": 1}, {"type": "deflector", "x": 1, "y": 3, "d": 1}]
+    },
+    {
+      "name": "T4 vent then window",
+      "wind": {"from": "W", "strength": 1},
+      "map": [
+        "#########",
+        "#...#...#",
+        "#.p.#...#",
+        "#...#...#",
+        "#########"
+      ],
+      "fixed": [{"type": "window", "x": 0, "y": 2}],
+      "inventory": {"vent": 1, "window": 1},
+      "solution": [{"type": "vent", "x": 4, "y": 2}, {"type": "window", "x": 8, "y": 2}]
+    },
+    {
+      "name": "T5 smoke",
+      "wind": {"from": "N", "strength": 0},
+      "map": [
+        "######",
+        "#....#",
+        "#.s..#",
+        "#....#",
+        "######"
+      ],
+      "fixed": [],
+      "inventory": {"fan": 1, "filter": 1, "window": 1},
+      "solution": [{"type": "fan", "x": 1, "y": 2, "d": 1}, {"type": "window", "x": 5, "y": 2}]
+    },
+    {
+      "name": "T6 filter cuts a pull line",
+      "wind": {"from": "N", "strength": 0},
+      "map": [
+        "#######",
+        "#c.p..#",
+        "#.....#",
+        "#######"
+      ],
+      "fixed": [{"type": "extractor", "x": 6, "y": 1}],
+      "inventory": {"filter": 1},
+      "solution": [{"type": "filter", "x": 2, "y": 1}]
+    },
+    {
+      "name": "T7 unsolvable",
+      "wind": {"from": "N", "strength": 0},
+      "map": [
+        "#######",
+        "#.....#",
+        "#.oc.p#",
+        "#.....#",
+        "#######"
+      ],
+      "fixed": [{"type": "fan", "x": 1, "y": 2, "d": 1}],
+      "inventory": {"window": 1, "deflector": 1},
+      "solution": []
+    },
+    {
+      "name": "T8 extractor and curtain",
+      "wind": {"from": "E", "strength": 2},
+      "map": [
+        "########",
+        "#..n...#",
+        "#......#",
+        "#..p...#",
+        "########"
+      ],
+      "fixed": [{"type": "window", "x": 7, "y": 1}],
+      "inventory": {"curtain": 1, "extractor": 1, "splitter": 1},
+      "solution": []
+    }
+  ]
+}

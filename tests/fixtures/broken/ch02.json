@@ -1,0 +1,77 @@
+{
+  "chapter": 2,
+  "title": "Fans (deliberately broken levels for tests)",
+  "levels": [
+    {
+      "name": "Fan Not Needed",
+      "tip": "Intro level for fans that can be solved without one.",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "#######",
+        "#.....#",
+        "#..p..#",
+        "#.....#",
+        "#######"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
+      "inventory": { "window": 1, "fan": 1 },
+      "solution": [{ "type": "window", "x": 6, "y": 2 }]
+    },
+    {
+      "name": "Wrong Solution",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "#######",
+        "#.....#",
+        "#..p..#",
+        "#.....#",
+        "#######"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
+      "inventory": { "window": 1 },
+      "solution": [{ "type": "window", "x": 6, "y": 1 }]
+    },
+    {
+      "name": "Already Solved",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "#######",
+        "#.....#",
+        "#..p..#",
+        "#.....#",
+        "#######"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 2 }, { "type": "window", "x": 6, "y": 2 }],
+      "inventory": { "window": 1 },
+      "solution": []
+    },
+    {
+      "name": "Too Early",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "#######",
+        "#.....#",
+        "#..p..#",
+        "#.....#",
+        "#######"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 1 }, { "type": "window", "x": 6, "y": 3 }],
+      "inventory": { "deflector": 2 },
+      "solution": [{ "type": "deflector", "x": 3, "y": 1, "d": 1 }, { "type": "deflector", "x": 3, "y": 3, "d": 1 }]
+    },
+    {
+      "name": "Leaky",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "#######",
+        "#.....#",
+        "#..p...",
+        "#.....#",
+        "#######"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
+      "inventory": { "window": 1 },
+      "solution": []
+    }
+  ]
+}

@@ -5,7 +5,11 @@
   "description": "A calm browser puzzle game about airflow.",
   "license": "MIT",
   "scripts": {
-    "test": "node --test tests/",
+    "build": "node tools/build-levels.js",
+    "check": "node tools/check-levels.js",
+    "test": "node --test tests/*.test.js",
+    "solve": "node tools/solve.js",
+    "show": "node tools/show.js",
     "serve": "npx http-server -c-1 -p 8080 ."
   }
 }
