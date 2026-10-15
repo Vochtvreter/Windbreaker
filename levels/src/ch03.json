@@ -37,7 +37,7 @@
     },
     {
       "name": "Clothesline",
-      "tip": "Laundry needs a breeze of 2 or more to dry. Breezes that cross on the same spot add up.",
+      "tip": "Laundry only dries in a breeze of 2 or more, and breezes that cross on it add up.",
       "wind": { "from": "W", "strength": 1 },
       "map": [
         "#########",

@@ -4,7 +4,7 @@
   "levels": [
     {
       "name": "Upwind Exit",
-      "tip": "Extractors fit any outside wall, even the one facing the wind, and draw a gentle breeze toward them.",
+      "tip": "Unlike a window, an extractor lets air out even through the wall facing the wind.",
       "wind": { "from": "N", "strength": 1 },
       "map": [
         "#########",
@@ -30,19 +30,18 @@
         "#cs.#...#",
         "#.....p.#",
         "#####...#",
-        "#.......#",
         "#########"
       ],
       "fixed": [{ "type": "window", "x": 6, "y": 0 }],
       "inventory": { "window": 1, "extractor": 1 },
       "solution": [
         { "type": "extractor", "x": 2, "y": 0 },
-        { "type": "window", "x": 6, "y": 5 }
+        { "type": "window", "x": 6, "y": 4 }
       ]
     },
     {
       "name": "Candlelit Supper",
-      "tip": "An extractor's pull stops at the first piece in its way.",
+      "tip": "An extractor pulls along its whole line, until a piece gets in the way.",
       "wind": { "from": "N", "strength": 0 },
       "map": [
         "#########",
@@ -62,21 +61,21 @@
       "name": "Wash House",
       "wind": { "from": "W", "strength": 2 },
       "map": [
-        "#########",
-        "#...f...#",
-        "#.s.....#",
-        "#.......#",
-        "####.####",
-        "#.......#",
-        "#...l...#",
-        "#########"
+        "#######",
+        "#..f..#",
+        "#.s...#",
+        "#.....#",
+        "###.###",
+        "#.....#",
+        "#..l..#",
+        "#######"
       ],
       "fixed": [{ "type": "window", "x": 0, "y": 2 }],
       "inventory": { "window": 1, "splitter": 1, "extractor": 1 },
       "solution": [
-        { "type": "splitter", "x": 4, "y": 2 },
-        { "type": "extractor", "x": 4, "y": 7 },
-        { "type": "window", "x": 4, "y": 0 }
+        { "type": "splitter", "x": 3, "y": 2 },
+        { "type": "extractor", "x": 3, "y": 7 },
+        { "type": "window", "x": 3, "y": 0 }
       ]
     },
     {

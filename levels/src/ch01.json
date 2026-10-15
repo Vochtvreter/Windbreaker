@@ -24,7 +24,7 @@
       "map": [
         "#####",
         "#...#",
-        "#..p#",
+        "#.p.#",
         "#...#",
         "#...#",
         "#...#",
@@ -32,11 +32,11 @@
       ],
       "fixed": [],
       "inventory": { "window": 2 },
-      "solution": [{ "type": "window", "x": 3, "y": 6 }, { "type": "window", "x": 3, "y": 0 }]
+      "solution": [{ "type": "window", "x": 2, "y": 6 }, { "type": "window", "x": 2, "y": 0 }]
     },
     {
       "name": "Candlelight",
-      "tip": "Candles need still air. A window with no way out lets no breeze in.",
+      "tip": "Candles need still air, and a breeze only flows when it has a way out.",
       "wind": { "from": "W", "strength": 1 },
       "map": [
         "#########",
@@ -54,7 +54,7 @@
       "wind": { "from": "N", "strength": 1 },
       "map": [
         "#########",
-        "#.....p.#",
+        "#.......#",
         "#.......#",
         "######.##",
         "#.......#",
@@ -69,19 +69,19 @@
       "name": "Garden Court",
       "wind": { "from": "E", "strength": 1 },
       "map": [
-        "###########",
-        "#.........#",
-        "#...###...#",
-        "#.p.#~#.c.#",
-        "#...#~#.p.#",
-        "#####~#####"
+        "############",
+        "#..........#",
+        "#...####...#",
+        "#.p.#~~#.c.#",
+        "#...#~~#.p.#",
+        "#####~~#####"
       ],
       "fixed": [{ "type": "window", "x": 0, "y": 3 }],
       "inventory": { "window": 3 },
       "solution": [
         { "type": "window", "x": 4, "y": 3 },
-        { "type": "window", "x": 10, "y": 4 },
-        { "type": "window", "x": 6, "y": 4 }
+        { "type": "window", "x": 11, "y": 4 },
+        { "type": "window", "x": 7, "y": 4 }
       ]
     }
   ]

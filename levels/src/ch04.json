@@ -4,7 +4,7 @@
   "levels": [
     {
       "name": "Shielded Flame",
-      "tip": "A curtain softens any air passing through it. A gentle breeze stops right there.",
+      "tip": "A curtain takes 1 off any breeze passing through it, so a gentle breeze stops right there.",
       "wind": { "from": "W", "strength": 0 },
       "map": [
         "##########",
@@ -25,21 +25,21 @@
       "name": "Strong Enough",
       "wind": { "from": "W", "strength": 2 },
       "map": [
-        "##########",
-        "#...#..c.#",
-        "#.......p#",
-        "#.o.#..p.#",
-        "#...#....#",
-        "##########"
+        "#########",
+        "#..#..c.#",
+        "#......p#",
+        "#..#..p.#",
+        "#..#....#",
+        "#########"
       ],
       "fixed": [
         { "type": "window", "x": 0, "y": 2 },
-        { "type": "fan", "x": 7, "y": 4, "d": 0 }
+        { "type": "fan", "x": 6, "y": 4, "d": 0 }
       ],
       "inventory": { "window": 1, "curtain": 1 },
       "solution": [
-        { "type": "window", "x": 9, "y": 2 },
-        { "type": "curtain", "x": 7, "y": 2 }
+        { "type": "window", "x": 8, "y": 2 },
+        { "type": "curtain", "x": 6, "y": 2 }
       ]
     },
     {
@@ -66,26 +66,29 @@
     },
     {
       "name": "Draught Stopper",
-      "wind": { "from": "N", "strength": 1 },
+      "wind": { "from": "E", "strength": 1 },
       "map": [
-        "##########",
-        "#.c.#.p..%",
-        "#...#....%",
-        "#...#....%",
-        "#......l.%",
-        "##########"
+        "######",
+        "#....#",
+        "#...c#",
+        "#....#",
+        "#.####",
+        "#...p#",
+        "#l...#",
+        "#....#",
+        "#%%%%#"
       ],
       "fixed": [
-        { "type": "window", "x": 2, "y": 0 },
-        { "type": "window", "x": 6, "y": 0 },
-        { "type": "deflector", "x": 2, "y": 4, "d": 1 },
-        { "type": "fan", "x": 6, "y": 4, "d": 1 }
+        { "type": "window", "x": 5, "y": 2 },
+        { "type": "window", "x": 5, "y": 5 },
+        { "type": "deflector", "x": 1, "y": 2, "d": 0 },
+        { "type": "fan", "x": 1, "y": 5, "d": 2 }
       ],
       "inventory": { "window": 1, "curtain": 1, "deflector": 1 },
       "solution": [
-        { "type": "curtain", "x": 2, "y": 2 },
-        { "type": "deflector", "x": 8, "y": 4, "d": 1 },
-        { "type": "window", "x": 8, "y": 5 }
+        { "type": "curtain", "x": 3, "y": 2 },
+        { "type": "deflector", "x": 1, "y": 7, "d": 0 },
+        { "type": "window", "x": 0, "y": 7 }
       ]
     },
     {
@@ -93,7 +96,7 @@
       "wind": { "from": "S", "strength": 2 },
       "map": [
         "#########",
-        "#o..#...#",
+        "#...#...#",
         "#.l.#...#",
         "#...n...#",
         "#ooo#o..#",

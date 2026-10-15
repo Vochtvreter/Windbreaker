@@ -9,13 +9,13 @@
       "map": [
         "#########",
         "#.......#",
-        "#..s.p..#",
+        "#....s.p#",
         "#.......#",
         "#########"
       ],
       "fixed": [{"type": "fan", "x": 1, "y": 2, "d": 1}],
       "inventory": {"filter": 1},
-      "solution": [{"type": "filter", "x": 4, "y": 2}]
+      "solution": [{"type": "filter", "x": 6, "y": 2}]
     },
     {
       "name": "Two Burners",

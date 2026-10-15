@@ -19,7 +19,7 @@
       "solution": [{ "type": "ceilingfan", "x": 4, "y": 3 }]
     },
     {
-      "name": "Candle Corner",
+      "name": "Sidestep",
       "wind": { "from": "W", "strength": 0 },
       "map": [
         "~~~#####~~~",
