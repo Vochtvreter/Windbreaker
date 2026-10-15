@@ -46,6 +46,12 @@
   }
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  // tooltip HTML as one line of text (for the screen-reader live region)
+  function plainText(html) {
+    return String(html).replace(/<span class="tt-act">[\s\S]*?<\/span>/g, '').replace(/<[^>]*>/g, ' ')
+      .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&amp;/g, '&')
+      .replace(/\s+/g, ' ').replace(/\s+([,.])/g, '$1').trim();
+  }
   var reducedMQ = mq('(prefers-reduced-motion: reduce)');
   var darkMQ = mq('(prefers-color-scheme: dark)');
   var landscapeMQ = mq('(max-height: 520px) and (min-aspect-ratio: 4/3)');
@@ -60,27 +66,91 @@
 
   // ================================================================== storage
 
+  // { completed, boards: {id: pieces}, boardSigs: {id: level signature}, sound, seenTools, seenTips }
   var store = loadStore();
 
-  function loadStore() {
-    var s = { completed: [], boards: {}, sound: true, seenTools: [], seenTips: [] };
+  function parseStore(raw) {
+    var s = { completed: [], boards: {}, boardSigs: {}, sound: true, seenTools: [], seenTips: [] };
     try {
-      var raw = window.localStorage.getItem(STORE_KEY);
       if (raw) {
         var d = JSON.parse(raw);
         if (d && typeof d === 'object') {
           if (Array.isArray(d.completed)) s.completed = d.completed.filter(function (n) { return typeof n === 'number'; });
           if (d.boards && typeof d.boards === 'object') s.boards = d.boards;
+          if (d.boardSigs && typeof d.boardSigs === 'object') s.boardSigs = d.boardSigs;
           if (typeof d.sound === 'boolean') s.sound = d.sound;
           if (Array.isArray(d.seenTools)) s.seenTools = d.seenTools.filter(function (n) { return typeof n === 'string'; });
           if (Array.isArray(d.seenTips)) s.seenTips = d.seenTips.filter(function (n) { return typeof n === 'string'; });
         }
       }
-    } catch (e) { /* storage unavailable: play without saving */ }
+    } catch (e) { /* corrupt: start fresh */ }
     return s;
   }
-  function saveStore() {
-    try { window.localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) { /* ignore */ }
+  function loadStore() {
+    var raw = null;
+    try { raw = window.localStorage.getItem(STORE_KEY); } catch (e) { /* storage unavailable: play without saving */ }
+    return parseStore(raw);
+  }
+  function union(a, b) {
+    var out = a.slice();
+    b.forEach(function (v) { if (out.indexOf(v) < 0) out.push(v); });
+    return out;
+  }
+  // Saved boards come from `from`, except the one for the level this tab is
+  // playing, which this tab knows best.
+  function takeBoards(from) {
+    var mine = G.screen === 'game' ? G.id : null;
+    if (mine != null) {
+      if (store.boards[mine]) { from.boards[mine] = store.boards[mine]; from.boardSigs[mine] = store.boardSigs[mine]; }
+      else { delete from.boards[mine]; delete from.boardSigs[mine]; }
+    }
+    store.boards = from.boards;
+    store.boardSigs = from.boardSigs;
+  }
+  // The game may be open in several tabs. Each write keeps what another tab
+  // saved in the meantime (solved levels, seen cards, its boards), so a stale
+  // tab never erases progress. `replace` (reset progress) writes as is.
+  function saveStore(replace) {
+    try {
+      if (!replace) {
+        var raw = window.localStorage.getItem(STORE_KEY);
+        if (raw) {
+          var o = parseStore(raw);
+          store.completed = union(store.completed, o.completed);
+          store.seenTools = union(store.seenTools, o.seenTools);
+          store.seenTips = union(store.seenTips, o.seenTips);
+          takeBoards(o);
+        }
+      }
+      window.localStorage.setItem(STORE_KEY, JSON.stringify(store));
+    } catch (e) { /* ignore */ }
+  }
+  // Another tab saved: take its view (it already merged ours), keep our board.
+  window.addEventListener('storage', function (e) {
+    if (e.key !== STORE_KEY && e.key !== null) return;
+    var o = parseStore(e.key === null ? null : e.newValue);
+    store.completed = o.completed;
+    store.seenTools = o.seenTools;
+    store.seenTips = o.seenTips;
+    store.sound = o.sound;
+    takeBoards(o);
+    updateSoundButton();
+    if (G.screen === 'home') renderHome();
+    else if (G.screen === 'game') updateButtons();
+  });
+
+  // A short signature of what a saved board depends on, so a board saved for
+  // an older version of a level is not restored onto a redesigned one.
+  var sigCache = {};
+  function levelSig(id) {
+    if (sigCache[id]) return sigCache[id];
+    var def = levelById(id);
+    if (!def) return '';
+    var s = JSON.stringify([def.map, def.fixed || [], def.inventory || {}, def.wind]);
+    var h = 0x811c9dc5;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+    sigCache[id] = h.toString(36);
+    return sigCache[id];
   }
 
   function levelById(id) {
@@ -234,7 +304,8 @@
     won: false, winAt: null, winTimer: 0, winCardTimer: 0,
     newTool: null, newToolUsed: false, reserve: 0, lastPtr: null, sawKeys: false,
     drawPieces: [], raf: 0, toastTimer: 0, tipTimer: 0, hoverTimer: 0, coachTimer: 0,
-    pushedFromHome: false, lastSig: '', settleUntil: 0, paletteVersion: 0
+    pushedFromHome: false, lastSig: '', settleUntil: 0, paletteVersion: 0,
+    openedAt: -1e9, focusBoardOnOpen: false
   };
   var I = G.input;
 
@@ -494,9 +565,10 @@
   dom.confirmYes.addEventListener('click', function () {
     store.completed = [];
     store.boards = {};
+    store.boardSigs = {};
     store.seenTools = [];
     store.seenTips = [];
-    saveStore();
+    saveStore(true);
     closeDialog(dom.confirm);
     G.lastId = null;
     renderHome();
@@ -518,7 +590,7 @@
   function flushPendingWin() {
     if (G.screen === 'game' && G.sim && G.sim.solved && G.id != null && !isDone(G.id)) {
       markDone(G.id);
-      delete store.boards[G.id];
+      forgetBoard(G.id);
       saveStore();
     }
   }
@@ -534,6 +606,7 @@
     clearTimeout(G.coachTimer);
     stopLoop();
     resetInput();
+    clearTimeout(G.winTimer); // a cancelled drag re-checks the win
     hideTooltip();
     hideToast();
     closeDialog(dom.win, true);
@@ -580,6 +653,11 @@
     layoutBoard();
     startLoop();
     window.scrollTo(0, 0);
+    G.openedAt = performance.now();
+    // "Next" (win card or pill) disappears with the old level: keep keyboard
+    // focus on the board instead of letting it fall back to the page
+    if (G.focusBoardOnOpen) dom.canvas.focus({ preventScroll: true });
+    G.focusBoardOnOpen = false;
     // a saved board that already solves the level (closed mid-celebration, or
     // a redesigned level): let the normal win run so progress is recorded
     if (G.sim.solved && !isDone(id)) checkWin();
@@ -589,6 +667,9 @@
     var saved = store.boards[id];
     var out = [];
     if (!Array.isArray(saved)) return out;
+    // saved for another version of this level (or before boards were signed):
+    // its pieces belonged to a different puzzle
+    if (store.boardSigs[id] !== levelSig(id)) { forgetBoard(id); return out; }
     var L = WB.parseLevel(levelById(id));
     var fixed = L.fixed.map(norm);
     var used = {};
@@ -606,9 +687,13 @@
 
   function saveBoard() {
     if (G.id == null) return;
-    if (G.pieces.length) store.boards[G.id] = G.pieces.map(norm);
-    else delete store.boards[G.id];
+    if (G.pieces.length) { store.boards[G.id] = G.pieces.map(norm); store.boardSigs[G.id] = levelSig(G.id); }
+    else forgetBoard(G.id);
     saveStore();
+  }
+  function forgetBoard(id) {
+    delete store.boards[id];
+    delete store.boardSigs[id];
   }
 
   function renderWind() {
@@ -797,6 +882,10 @@
   function onChipClick(e) {
     var type = this.getAttribute('data-tool');
     if (I.suppressClick) { I.suppressClick = false; return; }
+    // not during the win celebration, and not the second click of a
+    // double-click on "Next level" (the pill sits over the new tray)
+    if (boardLocked()) return;
+    if (e.detail > 1 && performance.now() - G.openedAt < 700) return;
     Sound.unlock();
     if (G.sel === type) { deselect(); return; }
     select(type);
@@ -852,14 +941,15 @@
   // tiles from the pointer to that cell's square (0 = inside it).
   function snapTarget(c, valid) {
     if (!valid || !valid.length) return null;
+    var fx = c.fx != null ? c.fx : c.x + 0.5, fy = c.fy != null ? c.fy : c.y + 0.5;
     var best = null, bd = 1e9;
     for (var i = 0; i < valid.length; i++) {
       var v = valid[i];
-      var dx = Math.max(v.x - c.fx, 0, c.fx - (v.x + 1)), dy = Math.max(v.y - c.fy, 0, c.fy - (v.y + 1));
+      var dx = Math.max(v.x - fx, 0, fx - (v.x + 1)), dy = Math.max(v.y - fy, 0, fy - (v.y + 1));
       var d = Math.sqrt(dx * dx + dy * dy);
       if (d < bd) { bd = d; best = v; }
     }
-    return { x: best.x, y: best.y, d: bd };
+    return best ? { x: best.x, y: best.y, d: bd } : null;
   }
   function snapTol(c) { return c.inMap ? 0.3 : 0.6; }
 
@@ -907,10 +997,37 @@
     }
   }
 
+  var DIRTY = 'dirty: smoky air is blowing through it (filter the smoke or keep it away)';
+  function stoveWord(g, sim) {
+    return g.state === 'happy' ? 'smoke is cleared' : g.state === 'bad' ? 'smoke is trapped — ' + trapReason(g, sim) : 'smoke needs a way out';
+  }
+  // Why a stove's smoke counts as trapped: where its smoky air is stopped.
+  function trapReason(g, sim) {
+    var L = G.L, cx = g.x + 0.5, cy = g.y + 0.5, why = null;
+    sim.trees.forEach(function (t) {
+      if (why || !t.active) return;
+      if (!t.segments.some(function (s) { return s.bx === cx && s.by === cy; })) return; // never reaches this stove
+      t.ends.forEach(function (e) {
+        if (why || e.type !== 'blocked') return;
+        var sg = null;
+        t.segments.forEach(function (s) { if (s.smoke && s.bx === e.x && s.by === e.y) sg = s; });
+        if (!sg) return;
+        var sx = Math.sign(sg.bx - sg.ax), sy = Math.sign(sg.by - sg.ay);
+        // a wall face lies between two cells; a curtain stops air at its centre
+        var atCentre = e.x % 1 !== 0 && e.y % 1 !== 0;
+        var wx = Math.floor(atCentre ? e.x : e.x + 0.5 * sx), wy = Math.floor(atCentre ? e.y : e.y + 0.5 * sy);
+        var p = playerAt(wx, wy) || fixedAt(wx, wy);
+        if (p && p.type === 'window') why = 'it is blown into a window facing the wind, which pushes air back';
+        else if (p && p.type === 'curtain') why = 'a curtain stops it';
+        else why = 'it is blown into a wall';
+      });
+    });
+    return why || 'it goes round in circles';
+  }
   function goalText(g) {
     var name = WB.OBJECTS[g.type].name;
-    if (g.type === 'stove') return name + ' — ' + (g.state === 'happy' ? 'smoke is cleared' : g.state === 'bad' ? 'smoke is trapped' : 'smoke needs a way out');
-    return name + ' — ' + (g.smoky ? 'smoky air makes it dirty' : NEED[g.type]) + ' · ' + breezeWord(g.flow);
+    if (g.type === 'stove') return name + ' — ' + stoveWord(g, G.sim);
+    return name + ' — ' + (g.smoky ? DIRTY : NEED[g.type]) + ' · ' + breezeWord(g.flow);
   }
   function focusGoal(type) {
     var goals = G.sim.goals.filter(function (g) { return g.type === type; });
@@ -942,7 +1059,7 @@
   dom.next.addEventListener('click', function () {
     var idx = levelIndex(G.id);
     var nxt = idx >= 0 && idx + 1 < LEVELS.length ? LEVELS[idx + 1] : null;
-    if (nxt) navigate(nxt.id, true); else goHome();
+    if (nxt) { G.focusBoardOnOpen = true; navigate(nxt.id, true); } else goHome();
   });
 
   // ---------------------------------------------------------------- changes
@@ -970,6 +1087,7 @@
       G.hint = null;
       G.conflicts = null;
     }
+    if (!dom.toast.hidden && dom.toast.getAttribute('data-kind') === 'reset') hideToast();
     rebuildDrawPieces();
     if (G.sel) {
       if (remaining(G.sel) <= 0) deselect();
@@ -1004,8 +1122,21 @@
     return true;
   }
 
-  function movePiece(p, x, y) {
-    var np = G.pieces.map(function (q) { return q === p ? { type: q.type, x: x, y: y, d: q.d } : q; });
+  // The player's piece `p` refers to, also when the board was rebuilt since
+  // (undo, a turn) and `p` is an older copy: matched by type and cell.
+  function livePiece(p) {
+    if (!p) return null;
+    if (G.pieces.indexOf(p) >= 0) return p;
+    var q = playerAt(p.x, p.y);
+    return q && q.type === p.type ? q : null;
+  }
+
+  function movePiece(p, x, y, d) {
+    p = livePiece(p);
+    if (!p) return;
+    var nd = d == null ? p.d : d;
+    var np = G.pieces.map(function (q) { return q === p ? { type: q.type, x: x, y: y, d: nd } : q; });
+    if (nd !== p.d) G.rot[p.type] = nd;
     commit(np);
     G.pops[x + ',' + y] = performance.now();
     Sound.tick();
@@ -1013,14 +1144,19 @@
   }
 
   function removePiece(p, selectAfter) {
+    p = livePiece(p);
+    if (!p) return;
     commit(G.pieces.filter(function (q) { return q !== p; }));
     Sound.whoosh();
     announce(toolName(p.type) + ' back in the tray. ' + goalSummary());
     if (selectAfter && remaining(p.type) > 0) select(p.type);
   }
 
-  function rotatePiece(p) {
-    var nd = WB.rotate(p.type, p.d);
+  // Turns a piece one step, or to rotation `to`.
+  function rotatePiece(p, to) {
+    p = livePiece(p);
+    if (!p) return;
+    var nd = to == null ? WB.rotate(p.type, p.d) : to;
     var np = G.pieces.map(function (q) { return q === p ? { type: q.type, x: q.x, y: q.y, d: nd } : q; });
     G.rot[p.type] = nd;
     commit(np);
@@ -1029,8 +1165,15 @@
     announce(toolName(p.type) + ' turned. ' + goalSummary());
   }
 
+  // A press on the board that has not become a drag yet is dropped when the
+  // board changes under it (undo, redo, reset), so it never acts on a piece
+  // that is gone.
+  function dropPress() {
+    if (I.press) { clearTimeout(I.press.timer); I.press = null; }
+  }
   function undo() {
     if (!G.history.length || I.drag) return;
+    dropPress();
     G.future.push(snapshot());
     G.pieces = G.history.pop();
     afterChange({});
@@ -1039,6 +1182,7 @@
   }
   function redo() {
     if (!G.future.length || I.drag) return;
+    dropPress();
     G.history.push(snapshot());
     G.pieces = G.future.pop();
     afterChange({});
@@ -1047,9 +1191,12 @@
   }
   function resetLevel() {
     if (!G.pieces.length || I.drag) return;
+    dropPress();
     commit([]);
     Sound.whoosh();
-    showToast('Board cleared.', 'Undo', undo, { ms: 6000 });
+    // any later change hides this toast (afterChange), so its Undo always
+    // undoes the reset itself
+    showToast('Board cleared.', 'Undo', undo, { ms: 6000, kind: 'reset' });
   }
 
   function nope(x, y) {
@@ -1101,7 +1248,7 @@
     G.winAt = performance.now();
     markDone(G.id);
     dismissNewTool(); // an overlay: fading it never moves the board
-    delete store.boards[G.id];
+    forgetBoard(G.id);
     saveStore();
     resetInput();
     deselect();
@@ -1155,7 +1302,7 @@
       : 'That was the last level! A few earlier rooms are still waiting for a breeze.';
     dom.winNext.hidden = last;
     dom.winLevels.classList.toggle('btn-primary', last);
-    dom.winNext.onclick = next ? function () { closeDialog(dom.win, true); navigate(next.id, true); } : null;
+    dom.winNext.onclick = next ? function () { closeDialog(dom.win, true); G.focusBoardOnOpen = true; navigate(next.id, true); } : null;
     openDialog(dom.win, last ? dom.winLevels : dom.winNext);
     updateButtons();
   }
@@ -1186,15 +1333,24 @@
     var mine = G.pieces;
     var conflicts = mine.filter(function (p) { return !sol.some(function (s) { return same(s, p); }); });
     var missing = sol.filter(function (s) { return !mine.some(function (p) { return same(s, p); }); });
-    var nextP = missing[0] || null;
-    if (conflicts.length) {
-      var wrongTurn = conflicts.length === 1 && nextP && conflicts[0].x === nextP.x && conflicts[0].y === nextP.y && conflicts[0].type === nextP.type;
-      if (wrongTurn) {
-        G.hint = nextP;
-        G.conflicts = null;
-        showToast('Almost — try turning this ' + toolName(nextP.type).toLowerCase() + '.', null, null, { kind: 'hint', near: nextP });
-        return;
+    // A piece on a solution cell that is only turned the wrong way is not a
+    // conflict: it needs a turn, and turning comes first.
+    var turns = [];
+    conflicts = conflicts.filter(function (p) {
+      for (var i = 0; i < missing.length; i++) {
+        var s = missing[i];
+        if (s.type === p.type && s.x === p.x && s.y === p.y && turns.indexOf(s) < 0) { turns.push(s); return false; }
       }
+      return true;
+    });
+    var nextP = missing[0] || null;
+    if (turns.length) {
+      G.hint = turns[0];
+      G.conflicts = null;
+      showToast((conflicts.length ? 'Try' : 'Almost — try') + ' turning this ' + toolName(turns[0].type).toLowerCase() + '.', null, null, { kind: 'hint', near: turns[0] });
+      return;
+    }
+    if (conflicts.length) {
       G.hint = null;
       G.conflicts = conflicts.map(function (p) { return { x: p.x, y: p.y }; });
       showToast(conflicts.length === 1
@@ -1300,11 +1456,8 @@
     if (oi >= 0) {
       var ob = L.objects[oi], g = sim.goals[oi];
       var oname = WB.OBJECTS[ob.type].name;
-      if (ob.type === 'stove') {
-        var st = g.state === 'happy' ? 'smoke is cleared' : g.state === 'bad' ? 'smoke is trapped' : 'smoke needs a way out';
-        return '<b>' + oname + '</b> — ' + st;
-      }
-      return '<b>' + oname + '</b> — ' + (g.smoky ? 'smoky air makes it dirty' : NEED[ob.type]) + ' <span class="tt-dim">· ' + breezeWord(g.flow) + '</span>';
+      if (ob.type === 'stove') return '<b>' + oname + '</b> — ' + stoveWord(g, sim);
+      return '<b>' + oname + '</b> — ' + (g.smoky ? DIRTY : NEED[ob.type]) + ' <span class="tt-dim">· ' + breezeWord(g.flow) + '</span>';
     }
     if (ch === '.') return '<b>Floor</b> — ' + breezeWord(f);
     if (ch === 'o') return '<b>Table</b> — air passes over <span class="tt-dim">· ' + breezeWord(f) + ' · nothing can be placed here</span>';
@@ -1426,7 +1579,8 @@
     if (!pr || G.screen !== 'game' || boardLocked()) return;
     pr.longFired = true;
     var c = pr.cell;
-    if (pr.piece && G.pieces.indexOf(pr.piece) >= 0) {
+    pr.piece = livePiece(pr.piece);
+    if (pr.piece) {
       removePiece(pr.piece, false);
       try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) { /* ignore */ }
       showTooltipAt(c.x, c.y, '<b>' + toolName(pr.piece.type) + '</b> — back in the tray', 1400);
@@ -1444,6 +1598,7 @@
       var slop = pr.type === 'mouse' ? 6 : 11;
       if (dist > slop && !pr.longFired) {
         clearTimeout(pr.timer);
+        pr.piece = livePiece(pr.piece); // the board may have changed under the press (a key)
         if (pr.piece) {
           I.press = null;
           var cr = dom.canvas.getBoundingClientRect(), rc = board.cellRect(pr.piece.x, pr.piece.y);
@@ -1691,24 +1846,28 @@
     G.previewKey = null;
     G.dragBaseSim = null;
     dom.avatar.hidden = true;
-    var lifted = G.lifted;
+    var lifted = livePiece(G.lifted);
     G.lifted = null;
     rebuildDrawPieces();
-    if (d.kind === 'move') {
+    if (d.kind === 'move' && lifted) {
+      // R during the drag turns the piece being dragged (see the keyboard)
+      var turned = (d.d | 0) !== (lifted.d | 0);
       if (d.travel < Math.max(0.5 * board.T, 18)) {
-        // never went anywhere: it was a (sloppy) tap
-        tapCell({ x: lifted.x, y: lifted.y, inMap: true, onCanvas: true }, d.ptype);
+        // never went anywhere: it was a (sloppy) tap, unless it was turned
+        if (turned) rotatePiece(lifted, d.d | 0);
+        else tapCell({ x: lifted.x, y: lifted.y, fx: lifted.x + 0.5, fy: lifted.y + 0.5, inMap: true, onCanvas: true }, d.ptype);
       } else if (overTray(e)) {
         removePiece(lifted, false);
       } else if (tgt) {
-        if (tgt.x === lifted.x && tgt.y === lifted.y) { /* dropped where it was */ }
-        else movePiece(lifted, tgt.x, tgt.y);
+        if (tgt.x === lifted.x && tgt.y === lifted.y) { if (turned) rotatePiece(lifted, d.d | 0); }
+        else movePiece(lifted, tgt.x, tgt.y, d.d | 0);
       } else if (c.inMap) {
+        if (turned) rotatePiece(lifted, d.d | 0);
         nope(lifted.x, lifted.y);
       } else {
         removePiece(lifted, false);
       }
-    } else {
+    } else if (d.kind !== 'move') {
       if (tgt) place(d.type, tgt.x, tgt.y, d.d);
       else if (c.inMap) nope(c.x, c.y);
     }
@@ -1729,7 +1888,19 @@
     G.lifted = null;
     dom.avatar.hidden = true;
     rebuildDrawPieces();
-    if (G.screen === 'game' && G.sim) updateGoals();
+    // a win held back while the piece was up (checkWin waits for the drop)
+    if (G.screen === 'game' && G.sim) { updateGoals(); checkWin(); }
+  }
+
+  // R while dragging turns the dragged piece; it lands turned.
+  function turnDragged() {
+    var d = I.drag;
+    if (!d || rotations(d.type) < 2) return;
+    d.d = WB.rotate(d.type, d.d | 0);
+    if (d.kind === 'new') G.rot[d.type] = d.d;
+    var g = G.ghost;
+    if (g) { G.ghost = { type: g.type, x: g.x, y: g.y, d: d.d, ok: g.ok }; updatePreview(); }
+    Sound.turn();
   }
 
   function onChipDown(e) {
@@ -1957,6 +2128,11 @@
       return;
     }
     if (boardLocked()) return;
+    if (I.drag) {
+      // a piece is in the hand: R turns it, other board keys wait for the drop
+      if (k === 'r' || k === 'R') turnDragged();
+      return;
+    }
     if (/^[0-9]$/.test(k)) {
       var chips = dom.tray.querySelectorAll('.chip');
       var chip = chips[k === '0' ? 9 : parseInt(k, 10) - 1];
@@ -1992,7 +2168,10 @@
         }
         G.cursor = { x: cur.x, y: cur.y, inMap: true };
         updateGhostFromHover();
-        showTooltipAt(cur.x, cur.y, describe(cur.x, cur.y), 0);
+        var desc = describe(cur.x, cur.y);
+        showTooltipAt(cur.x, cur.y, desc, 0);
+        // the tooltip is only drawn: say it for screen readers too
+        announce(plainText(desc) + '. Column ' + (cur.x + 1) + ', row ' + (cur.y + 1) + '.');
         return;
       }
       if ((k === 'Enter' || k === ' ') && G.cursor) {
