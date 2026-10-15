@@ -3,7 +3,7 @@
   "title": "Fans",
   "levels": [
     {
-      "name": "Still Air",
+      "name": "Becalmed",
       "tip": "No wind today. Place the fan, then tap it to turn it until it blows on the pinwheel.",
       "wind": { "from": "W", "strength": 0 },
       "map": [
@@ -34,18 +34,18 @@
     },
     {
       "name": "Smoke Signals",
-      "tip": "Stoves smoke. Blow the smoke out of a window: smoke pushed into a wall stays trapped.",
+      "tip": "Stoves smoke. Blow it out of a window: smoke that hits a wall stays trapped. Hatched walls take no windows.",
       "wind": { "from": "W", "strength": 0 },
       "map": [
         "########%",
-        "#.....p.%",
-        "#.s.....%",
         "#.......%",
+        "#.s.....%",
+        "#.....p.%",
         "########%"
       ],
       "fixed": [ { "type": "fan", "x": 1, "y": 2, "d": 1 } ],
       "inventory": { "fan": 1, "window": 1 },
-      "solution": [ { "type": "fan", "x": 6, "y": 2, "d": 0 }, { "type": "window", "x": 6, "y": 0 } ]
+      "solution": [ { "type": "fan", "x": 6, "y": 2, "d": 2 }, { "type": "window", "x": 6, "y": 4 } ]
     },
     {
       "name": "Into the Wind",
@@ -68,15 +68,15 @@
       "name": "Sunday Roast",
       "wind": { "from": "W", "strength": 1 },
       "map": [
-        "###########",
-        "#....#....#",
-        "#...s..oc.#",
-        "#....#....#",
-        "###########"
+        "#########",
+        "#...#...#",
+        "#.c...s.#",
+        "#...#...#",
+        "#########"
       ],
-      "fixed": [ { "type": "window", "x": 0, "y": 2 }, { "type": "window", "x": 10, "y": 2 } ],
+      "fixed": [ { "type": "window", "x": 0, "y": 2 } ],
       "inventory": { "fan": 1, "window": 1 },
-      "solution": [ { "type": "fan", "x": 6, "y": 2, "d": 0 }, { "type": "window", "x": 6, "y": 0 } ]
+      "solution": [ { "type": "fan", "x": 6, "y": 1, "d": 2 }, { "type": "window", "x": 6, "y": 4 } ]
     }
   ]
 }

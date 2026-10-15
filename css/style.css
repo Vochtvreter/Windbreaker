@@ -74,7 +74,7 @@
   --pip-idle: #9aa1aa;
   --hl: rgba(55, 154, 143, 0.16);
   --hl-edge: rgba(55, 154, 143, 0.6);
-  --hl-wall: rgba(120, 220, 205, 0.42);
+  --hl-wall: rgba(150, 228, 216, 0.3);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -120,7 +120,7 @@
     --air: #79bdeb;
     --air-deep: #a6d6f7;
     --smoke: #8d867e;
-    --glass: #4d6577;
+    --glass: #5b7a90;
     --glass-in: #8cc4e8;
     --window-mark: #173a55;
     --piece-base: #59616d;
@@ -148,7 +148,7 @@
     --pip-idle: #8b929b;
     --hl: rgba(92, 193, 180, 0.16);
     --hl-edge: rgba(92, 193, 180, 0.7);
-    --hl-wall: rgba(92, 193, 180, 0.45);
+    --hl-wall: rgba(92, 193, 180, 0.3);
   }
 }
 
@@ -1092,9 +1092,6 @@ kbd {
   .btn-label { display: inline; }
 }
 
-@media (min-width: 420px) {
-  .wind-word { display: inline; }
-}
 @media (max-width: 419px) {
   .wind:not(.is-calm) .wind-word { display: none; }
   .wind:not(.is-calm) { padding: 0 9px; }
@@ -1119,9 +1116,9 @@ kbd {
 
 @media (max-width: 420px) {
   /* goals become icon + count, so up to six fit on one line */
-  .goals { gap: 2px 8px; }
-  .goal { background: transparent; box-shadow: none; padding: 0 4px 0 0; gap: 3px; height: 32px; }
-  .goal canvas { width: 24px; height: 24px; }
+  .goals { gap: 0 6px; }
+  .goal { background: transparent; box-shadow: none; padding: 0 2px 0 0; gap: 2px; height: 32px; font-size: 13px; }
+  .goal canvas { width: 23px; height: 23px; }
   .goal.is-done { background: transparent; }
   .actions .icon-btn { min-width: 40px; }
   .next-pill { padding: 0 12px; }

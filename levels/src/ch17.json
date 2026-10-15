@@ -4,6 +4,7 @@
   "levels": [
     {
       "name": "Crossed Lines",
+      "tip": "On a still day, an extractor pulls a gentle breeze along its whole line, right from the far wall.",
       "wind": { "from": "N", "strength": 0 },
       "map": [
         "%%%#%%%#%",
@@ -28,16 +29,17 @@
         "%%%%%%%%%",
         "%c.s.n..#",
         "%#######%",
+        "%.......%",
         "%.s.....%",
-        "%p.....p%",
+        "%p.....f%",
         "%%%%%%%%%"
       ],
       "fixed": [],
-      "inventory": { "extractor": 1, "ceilingfan": 1, "skylight": 1, "curtain": 1, "vent": 1 },
+      "inventory": { "extractor": 1, "ceilingfan": 1, "skylight": 1, "vent": 1 },
       "solution": [
         { "type": "extractor", "x": 8, "y": 1 },
         { "type": "skylight", "x": 2, "y": 1 },
-        { "type": "ceilingfan", "x": 2, "y": 4 },
+        { "type": "ceilingfan", "x": 2, "y": 5 },
         { "type": "vent", "x": 2, "y": 2 }
       ]
     },
@@ -53,7 +55,7 @@
         "~~~%%%%%%%%"
       ],
       "fixed": [],
-      "inventory": { "ceilingfan": 1, "fan": 1, "splitter": 1, "window": 1 },
+      "inventory": { "ceilingfan": 1, "fan": 1, "splitter": 1, "window": 1, "curtain": 1 },
       "solution": [
         { "type": "ceilingfan", "x": 6, "y": 4 },
         { "type": "fan", "x": 5, "y": 4, "d": 0 },
@@ -68,7 +70,7 @@
         "%%%%#%%%%",
         "%.s...s.%",
         "%o..n..o%",
-        "%p.oco.f%",
+        "%p.oco.p%",
         "%%%%%%%%%"
       ],
       "fixed": [],
@@ -85,14 +87,16 @@
       "wind": { "from": "N", "strength": 0 },
       "map": [
         "%%%%%%%%%%%",
-        "%...n...l.%",
+        "%...n#..l.%",
         "%.s..#.c..%",
         "%....#....%",
         "%....#s..f%",
         "%....#..p.%",
         "%%%%%%%%%%%"
       ],
-      "fixed": [],
+      "fixed": [
+        { "type": "vent", "x": 5, "y": 1 }
+      ],
       "inventory": { "ceilingfan": 2, "filter": 1, "vent": 1, "curtain": 1 },
       "solution": [
         { "type": "ceilingfan", "x": 2, "y": 1 },

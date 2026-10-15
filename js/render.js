@@ -894,7 +894,7 @@
   function meterShape(ctx, type, flow, state, T) {
     var spec = METER[type];
     if (!spec) return;
-    var dr = Math.max(2.4, T * 0.056), g = Math.max(2.2, T * 0.042);
+    var dr = Math.max(2.4, T * 0.062), g = Math.max(2.2, T * 0.045);
     var barW = Math.max(1.4, T * 0.03), pl = dr * 0.9, padX = Math.max(3.5, T * 0.07);
     var list = [], k;
     for (k = 0; k < spec.slots.length; k++) list.push({ k: 'slot', w: dr * 2, req: spec.slots[k] === 'req', on: k < flow });
@@ -974,20 +974,20 @@
 
   function toolIcon(ctx, id) {
     if (id === 'window') {
-      // a stub of wall with a window in it, and air passing through
-      fillRR(ctx, -0.48, -0.12, 0.96, 0.24, 0.12, P('icon-wall'));
-      ctx.save();
-      ctx.scale(0.78, 0.95);
-      glyphWindow(ctx, { outward: 0, role: 'inlet', icon: true });
-      ctx.restore();
-      ctx.beginPath();
-      chevron(ctx, 0, -0.33, 2, 0.11);
-      chevron(ctx, 0, 0.33, 2, 0.11);
-      ctx.strokeStyle = P('air-deep');
-      ctx.lineWidth = 0.065;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
+      // a window seen from the front: frame, two panes, a sill
+      fillRR(ctx, -0.33, -0.38, 0.66, 0.68, 0.09, P('piece-base'));
+      ctx.beginPath(); rr(ctx, -0.33, -0.38, 0.66, 0.68, 0.09);
+      ctx.lineWidth = 0.05;
+      ctx.strokeStyle = P('icon-wall');
       ctx.stroke();
+      fillRR(ctx, -0.25, -0.3, 0.215, 0.52, 0.04, P('glass-in'));
+      fillRR(ctx, 0.035, -0.3, 0.215, 0.52, 0.04, P('glass-in'));
+      ctx.beginPath(); line(ctx, -0.2, -0.12, -0.1, -0.24); line(ctx, 0.08, -0.12, 0.18, -0.24);
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+      ctx.lineWidth = 0.04;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      fillRR(ctx, -0.43, 0.27, 0.86, 0.12, 0.06, P('icon-wall'));
     } else if (id === 'vent') {
       fillRR(ctx, -0.5, -0.42, 1, 0.84, 0.16, P('icon-wall'));
       glyphVent(ctx, { horiz: true });
@@ -1571,21 +1571,21 @@
     var L = this.L, T = this.T;
     var s = L.wind.strength;
     var list = this.streaks;
-    var col = mix(P('streak'), P('air'), 0.35);
+    var col = mix(P('streak'), P('air'), 0.5);
     ctx.save();
     ctx.lineCap = 'round';
     if (s <= 0) {
-      ctx.fillStyle = mix(P('streak'), P('air'), 0.3);
-      var r0 = Math.max(1.5, T * 0.045);
+      ctx.fillStyle = mix(P('streak'), P('air'), 0.6);
+      var r0 = Math.max(2, T * 0.06);
       for (var i = 0; i < list.length; i++) {
         var m = list[i];
-        ctx.globalAlpha = Math.sin(Math.PI * m.age / m.life) * 0.75;
+        ctx.globalAlpha = Math.sin(Math.PI * m.age / m.life) * 0.8;
         var bob = Math.sin(t * 0.8 + m.ph) * T * 0.08;
         ctx.beginPath(); circle(ctx, m.x, m.y + bob, r0 * m.r); ctx.fill();
       }
     } else {
       var dir = L.wind.dir, dx = DX[dir], dy = DY[dir], px = -dy, py = dx;
-      var lw = Math.max(1.2, T * (0.035 + 0.008 * s));
+      var lw = Math.max(1.5, T * (0.04 + 0.008 * s));
       ctx.strokeStyle = col;
       // comet streaks: bright head, fading tail (three passes)
       var parts = STREAK_PARTS;
@@ -1680,11 +1680,11 @@
       ctx.save();
       if (S.validWall) {
         ctx.beginPath();
-        for (i = 0; i < S.valid.length; i++) rr(ctx, S.valid[i].x * T + T * 0.1, S.valid[i].y * T + T * 0.1, T * 0.8, T * 0.8, T * 0.22);
+        for (i = 0; i < S.valid.length; i++) rr(ctx, S.valid[i].x * T + T * 0.13, S.valid[i].y * T + T * 0.13, T * 0.74, T * 0.74, T * 0.2);
         ctx.fillStyle = P('hl-wall');
         ctx.globalAlpha = 0.85 + 0.15 * pk;
         ctx.fill();
-        ctx.lineWidth = Math.max(1.2, T * 0.04) * (1 + pk);
+        ctx.lineWidth = Math.max(1.1, T * 0.03) * (1 + pk);
         ctx.strokeStyle = P('hl-edge');
         ctx.stroke();
       }
@@ -1995,7 +1995,7 @@
 
   Board.prototype.drawFlows = function (ctx, A, T, t, motion, realT, boostK) {
     var i, j, sg, run;
-    var lw = Math.max(1.5, T * 0.058) * (1 + 0.35 * boostK);
+    var lw = Math.max(1.7, T * 0.062) * (1 + 0.35 * boostK);
     var gap = Math.max(lw + 1.8, T * 0.14);
     ctx.save();
     ctx.lineCap = 'round';
@@ -2160,33 +2160,36 @@
       }
     }
 
-    // blocked ends of active flows: a soft splash against the wall face
+    // blocked ends of active flows: soft ripples bumping against the wall face
     for (i = 0; i < A.blockEnds.length; i++) {
       var be = A.blockEnds[i];
       if (be.d < 0) continue;
       var bx = be.x * T, by = be.y * T;
-      var br = Math.max(6, T * 0.24) * (motion ? 1 + 0.08 * Math.sin(realT * 3 + i) : 1);
+      var nb = Math.min(be.s, 4);
+      var br = Math.max(5, T * 0.16) + (nb - 1) * gap * 0.5;
       var base = Math.atan2(-be.dy, -be.dx);
-      ctx.beginPath();
-      for (var r3 = -2; r3 <= 2; r3++) {
-        var aa = base + r3 * 0.62;
-        var r0 = br * 0.35, r1 = br * (r3 === 0 ? 0.95 : 0.8);
-        line(ctx, bx + Math.cos(aa) * r0, by + Math.sin(aa) * r0, bx + Math.cos(aa) * r1, by + Math.sin(aa) * r1);
+      var ph = motion ? (realT * 0.9 + i * 0.37) % 1 : 0.5;
+      var bcol = be.smoke ? darker(P('smoke'), 0.1) : P('air-deep');
+      for (var rp = 0; rp < 2; rp++) {
+        var q2 = (ph + rp * 0.5) % 1;
+        var rad = br * (0.45 + 0.75 * q2);
+        ctx.beginPath();
+        ctx.arc(bx, by, rad, base - 1.05, base + 1.05);
+        ctx.strokeStyle = alpha(bcol, 0.75 * Math.sin(Math.PI * q2));
+        ctx.lineWidth = Math.max(1.3, T * 0.04);
+        ctx.stroke();
       }
-      ctx.strokeStyle = alpha(be.smoke ? darker(P('smoke'), 0.1) : P('air-deep'), 0.8);
-      ctx.lineWidth = Math.max(1.3, T * 0.04);
-      ctx.stroke();
     }
     ctx.restore();
   };
 
   // A soft cloud made of overlapping puffs.
   function puffCluster(ctx, cx, cy, T, amt, t, seed, spread) {
-    ctx.fillStyle = alpha(P('smoke'), 0.17 * amt);
+    ctx.fillStyle = alpha(P('smoke'), 0.24 * amt);
     for (var k = 0; k < 6; k++) {
       var ang = seed + k * 1.047 + t * 0.15 * (k % 2 ? 1 : -1);
       var rad = spread * T * (0.35 + 0.3 * Math.sin(t * 0.45 + k * 1.7 + seed));
-      var r = T * (0.2 + 0.06 * Math.sin(t * 0.7 + k * 2.1)) * (0.55 + 0.45 * amt);
+      var r = T * (0.24 + 0.06 * Math.sin(t * 0.7 + k * 2.1)) * (0.55 + 0.45 * amt);
       ctx.beginPath(); circle(ctx, cx + Math.cos(ang) * rad, cy + Math.sin(ang) * rad * 0.8, r); ctx.fill();
     }
   }

@@ -961,7 +961,7 @@
     G.won = true;
     G.winAt = performance.now();
     markDone(G.id);
-    markToolSeen();
+    dismissNewTool(); // an overlay: fading it never moves the board
     delete store.boards[G.id];
     saveStore();
     resetInput();
@@ -1144,7 +1144,7 @@
         case 'filter': s = 'cleans smoke' + flowBit(); break;
         case 'ceilingfan': s = 'blows all four ways' + flowBit(); break;
       }
-      var html = '<b>' + (fixed ? name : name) + '</b> — ' + s + (fixed ? ' <span class="tt-dim">· fixed</span>' : '');
+      var html = '<b>' + name + '</b> — ' + s + (fixed ? ' <span class="tt-dim">· fixed</span>' : '');
       if (withActions && !fixed) {
         html += '<span class="tt-act">' + (rotations(p.type) > 1 ? 'click to turn' : 'click to pick up') + ' · drag to move · right-click to remove</span>';
       }
@@ -1498,7 +1498,7 @@
     G.lifted = null;
     rebuildDrawPieces();
     if (d.kind === 'move') {
-      if (d.travel < 0.5 * board.T) {
+      if (d.travel < Math.max(0.5 * board.T, 18)) {
         // never went anywhere: it was a (sloppy) tap
         tapCell({ x: lifted.x, y: lifted.y, inMap: true, onCanvas: true }, d.ptype);
       } else if (overTray(e)) {
