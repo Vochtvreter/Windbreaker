@@ -948,17 +948,22 @@
     ctx.restore();
   }
 
+  // "No way out": a bare red x (no ring, so it never reads as an unhappy
+  // status pip), drawn inside the wall the stalled stream runs into.
   function stallMarker(ctx, x, y, r) {
-    ctx.beginPath(); circle(ctx, x, y, r);
-    ctx.fillStyle = P('surface');
-    ctx.fill();
-    ctx.lineWidth = Math.max(1.3, r * 0.3);
-    ctx.strokeStyle = P('bad');
-    ctx.stroke();
+    var k = r * 0.62;
+    ctx.save();
+    ctx.lineCap = 'round';
     ctx.beginPath();
-    line(ctx, x - r * 0.45, y - r * 0.45, x + r * 0.45, y + r * 0.45);
-    line(ctx, x + r * 0.45, y - r * 0.45, x - r * 0.45, y + r * 0.45);
+    line(ctx, x - k, y - k, x + k, y + k);
+    line(ctx, x + k, y - k, x - k, y + k);
+    ctx.strokeStyle = P('surface');
+    ctx.lineWidth = Math.max(3.6, r * 0.8);
     ctx.stroke();
+    ctx.strokeStyle = P('bad');
+    ctx.lineWidth = Math.max(1.9, r * 0.4);
+    ctx.stroke();
+    ctx.restore();
   }
 
   // ------------------------------------------------------------------ icons
@@ -1006,7 +1011,7 @@
 
   // icon(canvas, kind, id, cssSize)
   //   kind: 'tool' | 'pair' ('a+b') | 'object' | 'swirl' | 'ui'
-  //   ui ids: pip-idle, pip-happy, pip-bad, stall, inlet, outlet, meter-<type>-<flow>, lanes-<n>
+  //   ui ids: pip-idle, pip-happy, pip-bad, stall, table, inlet, outlet, meter-<type>-<flow>, lanes-<n>
   function icon(canvas, kind, id, size) {
     if (!PAL.wall) readPalette();
     var ctx = setupCanvas(canvas, size, size);
@@ -1059,7 +1064,20 @@
       ctx.lineCap = 'round';
       ctx.stroke();
       ctx.setLineDash([]);
-      stallMarker(ctx, size * 0.28, 0, size * 0.15);
+      fillRR(ctx, size * 0.15, -size * 0.32, size * 0.3, size * 0.64, size * 0.06, P('icon-wall'));
+      stallMarker(ctx, size * 0.3, 0, size * 0.15);
+      return;
+    }
+    if (id === 'table') {
+      var tw = size * 0.66, th = size * 0.5;
+      fillRR(ctx, -tw / 2, -th / 2 + size * 0.04, tw, th, size * 0.1, P('table-edge'));
+      fillRR(ctx, -tw / 2, -th / 2, tw, th, size * 0.1, P('table'));
+      ctx.beginPath();
+      line(ctx, -tw / 2 + size * 0.05, -th / 2 + th * 0.38, tw / 2 - size * 0.05, -th / 2 + th * 0.38);
+      line(ctx, -tw / 2 + size * 0.05, -th / 2 + th * 0.66, tw / 2 - size * 0.05, -th / 2 + th * 0.66);
+      ctx.strokeStyle = alpha(P('table-edge'), 0.45);
+      ctx.lineWidth = Math.max(1, size * 0.03);
+      ctx.stroke();
       return;
     }
     if (parts[0] === 'lanes') {
@@ -1122,13 +1140,18 @@
           }
         }
       });
+      // The step that runs into an end. At a wall face two steps can meet
+      // there (e.g. a stream that turned back onto its own inlet window): the
+      // one heading into the wall is the one that stops.
       function lastStep(e) {
-        var ex = Math.round(e.x * 2), ey = Math.round(e.y * 2);
+        var ex = Math.round(e.x * 2), ey = Math.round(e.y * 2), any = null;
         for (var d = 0; d < 4; d++) {
           var st = mine.get(hkey(ex - DX[d], ey - DY[d], d));
-          if (st) return st;
+          if (!st) continue;
+          if (WB.isWall(WB.cellAt(L, Math.floor(e.x + DX[d] * 0.25), Math.floor(e.y + DY[d] * 0.25)))) return st;
+          if (!any) any = st;
         }
-        return null;
+        return any;
       }
       if (!tr.active) {
         mine.forEach(function (e) { A.stalled.push(e); });
@@ -1232,7 +1255,8 @@
     if (!L) return null;
     availW = Math.max(60, Math.floor(availW)); availH = Math.max(60, Math.floor(availH));
     reserveTop = Math.max(0, Math.round(reserveTop || 0));
-    var dpr = Math.min(root.devicePixelRatio || 1, 3);
+    // the whole stage is repainted every frame: 2x is crisp and spares 3x phones
+    var dpr = Math.min(root.devicePixelRatio || 1, 2);
     var lay = this.lay;
     if (lay && lay.L === L && lay.w === availW && lay.h === availH && lay.r === reserveTop && lay.dpr === dpr) {
       return { w: this.cssW, h: this.cssH, T: this.T };
@@ -1247,7 +1271,7 @@
       T = Math.min(availW / (L.w + 2 * m), hAvail / (L.h + 2 * m));
     }
     T = T >= 20 ? Math.floor(T) : Math.max(10, T);
-    T = Math.min(T, 58);
+    T = Math.min(T, 84);
     this.T = T;
     this.m = m;
     this.cssW = availW;
@@ -1768,6 +1792,8 @@
       ctx.save(); pieceTransform(p); GLYPHS[p.type](ctx, o); ctx.restore();
     }
 
+    this.drawStallMarkers(ctx, A, T);
+
     // ---------------- objects
     var goals = sim.goals || [];
     var objScale = small ? 1.16 : 1.06;
@@ -2001,8 +2027,15 @@
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    // stalled inlets: a faint static dashed line and a "no way out" marker
+    // stalled inlets: a faint static dashed line and a "no way out" marker.
+    // The line stops short of every object, so it never looks like air reaches it.
     if (A.stalled.length) {
+      var objs = this.L.objects;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(-T, -T, (this.L.w + 2) * T, (this.L.h + 2) * T);
+      for (i = 0; i < objs.length; i++) circle(ctx, (objs[i].x + 0.5) * T, (objs[i].y + 0.5) * T, T * 0.4);
+      ctx.clip('evenodd');
       ctx.beginPath();
       for (i = 0; i < A.stalled.length; i++) {
         sg = A.stalled[i];
@@ -2010,14 +2043,11 @@
       }
       ctx.setLineDash([T * 0.07, T * 0.18]);
       ctx.lineDashOffset = 0;
-      ctx.strokeStyle = alpha(P('air'), 0.75);
+      ctx.strokeStyle = alpha(P('air'), 0.6);
       ctx.lineWidth = Math.max(1.3, T * 0.05);
       ctx.stroke();
       ctx.setLineDash([]);
-      for (i = 0; i < A.stallEnds.length; i++) {
-        var e = A.stallEnds[i];
-        stallMarker(ctx, (e.x - e.dx * 0.12) * T, (e.y - e.dy * 0.12) * T, Math.max(5.5, T * 0.13));
-      }
+      ctx.restore();
     }
 
     var runs = A.runs;
@@ -2181,6 +2211,15 @@
       }
     }
     ctx.restore();
+  };
+
+  // "No way out" markers of stalled inlets: inside the wall (or window) that
+  // stops the stream, drawn over pieces but under objects and their pips.
+  Board.prototype.drawStallMarkers = function (ctx, A, T) {
+    for (var i = 0; i < A.stallEnds.length; i++) {
+      var e = A.stallEnds[i];
+      stallMarker(ctx, (e.x + e.dx * 0.32) * T, (e.y + e.dy * 0.32) * T, Math.max(5.5, T * 0.13));
+    }
   };
 
   // A soft cloud made of overlapping puffs.

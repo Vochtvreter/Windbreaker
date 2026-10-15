@@ -17,8 +17,19 @@
   var DIR_WORD = ['north', 'east', 'south', 'west'];
   var STRENGTH_WORD = ['calm', 'gentle', 'strong', 'gale'];
   var NEED = {
-    pinwheel: 'needs a breeze', candle: 'keep the air away', laundry: 'needs 2 or more',
-    papers: 'no more than 1', fern: 'wants exactly 1', stove: ''
+    pinwheel: 'needs a breeze', candle: 'keep the air away', laundry: 'needs a breeze of 2+',
+    papers: 'a breeze of 1 at most', fern: 'wants a breeze of exactly 1', stove: ''
+  };
+  function breezeWord(f) { return f > 0 ? 'breeze ' + f : 'still air'; }
+  // Things that arrive without a new tool get the same "New" card on the first
+  // level they appear in (the key is stored in seenTools, next to the tools).
+  var NEW_THING = {
+    candle: 'Keep it out of any airflow, or it blows out.',
+    stove: 'Its smoke must be blown outside or through a filter, never into a wall.',
+    table: 'Air passes over it, but nothing can be placed on it.',
+    laundry: 'Needs a strong breeze: 2 or more.',
+    papers: 'A gentle breeze is fine, but no more than 1.',
+    fern: 'Wants exactly a gentle breeze: 1.'
   };
 
   // ================================================================== helpers
@@ -47,6 +58,9 @@
   var params;
   try { params = new URLSearchParams(location.search); } catch (e) { params = { has: function () { return false; }, get: function () { return null; } }; }
   var UNLOCK_ALL = params.has('unlock');
+  // ?unlock (QA) keeps its own progress, so levels solved there never unlock
+  // anything in normal play
+  if (UNLOCK_ALL) STORE_KEY += '.unlock';
 
   // ================================================================== storage
 
@@ -192,16 +206,16 @@
 
   var dom = {
     home: $('home'), game: $('game'), chapters: $('chapters'), play: $('btn-play'), progress: $('home-progress'),
-    sound: $('btn-sound'), soundLabel: $('sound-label'), resetProgress: $('btn-reset-progress'),
-    back: $('btn-back'), lvlNum: $('lvl-num'), lvlName: $('lvl-name'), wind: $('wind'), help: $('btn-help'),
+    sound: $('btn-sound'), soundLabel: $('sound-label'), resetProgress: $('btn-reset-progress'), homeToast: $('home-toast'),
+    back: $('btn-back'), lvlNum: $('lvl-num'), lvlName: $('lvl-name'), lvlDone: $('lvl-done'), wind: $('wind'), help: $('btn-help'),
     tip: $('tip'), stage: $('stage'), canvas: $('board'), tooltip: $('tooltip'), live: $('sr-live'),
     toast: $('toast'), toastText: $('toast-text'), toastAction: $('toast-action'), toastClose: $('toast-close'),
     newtool: $('newtool'), newtoolIcon: $('newtool-icon'), newtoolTitle: $('newtool-title'), newtoolDesc: $('newtool-desc'), newtoolOk: $('newtool-ok'),
     goals: $('goals'), undo: $('btn-undo'), reset: $('btn-reset'), hint: $('btn-hint'), next: $('btn-next'), nextLabel: $('btn-next-label'),
-    tray: $('tray'), avatar: $('drag-avatar'),
+    tray: $('tray'), trayWrap: document.querySelector('.tray-wrap'), side: document.querySelector('.side'), avatar: $('drag-avatar'),
     win: $('win'), winSub: $('win-sub'), winDots: $('win-dots'), winTeaser: $('win-teaser'), winTeaserIcon: $('win-teaser-icon'),
     winTeaserText: $('win-teaser-text'), winFinal: $('win-final'), winNext: $('win-next'), winLevels: $('win-levels'),
-    helpDlg: $('help'), helpBody: $('help-body'), helpClose: $('help-close'),
+    helpDlg: $('help'), helpBody: $('help-body'), helpClose: $('help-close'), helpSound: $('help-sound'),
     confirm: $('confirm'), confirmYes: $('confirm-yes'), confirmNo: $('confirm-no')
   };
 
@@ -222,7 +236,7 @@
     input: { press: null, drag: null, tray: null, suppressClick: false, cancelledPointer: null },
     pops: {}, shake: null, flash: null, pulse: null, focus: null,
     won: false, winAt: null, winTimer: 0, winCardTimer: 0,
-    newTool: null, reserve: 0,
+    newTool: null, newToolUsed: false, reserve: 0, lastPtr: null, sawKeys: false,
     drawPieces: [], raf: 0, toastTimer: 0, tipTimer: 0, hoverTimer: 0, coachTimer: 0,
     pushedFromHome: false, lastSig: '', settleUntil: 0, paletteVersion: 0
   };
@@ -262,6 +276,10 @@
     G.drawPieces = list;
   }
   function touchy(ptype) { return ptype === 'touch' || ptype === 'pen'; }
+  // Wording follows the input the player actually uses, not the device's
+  // primary pointer (a touch laptop is 'fine' but may be used by finger).
+  function usingTouch() { return G.lastPtr ? touchy(G.lastPtr) : coarseMQ.matches; }
+  window.addEventListener('pointerdown', function (e) { G.lastPtr = e.pointerType || G.lastPtr; }, true);
   function announce(text) {
     dom.live.textContent = '';
     setTimeout(function () { dom.live.textContent = text; }, 30);
@@ -323,7 +341,9 @@
   var CHECK_SVG = '<svg class="ico check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 
   // The two tools a mastery chapter leans on most (by inventory), for its icon.
-  function chapterPair(ch) {
+  // `used` holds pairs earlier chapters already show: the best pair not yet
+  // taken is picked, so no two chapters share an icon.
+  function chapterPair(ch, used) {
     var count = {};
     for (var n = ch.first; n <= ch.last; n++) {
       var lv = levelById(n);
@@ -334,13 +354,20 @@
     ids.sort(function (a, b) { return count[b] - count[a] || WB.TOOL_ORDER.indexOf(b) - WB.TOOL_ORDER.indexOf(a); });
     if (!ids.length) return 'window+fan';
     if (ids.length === 1) return 'window+' + ids[0];
-    return ids[0] + '+' + ids[1];
+    var cands = [];
+    for (var i = 0; i < ids.length; i++) {
+      for (var j = i + 1; j < ids.length; j++) cands.push({ k: ids[i] + '+' + ids[j], score: count[ids[i]] + count[ids[j]], r: i + j });
+    }
+    cands.sort(function (a, b) { return b.score - a.score || a.r - b.r; });
+    for (var c = 0; c < cands.length; c++) if (!used || !used[cands[c].k]) return cands[c].k;
+    return cands[0].k;
   }
 
   function renderHome() {
     var frag = document.createDocumentFragment();
     var nextId = nextPlayableId();
     var shownLocked = false;
+    var usedPairs = {};
     CHAPTERS.forEach(function (ch) {
       var ids = [];
       for (var n = ch.first; n <= ch.last; n++) if (levelById(n)) ids.push(n);
@@ -350,7 +377,11 @@
       var ic = el('canvas', 'ch-icon');
       ic.setAttribute('aria-hidden', 'true');
       if (ch.tool) R.icon(ic, 'tool', ch.tool, 40);
-      else R.icon(ic, 'pair', chapterPair(ch), 40);
+      else {
+        var pair = chapterPair(ch, usedPairs);
+        usedPairs[pair] = true;
+        R.icon(ic, 'pair', pair, 40);
+      }
 
       if (!anyOpen && shownLocked) {
         // far away: one quiet line
@@ -388,12 +419,19 @@
         b.setAttribute('data-level', id);
         var def = levelById(id);
         var al = 'Level ' + id + (def && def.name ? ', ' + def.name : '');
+        var locked = !isUnlocked(id);
         if (isDone(id)) { b.classList.add('is-done'); al += ', solved'; }
-        else if (isUnlocked(id)) { b.classList.add(id === nextId ? 'is-next' : 'is-open'); }
-        if (!isUnlocked(id)) { b.disabled = true; al += ', locked'; }
+        else if (!locked) { b.classList.add(id === nextId ? 'is-next' : 'is-open'); }
+        // locked buttons stay tappable (aria-disabled), so a tap can say why
+        if (locked) { b.classList.add('is-locked'); b.setAttribute('aria-disabled', 'true'); al += ', locked'; }
         b.setAttribute('aria-label', al);
         b.title = def && def.name ? def.name : '';
-        b.addEventListener('click', function () { Sound.unlock(); navigate(id); });
+        b.addEventListener('click', function () {
+          if (!isUnlocked(id)) { lockedTap(b, id); return; }
+          Sound.unlock();
+          navigate(id);
+        });
+        b.addEventListener('animationend', function () { b.classList.remove('is-shake'); });
         lv.appendChild(b);
       });
       sec.appendChild(lv);
@@ -414,10 +452,36 @@
     updateSoundButton();
   }
 
+  var homeToastTimer = 0;
+  function lockedTap(b, id) {
+    b.classList.remove('is-shake');
+    void b.offsetWidth;
+    b.classList.add('is-shake');
+    var i = levelIndex(id);
+    var prev = i > 0 ? LEVELS[i - 1].id : null;
+    var msg = prev != null && isUnlocked(prev)
+      ? 'Solve level ' + prev + ' to unlock level ' + id + '.'
+      : 'Level ' + id + ' is locked' + (nextPlayableId() != null ? ' — level ' + nextPlayableId() + ' is next.' : '.');
+    dom.homeToast.textContent = msg;
+    dom.homeToast.hidden = false;
+    clearTimeout(homeToastTimer);
+    homeToastTimer = setTimeout(function () { dom.homeToast.hidden = true; }, 2400);
+  }
+
   function updateSoundButton() {
-    dom.sound.setAttribute('aria-pressed', store.sound ? 'true' : 'false');
-    dom.sound.setAttribute('aria-label', store.sound ? 'Sound on' : 'Sound off');
-    dom.soundLabel.textContent = store.sound ? 'Sound on' : 'Sound off';
+    var on = store.sound, label = on ? 'Sound on' : 'Sound off';
+    [dom.sound, dom.helpSound].forEach(function (b) {
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.setAttribute('aria-label', label);
+      b.title = label;
+    });
+    dom.soundLabel.textContent = label;
+  }
+  function toggleSound() {
+    store.sound = !store.sound;
+    saveStore();
+    updateSoundButton();
+    if (store.sound) Sound.tick();
   }
 
   dom.play.addEventListener('click', function () {
@@ -426,12 +490,8 @@
     if (id == null && LEVELS.length) id = LEVELS[0].id;
     if (id != null) navigate(id);
   });
-  dom.sound.addEventListener('click', function () {
-    store.sound = !store.sound;
-    saveStore();
-    updateSoundButton();
-    if (store.sound) Sound.tick();
-  });
+  dom.sound.addEventListener('click', toggleSound);
+  dom.helpSound.addEventListener('click', toggleSound);
   dom.resetProgress.addEventListener('click', function () { openDialog(dom.confirm, dom.confirmNo); });
   dom.confirmNo.addEventListener('click', function () { closeDialog(dom.confirm); });
   dom.confirmYes.addEventListener('click', function () {
@@ -511,6 +571,7 @@
     document.title = id + ' · ' + (def.name || 'Level') + ' — Windbreaker';
     dom.lvlNum.textContent = String(id);
     dom.lvlName.textContent = def.name || 'Level ' + id;
+    dom.lvlDone.hidden = !isDone(id);
     renderWind();
     if (def.tip) { dom.tip.textContent = def.tip; dom.tip.hidden = false; } else { dom.tip.hidden = true; }
     renderNewTool();
@@ -563,28 +624,85 @@
     // chevrons light up from the front: 1 = gentle, 3 = gale
     for (var i = 0; i < chev.length; i++) chev[i].classList.toggle('on', i >= chev.length - w.strength);
     dom.wind.querySelector('.wind-word').textContent = STRENGTH_WORD[clamp(w.strength, 0, 3)];
-    var label = calm ? 'Calm day, no wind' : 'Wind from the ' + DIR_WORD[w.from] + ', ' + STRENGTH_WORD[Math.min(3, w.strength)] + ' (strength ' + w.strength + ')';
-    dom.wind.setAttribute('aria-label', label);
-    dom.wind.title = label;
+    dom.wind.setAttribute('aria-label', windText());
+    dom.wind.title = windText();
   }
+  function windText() {
+    var w = G.L.wind;
+    if (w.strength <= 0) return 'A calm day: no wind comes in, only fans move the air.';
+    return 'Wind from the ' + DIR_WORD[w.from] + ' · strength ' + w.strength + ' (' + STRENGTH_WORD[Math.min(3, w.strength)] + ')' +
+      ' — windows facing it let air in.';
+  }
+  dom.wind.addEventListener('click', function () {
+    if (G.screen !== 'game') return;
+    if (!dom.toast.hidden && dom.toast.getAttribute('data-kind') === 'wind') { hideToast(); return; }
+    showToast(windText(), null, null, { ms: 4200, kind: 'wind' });
+  });
 
   function firstSentence(s) {
     var m = /^(.+?[.!?])(\s|$)/.exec(s || '');
     return m ? m[1] : s;
   }
-  function renderNewTool() {
+  // The first level (in play order) a thing appears on: objects by their
+  // map character, tables by 'o'.
+  var firstSeen = null;
+  function firstLevelWith(thing) {
+    if (!firstSeen) {
+      firstSeen = {};
+      var chars = { candle: 'c', stove: 's', table: 'o', laundry: 'l', papers: 'n', fern: 'f' };
+      LEVELS.forEach(function (lv) {
+        var m = (lv.map || []).join('');
+        Object.keys(chars).forEach(function (k) { if (firstSeen[k] == null && m.indexOf(chars[k]) >= 0) firstSeen[k] = lv.id; });
+      });
+    }
+    return firstSeen[thing];
+  }
+  // What the "New" card introduces on this level: the chapter's tool on its
+  // first level, otherwise a thing (object or table) seen here for the first time.
+  function newThingHere() {
     var ch = G.chapter;
-    var tool = ch && ch.tool && G.id === ch.first ? ch.tool : null;
-    G.newTool = tool && store.seenTools.indexOf(tool) < 0 ? tool : null;
+    if (ch && ch.tool && G.id === ch.first) return ch.tool;
+    var keys = Object.keys(NEW_THING);
+    for (var i = 0; i < keys.length; i++) if (firstLevelWith(keys[i]) === G.id) return keys[i];
+    return null;
+  }
+  function thingName(k) { return WB.TOOLS[k] ? WB.TOOLS[k].name : WB.OBJECTS[k] ? WB.OBJECTS[k].name : k === 'table' ? 'Table' : k; }
+  function paintNewIcon() {
+    var k = G.newTool;
+    if (!k) return;
+    if (WB.TOOLS[k]) R.icon(dom.newtoolIcon, 'tool', k, 40);
+    else if (WB.OBJECTS[k]) R.icon(dom.newtoolIcon, 'object', k, 40);
+    else R.icon(dom.newtoolIcon, 'ui', k, 40);
+  }
+  function renderNewTool() {
+    var thing = newThingHere();
+    G.newTool = thing && store.seenTools.indexOf(thing) < 0 ? thing : null;
+    G.newToolUsed = false;
     dom.newtool.classList.remove('is-leaving');
+    placeNewToolCard();
     if (!G.newTool) { dom.newtool.hidden = true; return; }
-    var t = WB.TOOLS[tool];
-    dom.newtoolTitle.textContent = t.name;
-    dom.newtoolDesc.textContent = firstSentence(t.desc);
-    dom.newtool.title = t.desc;
-    R.icon(dom.newtoolIcon, 'tool', tool, 40);
+    var isTool = !!WB.TOOLS[thing];
+    dom.newtool.setAttribute('aria-label', isTool ? 'New tool' : 'New in the house');
+    dom.newtoolTitle.textContent = thingName(thing);
+    dom.newtoolDesc.textContent = isTool ? firstSentence(WB.TOOLS[thing].desc) : NEW_THING[thing];
+    dom.newtool.title = isTool ? WB.TOOLS[thing].desc : NEW_THING[thing];
+    paintNewIcon();
     dom.newtool.hidden = false;
   }
+  // Portrait and desktop: the card floats over the top of the stage. Landscape
+  // phones: it sits at the top of the side column, so the house keeps its size.
+  function placeNewToolCard() {
+    var want = landscapeMQ.matches ? dom.side : dom.stage;
+    if (dom.newtool.parentNode !== want) {
+      if (want === dom.side) dom.side.insertBefore(dom.newtool, dom.side.firstChild);
+      else dom.stage.insertBefore(dom.newtool, dom.tooltip);
+    }
+  }
+  onMQ(landscapeMQ, function () {
+    placeNewToolCard();
+    G.reserve = 0;
+    layoutBoard();
+  });
   function markToolSeen() {
     if (G.newTool && store.seenTools.indexOf(G.newTool) < 0) {
       store.seenTools.push(G.newTool);
@@ -671,7 +789,7 @@
       b.querySelector('.chip-count').textContent = String(n);
       b.disabled = n <= 0 && G.sel !== type;
       b.classList.toggle('is-selected', G.sel === type);
-      b.classList.toggle('is-new', G.newTool === type);
+      b.classList.toggle('is-new', G.newTool === type && !G.newToolUsed);
       b.setAttribute('aria-pressed', G.sel === type ? 'true' : 'false');
       b.setAttribute('aria-label', toolName(type) + ', ' + n + ' left' + (G.sel === type ? ', selected' : ''));
     }
@@ -720,6 +838,7 @@
     G.sel = null;
     G.valid = null;
     G.ghost = null;
+    if (!dom.toast.hidden && dom.toast.getAttribute('data-kind') === 'mount') hideToast();
     updatePreview();
     updateTray();
     updateCursorStyle();
@@ -792,7 +911,7 @@
   function goalText(g) {
     var name = WB.OBJECTS[g.type].name;
     if (g.type === 'stove') return name + ' — ' + (g.state === 'happy' ? 'smoke is cleared' : g.state === 'bad' ? 'smoke is trapped' : 'smoke needs a way out');
-    return name + ' — ' + NEED[g.type] + ' · now ' + g.flow;
+    return name + ' — ' + NEED[g.type] + ' · ' + breezeWord(g.flow);
   }
   function focusGoal(type) {
     var goals = G.sim.goals.filter(function (g) { return g.type === type; });
@@ -810,13 +929,16 @@
     dom.undo.disabled = G.history.length === 0;
     dom.reset.disabled = G.pieces.length === 0;
     var hasSolution = Array.isArray(G.def.solution) && G.def.solution.length > 0;
-    dom.hint.disabled = !hasSolution;
+    dom.hint.disabled = !hasSolution || G.won;
     var showNext = G.won && dom.win.hidden && !G.winCardTimer;
     var idx = levelIndex(G.id);
     var nxt = idx >= 0 && idx + 1 < LEVELS.length ? LEVELS[idx + 1] : null;
+    // "Next level" covers the tray (whose chips are hidden meanwhile), so the
+    // hud and the board never move when it appears
     dom.next.hidden = !showNext;
-    dom.hint.hidden = showNext;
+    dom.trayWrap.classList.toggle('is-won', showNext);
     dom.nextLabel.textContent = nxt ? 'Next level' : 'Levels';
+    dom.lvlDone.hidden = !isDone(G.id);
   }
   dom.next.addEventListener('click', function () {
     var idx = levelIndex(G.id);
@@ -869,8 +991,12 @@
 
   function place(type, x, y, d) {
     if (remaining(type) <= 0 || !WB.canPlace(G.L, allPieces(), type, x, y)) { nope(x, y); return false; }
+    // placed right on the hint ghost: take the hinted rotation too
+    if (G.hint && G.hint.x === x && G.hint.y === y && G.hint.type === type) d = G.hint.d;
     var p = { type: type, x: x, y: y, d: rotations(type) > 1 ? (d | 0) % rotations(type) : 0 };
     var first = G.pieces.length === 0;
+    if (type === G.newTool) G.newToolUsed = true;
+    if (!dom.toast.hidden && dom.toast.getAttribute('data-kind') === 'mount') hideToast();
     commit(G.pieces.concat([p]));
     G.pops[x + ',' + y] = performance.now();
     Sound.tick();
@@ -936,7 +1062,7 @@
   // One-time coaching for moving, removing and turning pieces.
   function coach(type, firstOnBoard) {
     if (G.sim.solved) return;
-    var touch = coarseMQ.matches;
+    var touch = usingTouch();
     var msg = null, key = null;
     if (rotations(type) > 1 && !seenTip('turn')) {
       key = 'turn';
@@ -1019,7 +1145,7 @@
     if (nch && ch && nch !== ch && nch.tool && nch.first === next.id) {
       dom.winTeaser.hidden = false;
       R.icon(dom.winTeaserIcon, 'tool', nch.tool, 34);
-      dom.winTeaserText.innerHTML = 'Next chapter: <b>new tool — ' + esc(toolName(nch.tool)) + '</b>';
+      dom.winTeaserText.innerHTML = 'Next chapter: <b class="nw">new tool —&nbsp;' + esc(toolName(nch.tool)) + '</b>';
     } else {
       dom.winTeaser.hidden = true;
     }
@@ -1141,7 +1267,7 @@
     var f = floorish ? sim.flow[y * L.w + x] : 0;
     var p = playerAt(x, y), fixed = false;
     if (!p) { p = fixedAt(x, y); fixed = !!p; }
-    var flowBit = function () { return ' <span class="tt-dim">· ' + (f ? 'flow ' + f : 'still air') + '</span>'; };
+    var flowBit = function () { return ' <span class="tt-dim">· ' + breezeWord(f) + '</span>'; };
     if (p) {
       var name = toolName(p.type), s = '';
       switch (p.type) {
@@ -1152,7 +1278,8 @@
             s = 'inlet, facing the wind' + (tr && !tr.active ? ' <span class="tt-dim">· no way out yet</span>' : '');
           } else s = 'outlet, lets air out';
           break;
-        case 'fan': s = 'blowing ' + DIR_WORD[p.d] + flowBit(); break;
+        // a source reports what it sends out (its own 1, plus any air it pushes on)
+        case 'fan': s = 'blowing ' + DIR_WORD[p.d] + ' <span class="tt-dim">· pushes a breeze of ' + (f + 1) + '</span>'; break;
         case 'deflector': s = 'turns air 90°' + flowBit(); break;
         case 'curtain': s = 'softens air by 1' + flowBit(); break;
         case 'vent': s = 'air passes through'; break;
@@ -1160,7 +1287,7 @@
         case 'extractor': s = 'outlet, pulls air'; break;
         case 'skylight': s = 'outlet through the roof'; break;
         case 'filter': s = 'cleans smoke' + flowBit(); break;
-        case 'ceilingfan': s = 'blows all four ways' + flowBit(); break;
+        case 'ceilingfan': s = 'a breeze of 1 all four ways' + (f ? ' <span class="tt-dim">· ' + f + ' passes beneath</span>' : ''); break;
       }
       var html = '<b>' + name + '</b> — ' + s + (fixed ? ' <span class="tt-dim">· fixed</span>' : '');
       if (withActions && !fixed) {
@@ -1176,10 +1303,10 @@
         var st = g.state === 'happy' ? 'smoke is cleared' : g.state === 'bad' ? 'smoke is trapped' : 'smoke needs a way out';
         return '<b>' + oname + '</b> — ' + st;
       }
-      return '<b>' + oname + '</b> — ' + NEED[ob.type] + ' <span class="tt-dim">· now ' + g.flow + '</span>';
+      return '<b>' + oname + '</b> — ' + NEED[ob.type] + ' <span class="tt-dim">· ' + breezeWord(g.flow) + '</span>';
     }
-    if (ch === '.') return '<b>Floor</b> — ' + (f ? 'flow ' + f : 'still air');
-    if (ch === 'o') return '<b>Table</b> — ' + (f ? 'flow ' + f : 'still air') + ' <span class="tt-dim">· nothing fits here</span>';
+    if (ch === '.') return '<b>Floor</b> — ' + breezeWord(f);
+    if (ch === 'o') return '<b>Table</b> — air passes over <span class="tt-dim">· ' + breezeWord(f) + ' · nothing can be placed here</span>';
     if (ch === '%') return '<b>Solid wall</b> <span class="tt-dim">· nothing can be mounted</span>';
     if (ch === '#') {
       if (WB.outwardDir(L, x, y) >= 0) return '<b>Outside wall</b> <span class="tt-dim">· windows fit here</span>';
@@ -1191,23 +1318,60 @@
     return '<b>Garden</b> — ' + (w.strength > 0 ? 'wind from the ' + DIR_WORD[w.from] + ', ' + STRENGTH_WORD[Math.min(3, w.strength)] : 'a calm day');
   }
 
-  function showTooltipAt(x, y, html, ms) {
+  // Shows the tooltip above the cell (below when there is no room). With
+  // `avoid` (a touch turn, where the player wants to see what changed) it takes
+  // the spot around the cell that hides the fewest objects, pieces and streams.
+  function showTooltipAt(x, y, html, ms, avoid) {
     var tt = dom.tooltip;
     tt.innerHTML = html;
     tt.hidden = false;
     var rect = board.cellRect(x, y);
-    var cx = dom.canvas.offsetLeft + rect.left + rect.size / 2;
-    var top = dom.canvas.offsetTop + rect.top;
+    var ox = dom.canvas.offsetLeft, oy = dom.canvas.offsetTop, T = rect.size;
+    var cx = ox + rect.left + T / 2;
+    var top = oy + rect.top;
     tt.style.left = '0px';
     var w = tt.offsetWidth, h = tt.offsetHeight;
-    var sw = dom.stage.clientWidth;
-    var left = Math.max(8, Math.min(sw - w - 8, cx - w / 2));
-    var ty = top - h - 6;
-    if (ty < 4) ty = top + rect.size + 6;
-    tt.style.left = left + 'px';
-    tt.style.top = ty + 'px';
+    var sw = dom.stage.clientWidth, sh = dom.stage.clientHeight;
+    var cands = [{ l: cx - w / 2, t: top - h - 6 }, { l: cx - w / 2, t: top + T + 6 }];
+    if (avoid) {
+      cands.push({ l: ox + rect.left + T + 6, t: top + T / 2 - h / 2 });
+      cands.push({ l: ox + rect.left - w - 6, t: top + T / 2 - h / 2 });
+      cands.push({ l: cx - w / 2, t: top - T - h - 6 });
+      cands.push({ l: cx - w / 2, t: top + 2 * T + 6 });
+    }
+    var best = null;
+    for (var i = 0; i < cands.length; i++) {
+      var c = cands[i];
+      c.l = Math.max(8, Math.min(sw - w - 8, c.l));
+      var cost = (c.t >= 4 && c.t + h <= sh - 4 ? 0 : 1000) + i * 0.5;
+      if (avoid) cost += coverCost(c.l - ox, c.t - oy, w, h);
+      if (!best || cost < best.cost) best = { l: c.l, t: c.t, cost: cost };
+    }
+    tt.style.left = best.l + 'px';
+    tt.style.top = Math.max(4, Math.min(sh - h - 4, best.t)) + 'px';
     clearTimeout(G.tipTimer);
     if (ms) G.tipTimer = setTimeout(hideTooltip, ms);
+  }
+  // How much of the board a box (canvas px) hides: objects matter most, then
+  // pieces, then cells with air moving through them.
+  function coverCost(l, t, w, h) {
+    var L = G.L, T = board.T, sim = G.sim, cost = 0;
+    var x0 = Math.floor((l - board.ox) / T), x1 = Math.floor((l + w - board.ox) / T);
+    var y0 = Math.floor((t - board.oy) / T), y1 = Math.floor((t + h - board.oy) / T);
+    for (var y = Math.max(0, y0); y <= Math.min(L.h - 1, y1); y++) {
+      for (var x = Math.max(0, x0); x <= Math.min(L.w - 1, x1); x++) {
+        var cl = board.ox + x * T, ct = board.oy + y * T;
+        var ow = Math.min(cl + T, l + w) - Math.max(cl, l), oh = Math.min(ct + T, t + h) - Math.max(ct, t);
+        if (ow <= 0 || oh <= 0) continue;
+        var frac = (ow * oh) / (T * T);
+        var wgt = 0;
+        if (objectAt(x, y) >= 0) wgt = 12;
+        else if (playerAt(x, y) || fixedAt(x, y)) wgt = 6;
+        else if (WB.isFloorish(WB.cellAt(L, x, y)) && sim.flow[y * L.w + x] > 0) wgt = 2;
+        cost += wgt * frac;
+      }
+    }
+    return cost;
   }
   function hideTooltip() {
     clearTimeout(G.tipTimer);
@@ -1224,7 +1388,7 @@
     var t = WB.TOOLS[G.sel];
     if (!t) return;
     G.pulse = performance.now();
-    showToast(t.name + ' ' + MOUNT_HELP[t.mount] + ' — try a highlighted spot.', null, null, { ms: 2600 });
+    showToast(t.name + ' ' + MOUNT_HELP[t.mount] + ' — try a highlighted spot.', null, null, { ms: 2600, kind: 'mount' });
   }
 
   // ---------------------------------------------------------------- board input
@@ -1336,6 +1500,13 @@
 
   function tapCell(c, ptype) {
     var pp = c.inMap ? playerAt(c.x, c.y) : null, fp = c.inMap ? fixedAt(c.x, c.y) : null;
+    // a tap on the hint ghost places the hinted piece, turned the hinted way
+    var hp = G.hint;
+    if (hp && c.inMap && c.x === hp.x && c.y === hp.y && !pp && !fp && (!G.sel || G.sel === hp.type) &&
+        remaining(hp.type) > 0 && WB.canPlace(G.L, allPieces(), hp.type, hp.x, hp.y)) {
+      place(hp.type, hp.x, hp.y, hp.d);
+      return;
+    }
     if (G.sel && !pp && !fp) {
       var tgt = snapTarget(c, G.valid);
       if (tgt && tgt.d <= snapTol(c)) { place(G.sel, tgt.x, tgt.y, defaultRot(G.sel)); return; }
@@ -1347,7 +1518,9 @@
       var x = pp.x, y = pp.y, type = pp.type;
       if (rotations(type) > 1) {
         rotatePiece(pp);
-        if (ptype !== 'mouse') showTooltipAt(x, y, describe(x, y), 1500);
+        // on touch, say what it does now, but never over what the turn changed
+        // (and not at all when the turn solves the level)
+        if (ptype !== 'mouse' && !G.sim.solved) showTooltipAt(x, y, describe(x, y), 1500, ptype !== 'keyboard');
       } else {
         removePiece(pp, true);
         if (ptype !== 'mouse') showTooltipAt(x, y, '<b>' + toolName(type) + '</b> — back in the tray', 1400);
@@ -1468,8 +1641,11 @@
     d.travel = Math.max(d.travel || 0, Math.hypot(e.clientX - (d.x0 == null ? e.clientX : d.x0), e.clientY - (d.y0 == null ? e.clientY : d.y0)));
     var lift = touchy(d.ptype) ? Math.min(40, T * 0.9) : 0;
     if (d.kind === 'move') {
-      var k = touchy(d.ptype) ? clamp((d.travel - 0.5 * T) / (0.5 * T), 0, 1) : 0;
-      return { x: e.clientX + d.gx * (1 - k), y: e.clientY + d.gy * (1 - k) - lift * k };
+      // stays anchored for the first tile of travel (so nudging a piece one
+      // slot works), then eases up to about half a tile above the finger
+      var mlift = touchy(d.ptype) ? Math.min(28, T * 0.55) : 0;
+      var k = touchy(d.ptype) ? clamp((d.travel - T) / (1.5 * T), 0, 1) : 0;
+      return { x: e.clientX + d.gx * (1 - k), y: e.clientY + d.gy * (1 - k) - mlift * k };
     }
     return { x: e.clientX, y: e.clientY - lift };
   }
@@ -1481,7 +1657,9 @@
     d.last = c;
     var tgt = snapTarget(c, d.valid);
     var near = c.inMap || (tgt && tgt.d <= 1);
-    if (tgt && tgt.d <= snapTol(c)) {
+    // a finger is less precise than a mouse: snap to a slot from further away
+    var tol = touchy(d.ptype) ? (c.inMap ? 0.6 : 0.75) : snapTol(c);
+    if (tgt && tgt.d <= tol) {
       G.ghost = { type: d.type, x: tgt.x, y: tgt.y, d: d.d | 0, ok: true };
       d.target = tgt;
     } else {
@@ -1625,8 +1803,20 @@
     return '<canvas class="' + (cls || '') + '" data-icon="' + kind + '" data-id="' + id + '" data-size="' + size + '" style="width:' + size + 'px;height:' + size + 'px" aria-hidden="true"></canvas>';
   }
 
-  function openHelp() {
+  // The furthest level the player has reached: the help lists what they have
+  // met so far, also when they replay an early level.
+  function reachedLevel() {
     var n = G.id || 1;
+    store.completed.forEach(function (id) {
+      var i = levelIndex(id);
+      if (i < 0) return;
+      n = Math.max(n, i + 1 < LEVELS.length ? LEVELS[i + 1].id : id);
+    });
+    return n;
+  }
+
+  function openHelp() {
+    var n = reachedLevel();
     var h = [];
     var inLevel = {};
     if (G.L) {
@@ -1666,21 +1856,31 @@
       objs.forEach(function (o) {
         h.push('<li>' + cv('object', o, 40) + '<div><div class="gloss-name">' + esc(WB.OBJECTS[o].name) + '</div><div class="gloss-desc">' + esc(WB.OBJECTS[o].desc) + '</div></div></li>');
       });
+      var tl = firstLevelWith('table');
+      if ((tl != null && tl <= n) || (G.L && G.L.cells && G.L.cells.indexOf('o') >= 0)) {
+        h.push('<li>' + cv('ui', 'table', 40) + '<div><div class="gloss-name">Table</div><div class="gloss-desc">' + NEW_THING.table + '</div></div></li>');
+      }
       h.push('</ul>');
     }
+    var touch = usingTouch();
     h.push('<h3>Controls</h3><dl class="keys">');
     h.push('<dt>Tap a tool</dt><dd>select it, then tap a highlighted spot — or drag it onto the board</dd>');
     h.push('<dt>Tap a piece</dt><dd>turn it (fans, deflectors) or pick it up</dd>');
     h.push('<dt>Drag a piece</dt><dd>move it; drop it off the board to put it back</dd>');
-    h.push('<dt>Hold / right-click</dt><dd>remove a piece</dd>');
-    h.push('<dt><kbd>1</kbd>–<kbd>9</kbd>, <kbd>0</kbd></dt><dd>select a tool</dd>');
-    h.push('<dt><kbd>R</kbd></dt><dd>turn the piece under the pointer</dd>');
-    h.push('<dt><kbd>H</kbd></dt><dd>hint</dd>');
-    h.push('<dt><kbd>Ctrl</kbd> <kbd>Z</kbd></dt><dd>undo (add <kbd>Shift</kbd> to redo)</dd>');
-    h.push('<dt><kbd>Esc</kbd></dt><dd>deselect / close</dd>');
-    h.push('<dt>Arrows, <kbd>Enter</kbd></dt><dd>move around the board and place or turn</dd>');
-    h.push('<dt><kbd>Delete</kbd></dt><dd>remove the piece under the keyboard cursor</dd>');
+    h.push('<dt>' + (touch ? 'Press and hold' : 'Right-click') + '</dt><dd>remove a piece</dd>');
     h.push('</dl>');
+    // keyboard shortcuts only where a keyboard is likely (or has been used)
+    if (!(touch && coarseMQ.matches && !G.sawKeys)) {
+      h.push('<h3>Keyboard</h3><dl class="keys">');
+      h.push('<dt><kbd>1</kbd>–<kbd>9</kbd>, <kbd>0</kbd></dt><dd>select a tool</dd>');
+      h.push('<dt><kbd>R</kbd></dt><dd>turn the piece under the pointer</dd>');
+      h.push('<dt><kbd>H</kbd></dt><dd>hint</dd>');
+      h.push('<dt><kbd>Ctrl</kbd> <kbd>Z</kbd></dt><dd>undo (add <kbd>Shift</kbd> to redo)</dd>');
+      h.push('<dt><kbd>Esc</kbd></dt><dd>deselect / close</dd>');
+      h.push('<dt>Arrows, <kbd>Enter</kbd></dt><dd>move around the board and place or turn</dd>');
+      h.push('<dt><kbd>Delete</kbd></dt><dd>remove the piece under the keyboard cursor</dd>');
+      h.push('</dl>');
+    }
     dom.helpBody.innerHTML = h.join('');
     paintIcons(dom.helpBody);
     openDialog(dom.helpDlg, dom.helpClose);
@@ -1726,6 +1926,7 @@
   // ---------------------------------------------------------------- keyboard
 
   document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Tab' && e.key !== 'Escape' && !e.isComposing) G.sawKeys = true;
     var dlg = topDialog();
     if (dlg) {
       if (e.key === 'Escape') { e.preventDefault(); closeDialog(dlg); }
@@ -1818,7 +2019,7 @@
     if (w <= 0 || h <= 0) return;
     // keep the house clear of the "New tool" card; once reserved for a level,
     // the space stays so dismissing the card never moves the board
-    if (!dom.newtool.hidden) G.reserve = Math.max(G.reserve, dom.newtool.offsetTop + dom.newtool.offsetHeight - pt + 4);
+    if (!dom.newtool.hidden && dom.newtool.parentNode === dom.stage) G.reserve = Math.max(G.reserve, dom.newtool.offsetTop + dom.newtool.offsetHeight - pt + 4);
     var before = board.T + ',' + board.ox + ',' + board.oy;
     board.layout(w, h, G.reserve);
     if (before !== board.T + ',' + board.ox + ',' + board.oy) hideTooltip();
@@ -1903,7 +2104,7 @@
     if (G.screen === 'game') {
       renderTray();
       renderGoals();
-      if (G.newTool) R.icon(dom.newtoolIcon, 'tool', G.newTool, 40);
+      paintNewIcon();
       if (!dom.helpDlg.hidden) paintIcons(dom.helpBody);
     } else if (G.screen === 'home') {
       renderHome();
