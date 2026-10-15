@@ -138,7 +138,7 @@
     },
     {
       "id": 8, "chapter": 2, "name": "Smoke Signals",
-      "tip": "Stoves smoke. Blow it out of a window: smoke that hits a wall stays trapped. Hatched walls take no windows.",
+      "tip": "Blow the stove's smoke out of a window, never into a wall; hatched walls take no windows.",
       "wind": { "from": "W", "strength": 0 },
       "map": [
         "########%",
@@ -285,6 +285,7 @@
     },
     {
       "id": 17, "chapter": 4, "name": "Strong Enough",
+      "tip": "Strong wind today: count the lines in a stream to see how strong it is.",
       "wind": { "from": "W", "strength": 2 },
       "map": [
         "#########",
@@ -1074,28 +1075,7 @@
       ]
     },
     {
-      "id": 59, "chapter": 12, "name": "Glasshouse Storm",
-      "wind": { "from": "S", "strength": 3 },
-      "map": [
-        "###########",
-        "#o.o#f....#",
-        "#...#.ooo.#",
-        "#...l.....#",
-        "#.p.#.ooo.#",
-        "#o.o#f....#",
-        "%%#%%%%%%%%"
-      ],
-      "fixed": [{ "type": "window", "x": 2, "y": 6 }],
-      "inventory": { "window": 1, "fan": 1, "curtain": 1, "splitter": 1 },
-      "solution": [
-        { "type": "fan", "x": 2, "y": 3, "d": 1 },
-        { "type": "curtain", "x": 3, "y": 3 },
-        { "type": "splitter", "x": 5, "y": 3 },
-        { "type": "window", "x": 5, "y": 0 }
-      ]
-    },
-    {
-      "id": 60, "chapter": 12, "name": "Quiet Wing",
+      "id": 59, "chapter": 12, "name": "Quiet Wing",
       "tip": "A window whose wind finds no way out adds nothing, but a fan's own breeze always blows.",
       "wind": { "from": "N", "strength": 3 },
       "map": [
@@ -1120,12 +1100,33 @@
       ]
     },
     {
+      "id": 60, "chapter": 12, "name": "Glasshouse Storm",
+      "wind": { "from": "S", "strength": 3 },
+      "map": [
+        "###########",
+        "#o.o#f....#",
+        "#...#.ooo.#",
+        "#...l.....#",
+        "#.p.#.ooo.#",
+        "#o.o#f....#",
+        "%%#%%%%%%%%"
+      ],
+      "fixed": [{ "type": "window", "x": 2, "y": 6 }],
+      "inventory": { "window": 1, "fan": 1, "curtain": 1, "splitter": 1 },
+      "solution": [
+        { "type": "fan", "x": 2, "y": 3, "d": 1 },
+        { "type": "curtain", "x": 3, "y": 3 },
+        { "type": "splitter", "x": 5, "y": 3 },
+        { "type": "window", "x": 5, "y": 0 }
+      ]
+    },
+    {
       "id": 61, "chapter": 13, "name": "Wet Cloak",
       "tip": "Shh, this is a library: candles want still air, and papers a gentle breeze at most.",
       "wind": { "from": "W", "strength": 1 },
       "map": [
         "%%%%###%%%%",
-        "%c.%...%..%",
+        "%..%c..%..%",
         "%.o%.o.%o.%",
         "#.n..l..nc#",
         "%.o%...%o.%",
@@ -1449,22 +1450,21 @@
       "tip": "The old study is locked tight, but its window is stuck open: the breeze needs another way out.",
       "wind": { "from": "W", "strength": 2 },
       "map": [
-        "%%%%%%%%%%%%%",
-        "%o..o#...o..#",
-        "#.n..#oo...c#",
-        "%o...#..l.o.#",
-        "%%%%%%%%.%%%%",
-        "%.......s...%",
-        "%..o.....o..%",
-        "%%%%##%%#%##%"
+        "%%%%%%%%%%%%",
+        "%o..o%o....%",
+        "#.s..#.....%",
+        "%....%....o%",
+        "%%%#%%%%.%%%",
+        "%....c....l#",
+        "%%%%%%%%%%%%"
       ],
       "fixed": [{ "type": "window", "x": 0, "y": 2 }],
-      "inventory": { "window": 1, "fan": 1, "curtain": 1, "vent": 1 },
+      "inventory": { "window": 1, "deflector": 2, "curtain": 1, "vent": 1 },
       "solution": [
-        { "type": "curtain", "x": 1, "y": 2 },
         { "type": "vent", "x": 5, "y": 2 },
-        { "type": "fan", "x": 8, "y": 2, "d": 2 },
-        { "type": "window", "x": 8, "y": 7 }
+        { "type": "deflector", "x": 8, "y": 2, "d": 1 },
+        { "type": "deflector", "x": 8, "y": 5, "d": 1 },
+        { "type": "window", "x": 11, "y": 5 }
       ]
     },
     {
@@ -1542,12 +1542,12 @@
         "%%%%~~~~~%%%%",
         "%o.%~~~~~%.o%",
         "%..%%%#%%%..%",
-        "%.o..%.%..o.%",
-        "%....%s%....%",
+        "%.o..%.%..o.#",
+        "#....%s%....%",
         "%c.f.......s#",
         "%%%%%%.%%%%%%",
         "%.....l.....%",
-        "%%%%%%#%%%%%%"
+        "%#%%%%#%%%%%%"
       ],
       "fixed": [],
       "inventory": { "window": 3, "curtain": 1, "filter": 2, "ceilingfan": 1 },
@@ -1601,26 +1601,7 @@
       ]
     },
     {
-      "id": 83, "chapter": 17, "name": "Single Flue",
-      "wind": { "from": "N", "strength": 0 },
-      "map": [
-        "%%%%#%%%%",
-        "%.s...s.%",
-        "%o.....o%",
-        "%p.oco.p%",
-        "%%%%%%%%%"
-      ],
-      "fixed": [],
-      "inventory": { "fan": 1, "deflector": 1, "extractor": 1, "ceilingfan": 2 },
-      "solution": [
-        { "type": "extractor", "x": 4, "y": 0 },
-        { "type": "fan", "x": 4, "y": 1, "d": 0 },
-        { "type": "ceilingfan", "x": 1, "y": 1 },
-        { "type": "ceilingfan", "x": 7, "y": 1 }
-      ]
-    },
-    {
-      "id": 84, "chapter": 17, "name": "Under the Eaves",
+      "id": 83, "chapter": 17, "name": "Under the Eaves",
       "tip": "A gentle breeze splits into two gentle breezes, so stack two on one line and both sides get 2.",
       "wind": { "from": "N", "strength": 0 },
       "map": [
@@ -1638,6 +1619,25 @@
         { "type": "fan", "x": 5, "y": 4, "d": 0 },
         { "type": "splitter", "x": 5, "y": 1 },
         { "type": "window", "x": 10, "y": 4 }
+      ]
+    },
+    {
+      "id": 84, "chapter": 17, "name": "Single Flue",
+      "wind": { "from": "N", "strength": 0 },
+      "map": [
+        "%%%%#%%%%",
+        "%.s...s.%",
+        "%o.....o%",
+        "%p.oco.p%",
+        "%%%%%%%%%"
+      ],
+      "fixed": [],
+      "inventory": { "fan": 1, "deflector": 1, "extractor": 1, "ceilingfan": 2 },
+      "solution": [
+        { "type": "extractor", "x": 4, "y": 0 },
+        { "type": "fan", "x": 4, "y": 1, "d": 0 },
+        { "type": "ceilingfan", "x": 1, "y": 1 },
+        { "type": "ceilingfan", "x": 7, "y": 1 }
       ]
     },
     {
@@ -1663,24 +1663,24 @@
     },
     {
       "id": 86, "chapter": 18, "name": "Gale Warning",
-      "tip": "A split gale of 3 becomes two breezes of 1: kind to a fern, but still enough to put out a candle.",
+      "tip": "Storm season: a gale of 3 rattles every room it reaches.",
       "wind": { "from": "W", "strength": 3 },
       "map": [
         "###########",
-        "#...#..c..#",
-        "#...#.....#",
-        "#.l.......#",
-        "#...#..n..#",
-        "#...#..f..#",
+        "#oo.f..oo.#",
+        "#.........#",
+        "####.###.##",
+        "#...l....o#",
+        "#.........#",
         "###########"
       ],
-      "fixed": [],
-      "inventory": { "window": 2, "curtain": 1, "splitter": 1 },
+      "fixed": [{ "type": "window", "x": 0, "y": 2 }, { "type": "window", "x": 4, "y": 0 }],
+      "inventory": { "deflector": 4, "curtain": 1 },
       "solution": [
-        { "type": "window", "x": 0, "y": 3 },
-        { "type": "splitter", "x": 7, "y": 3 },
-        { "type": "curtain", "x": 7, "y": 2 },
-        { "type": "window", "x": 7, "y": 6 }
+        { "type": "deflector", "x": 8, "y": 2, "d": 1 },
+        { "type": "deflector", "x": 8, "y": 5, "d": 0 },
+        { "type": "deflector", "x": 4, "y": 5, "d": 1 },
+        { "type": "curtain", "x": 4, "y": 2 }
       ]
     },
     {
@@ -1897,6 +1897,7 @@
     },
     {
       "id": 96, "chapter": 20, "name": "Full Circle",
+      "tip": "Fresh air at last: these final houses need every trick you know.",
       "wind": { "from": "E", "strength": 2 },
       "map": [
         "#############",
@@ -1945,7 +1946,30 @@
       ]
     },
     {
-      "id": 98, "chapter": 20, "name": "Long Draw",
+      "id": 98, "chapter": 20, "name": "Pushback",
+      "wind": { "from": "W", "strength": 3 },
+      "map": [
+        "#############",
+        "#f.o..c#...o#",
+        "#...l..#....#",
+        "#......#.p..#",
+        "##########.##",
+        "#..s.o..o...#",
+        "#############"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 1 }, { "type": "window", "x": 0, "y": 5 }],
+      "inventory": { "fan": 1, "deflector": 3, "vent": 1, "skylight": 1 },
+      "solution": [
+        { "type": "deflector", "x": 10, "y": 5, "d": 0 },
+        { "type": "deflector", "x": 10, "y": 3, "d": 1 },
+        { "type": "vent", "x": 7, "y": 3 },
+        { "type": "deflector", "x": 4, "y": 3, "d": 1 },
+        { "type": "skylight", "x": 4, "y": 1 },
+        { "type": "fan", "x": 2, "y": 1, "d": 3 }
+      ]
+    },
+    {
+      "id": 99, "chapter": 20, "name": "Long Draw",
       "wind": { "from": "N", "strength": 3 },
       "map": [
         "%%#%%%%%%%%%%",
@@ -1969,30 +1993,7 @@
       ]
     },
     {
-      "id": 99, "chapter": 20, "name": "Pushback",
-      "wind": { "from": "W", "strength": 3 },
-      "map": [
-        "#############",
-        "#f.o..c#...o#",
-        "#...l..#....#",
-        "#......#.p..#",
-        "##########.##",
-        "#..s.o..o...#",
-        "#############"
-      ],
-      "fixed": [{ "type": "window", "x": 0, "y": 1 }, { "type": "window", "x": 0, "y": 5 }],
-      "inventory": { "fan": 1, "deflector": 3, "vent": 1, "skylight": 1 },
-      "solution": [
-        { "type": "deflector", "x": 10, "y": 5, "d": 0 },
-        { "type": "deflector", "x": 10, "y": 3, "d": 1 },
-        { "type": "vent", "x": 7, "y": 3 },
-        { "type": "deflector", "x": 4, "y": 3, "d": 1 },
-        { "type": "skylight", "x": 4, "y": 1 },
-        { "type": "fan", "x": 2, "y": 1, "d": 3 }
-      ]
-    },
-    {
-      "id": 100, "chapter": 20, "name": "Fresh Air",
+      "id": 100, "chapter": 20, "name": "Spring Cleaning",
       "tip": "Spring cleaning day: open up the whole house so every room gets just the air it needs.",
       "wind": { "from": "W", "strength": 3 },
       "map": [

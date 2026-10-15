@@ -4,6 +4,19 @@ Every release is merged to `main` with a version bump; work in progress lives
 on the `dev` branch. The version is shown at the bottom of the level-select
 screen.
 
+## v0.7 — Curated level progression
+
+* Game-wide curation: levels reordered within chapters so difficulty
+  rises, all 100 names unique (level 100 is now Spring Cleaning).
+* Levels 86-100 proven to have exactly one solution each (exhaustive
+  solver runs up to 2 minutes per level).
+* Fresh-eyes playtest of the onboarding and every chapter boundary:
+  levels 76 (Locked Study) and 86 (Gale Warning) rebuilt with new ideas,
+  80 opened up, clearer tips on 8, 17, 61 and 96.
+* Help text now explains exactly how breezes add up.
+* Full end-to-end suite green: 159 checks across mouse, touch, keyboard,
+  phone/tablet/desktop sizes, storage disabled and file://.
+
 ## v0.6 — Polished levels
 
 * Applied the chapter reviewers' remaining notes across all 20 chapters
