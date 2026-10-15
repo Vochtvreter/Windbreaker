@@ -4,7 +4,7 @@
   "levels": [
     {
       "name": "Back Door",
-      "tip": "A window's breeze only blows while it has somewhere to go.",
+      "tip": "Every pan is on tonight, and the back door is the only way out.",
       "wind": {"from": "W", "strength": 2},
       "map": [
         "###########",
@@ -20,37 +20,38 @@
       "solution": [{"type": "deflector", "x": 5, "y": 4, "d": 0}, {"type": "vent", "x": 5, "y": 3}, {"type": "deflector", "x": 5, "y": 1, "d": 0}]
     },
     {
-      "name": "Short Draw",
+      "name": "Hot Plates",
       "wind": {"from": "W", "strength": 0},
       "map": [
-        "%%%%%%%%%%%%%",
-        "#.......%...%",
-        "#...s...%.o.%",
-        "#.......%.o.%",
-        "#.s.......c.%",
-        "#...f...%.o.%",
-        "%%%%%%%%%%%%%"
-      ],
-      "fixed": [],
-      "inventory": {"fan": 1, "filter": 1, "extractor": 1},
-      "solution": [{"type": "fan", "x": 4, "y": 1, "d": 2}, {"type": "filter", "x": 4, "y": 4}, {"type": "extractor", "x": 0, "y": 4}]
-    },
-    {
-      "name": "Three Pans",
-      "wind": {"from": "W", "strength": 0},
-      "map": [
-        "%%%%%#%%%%%",
+        "###########",
         "#....s....#",
         "#.........#",
         "#.s......s#",
         "#.........#",
-        "%...ooo...%",
-        "%...oco...%",
-        "%%%%%%%%%%%"
+        "#...ooo...#",
+        "#...oco...#",
+        "###########"
       ],
       "fixed": [],
       "inventory": {"ceilingfan": 1, "curtain": 1, "window": 2, "filter": 1},
       "solution": [{"type": "ceilingfan", "x": 5, "y": 3}, {"type": "curtain", "x": 5, "y": 4}, {"type": "window", "x": 5, "y": 0}, {"type": "window", "x": 10, "y": 3}, {"type": "filter", "x": 1, "y": 3}]
+    },
+    {
+      "name": "Round Trip",
+      "wind": {"from": "W", "strength": 0},
+      "map": [
+        "%%%%%%%%%",
+        "%co.s.o.%",
+        "%oo%...l%",
+        "%%%%...s%",
+        "~~~%%%%.%",
+        "~~~%.ooc%",
+        "~~~%.oo.%",
+        "~~~%%%%%%"
+      ],
+      "fixed": [],
+      "inventory": {"fan": 2, "deflector": 1, "filter": 1},
+      "solution": [{"type": "fan", "x": 3, "y": 1, "d": 1}, {"type": "deflector", "x": 7, "y": 1, "d": 1}, {"type": "fan", "x": 7, "y": 4, "d": 0}, {"type": "filter", "x": 5, "y": 1}]
     },
     {
       "name": "Tea Towels",
@@ -59,7 +60,7 @@
         "###########",
         "#.s.#.....#",
         "#.........#",
-        "#...#....o#",
+        "#...#..s.o#",
         "#...#..l.c#",
         "#...#....o#",
         "###########"
@@ -76,13 +77,13 @@
         "#n.s....f.#",
         "#.........#",
         "#.#########",
-        "#.s.l.oco.#",
-        "#.....ooo.#",
+        "#.s.loooo.#",
+        "#....oooo.#",
         "###########"
       ],
       "fixed": [{"type": "window", "x": 0, "y": 1}, {"type": "window", "x": 0, "y": 4}],
       "inventory": {"deflector": 1, "vent": 1, "splitter": 1, "filter": 1, "skylight": 1},
-      "solution": [{"type": "deflector", "x": 5, "y": 4, "d": 0}, {"type": "vent", "x": 5, "y": 3}, {"type": "splitter", "x": 5, "y": 1}, {"type": "filter", "x": 2, "y": 1}, {"type": "skylight", "x": 9, "y": 1}]
+      "solution": [{"type": "deflector", "x": 9, "y": 1, "d": 1}, {"type": "vent", "x": 9, "y": 3}, {"type": "splitter", "x": 9, "y": 4}, {"type": "skylight", "x": 9, "y": 5}, {"type": "filter", "x": 2, "y": 1}]
     }
   ]
 }

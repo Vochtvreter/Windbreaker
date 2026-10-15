@@ -220,6 +220,19 @@ async function newPage(opts) {
       Object.defineProperty(window, 'sessionStorage', deny);
     });
   }
+  // a short log of the input events the page saw, printed when a step fails
+  await ctx.addInitScript(() => {
+    const log = window.__inputLog = [];
+    const desc = (t) => !t || !t.tagName ? '?' : t.tagName.toLowerCase() + (t.id ? '#' + t.id : '') +
+      (t.getAttribute && t.getAttribute('data-tool') ? '[' + t.getAttribute('data-tool') + ']' : '') + (t.className && typeof t.className === 'string' && !t.id ? '.' + t.className.split(' ')[0] : '');
+    ['pointerdown', 'pointerup', 'pointercancel', 'click', 'contextmenu', 'keydown'].forEach((type) => {
+      window.addEventListener(type, (e) => {
+        log.push(Math.round(performance.now()) + ' ' + type + (e.pointerType ? ':' + e.pointerType : '') + (e.key ? ':' + e.key : '') +
+          (e.clientX != null ? ' @' + Math.round(e.clientX) + ',' + Math.round(e.clientY) : '') + ' ' + desc(e.target));
+        if (log.length > 16) log.shift();
+      }, true);
+    });
+  });
   const page = await ctx.newPage();
   const label = opts.label || 'page';
   page.on('console', (m) => {
@@ -241,9 +254,10 @@ async function expectState(page, pred, what, timeout) {
     s = await state(page);
     if (pred(s)) return s;
     if (Date.now() > until) {
+      const events = await page.evaluate(() => (window.__inputLog || []).slice(-10)).catch(() => []);
       fail('timed out waiting for: ' + what + '\n         state: ' + JSON.stringify({
         screen: s.screen, id: s.id, sel: s.sel, pieces: s.pieces, won: s.won, hint: s.hint, conflicts: s.conflicts, undo: s.undo, redo: s.redo,
-      }));
+      }) + (events.length ? '\n         last input events (ms):\n           ' + events.join('\n           ') : ''));
     }
     await sleep(20);
   }

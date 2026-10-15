@@ -23,46 +23,50 @@
       ]
     },
     {
-      "name": "High Road",
+      "name": "Night Light",
       "wind": { "from": "E", "strength": 1 },
       "map": [
-        "###########",
-        "#p.#.p.#..#",
-        "#..#...#..#",
-        "#...c.....#",
-        "###########"
+        "#########",
+        "#.p.#..c#",
+        "#.......#",
+        "######.##",
+        "#.......#",
+        "#.......#",
+        "#########"
       ],
       "fixed": [
-        { "type": "window", "x": 10, "y": 1 },
-        { "type": "window", "x": 10, "y": 3 }
+        { "type": "window", "x": 8, "y": 1 },
+        { "type": "window", "x": 8, "y": 4 },
+        { "type": "deflector", "x": 2, "y": 4, "d": 1 }
       ],
-      "inventory": { "window": 1, "vent": 2 },
+      "inventory": { "window": 1, "vent": 1 },
       "solution": [
-        { "type": "vent", "x": 7, "y": 1 },
-        { "type": "vent", "x": 3, "y": 1 },
-        { "type": "window", "x": 0, "y": 1 }
+        { "type": "vent", "x": 2, "y": 3 },
+        { "type": "window", "x": 2, "y": 0 }
       ]
     },
     {
       "name": "Potted Fern",
       "tip": "Ferns are delicate: they want exactly one breeze, no more and no less.",
-      "wind": { "from": "W", "strength": 2 },
+      "wind": { "from": "S", "strength": 2 },
       "map": [
-        "##########",
-        "#...#....#",
-        "#..l#..f.#",
-        "#...#....#",
-        "#........#",
-        "##########"
+        "#######",
+        "#.....#",
+        "#.f..o#",
+        "#.....#",
+        "####.##",
+        "#.....#",
+        "#.l...#",
+        "#######"
       ],
       "fixed": [
-        { "type": "window", "x": 0, "y": 2 }
+        { "type": "window", "x": 2, "y": 7 }
       ],
       "inventory": { "window": 1, "vent": 1, "curtain": 1 },
       "solution": [
-        { "type": "vent", "x": 4, "y": 2 },
-        { "type": "curtain", "x": 5, "y": 2 },
-        { "type": "window", "x": 9, "y": 2 }
+        { "type": "vent", "x": 2, "y": 4 },
+        { "type": "curtain", "x": 2, "y": 3 },
+        { "type": "window", "x": 2, "y": 0 }
       ]
     },
     {
@@ -92,25 +96,27 @@
       "name": "Blustery Washday",
       "wind": { "from": "W", "strength": 2 },
       "map": [
-        "#######~~~~",
-        "#.....#~~~~",
-        "#.l...#~~~~",
-        "#.#########",
-        "#.....#...#",
-        "#...f.#...#",
-        "#.......l.#",
-        "###########"
+        "#####~~~~",
+        "#...#~~~~",
+        "#l..#~~~~",
+        "##.##~~~~",
+        "#.f.#####",
+        "#....o..#",
+        "#c.o#l..#",
+        "#########"
       ],
       "fixed": [
         { "type": "window", "x": 0, "y": 2 },
-        { "type": "deflector", "x": 4, "y": 2, "d": 1 },
-        { "type": "window", "x": 10, "y": 6 }
+        { "type": "deflector", "x": 2, "y": 2, "d": 1 },
+        { "type": "curtain", "x": 2, "y": 3 },
+        { "type": "window", "x": 0, "y": 6 },
+        { "type": "window", "x": 8, "y": 6 }
       ],
-      "inventory": { "vent": 1, "curtain": 1, "fan": 1 },
+      "inventory": { "vent": 1, "deflector": 1, "fan": 1 },
       "solution": [
-        { "type": "vent", "x": 4, "y": 3 },
-        { "type": "curtain", "x": 4, "y": 4 },
-        { "type": "fan", "x": 4, "y": 6, "d": 1 }
+        { "type": "vent", "x": 4, "y": 6 },
+        { "type": "deflector", "x": 2, "y": 6, "d": 1 },
+        { "type": "fan", "x": 2, "y": 5, "d": 2 }
       ]
     }
   ]

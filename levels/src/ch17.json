@@ -23,28 +23,47 @@
       ]
     },
     {
-      "name": "Short Pull",
+      "name": "Scullery",
       "wind": { "from": "N", "strength": 0 },
       "map": [
-        "%%%%%%%%%",
-        "%c.s.n..#",
-        "%#######%",
-        "%.......%",
-        "%.s.....%",
-        "%p.....f%",
-        "%%%%%%%%%"
+        "%%%%%%%#%%%",
+        "%..c.%....%",
+        "%.s..#l...#",
+        "%s..c%..c.#",
+        "%.........%",
+        "%#%%%%%%%%%"
       ],
       "fixed": [],
-      "inventory": { "extractor": 1, "ceilingfan": 1, "skylight": 1, "vent": 1 },
+      "inventory": { "ceilingfan": 1, "vent": 1, "extractor": 1, "skylight": 1 },
       "solution": [
-        { "type": "extractor", "x": 8, "y": 1 },
-        { "type": "skylight", "x": 2, "y": 1 },
-        { "type": "ceilingfan", "x": 2, "y": 5 },
-        { "type": "vent", "x": 2, "y": 2 }
+        { "type": "ceilingfan", "x": 1, "y": 2 },
+        { "type": "skylight", "x": 1, "y": 4 },
+        { "type": "vent", "x": 5, "y": 2 },
+        { "type": "extractor", "x": 10, "y": 2 }
       ]
     },
     {
-      "name": "Drying Loft",
+      "name": "Single Flue",
+      "wind": { "from": "N", "strength": 0 },
+      "map": [
+        "%%%%#%%%%",
+        "%.s...s.%",
+        "%o.....o%",
+        "%p.oco.p%",
+        "%%%%%%%%%"
+      ],
+      "fixed": [],
+      "inventory": { "extractor": 1, "fan": 1, "ceilingfan": 2, "deflector": 1 },
+      "solution": [
+        { "type": "extractor", "x": 4, "y": 0 },
+        { "type": "fan", "x": 4, "y": 1, "d": 0 },
+        { "type": "ceilingfan", "x": 1, "y": 1 },
+        { "type": "ceilingfan", "x": 7, "y": 1 }
+      ]
+    },
+    {
+      "name": "Under the Eaves",
+      "tip": "A gentle breeze splits into two gentle breezes, so stack two on one line and both sides get 2.",
       "wind": { "from": "N", "strength": 0 },
       "map": [
         "%%%%%%%%%%%",
@@ -64,25 +83,6 @@
       ]
     },
     {
-      "name": "One Way Out",
-      "wind": { "from": "N", "strength": 0 },
-      "map": [
-        "%%%%#%%%%",
-        "%.s...s.%",
-        "%o..n..o%",
-        "%p.oco.p%",
-        "%%%%%%%%%"
-      ],
-      "fixed": [],
-      "inventory": { "extractor": 1, "fan": 1, "ceilingfan": 2, "deflector": 1 },
-      "solution": [
-        { "type": "extractor", "x": 4, "y": 0 },
-        { "type": "fan", "x": 4, "y": 1, "d": 0 },
-        { "type": "ceilingfan", "x": 1, "y": 1 },
-        { "type": "ceilingfan", "x": 7, "y": 1 }
-      ]
-    },
-    {
       "name": "Still House",
       "wind": { "from": "N", "strength": 0 },
       "map": [
@@ -91,7 +91,7 @@
         "%.s..#.c..%",
         "%....#....%",
         "%....#s..f%",
-        "%....#..p.%",
+        "%.......p.%",
         "%%%%%%%%%%%"
       ],
       "fixed": [
