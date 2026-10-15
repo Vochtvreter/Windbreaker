@@ -23,6 +23,7 @@
     },
     {
       "name": "Strong Enough",
+      "tip": "Strong wind today: count the lines in a stream to see how strong it is.",
       "wind": { "from": "W", "strength": 2 },
       "map": [
         "#########",

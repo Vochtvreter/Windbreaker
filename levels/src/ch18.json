@@ -4,24 +4,27 @@
   "levels": [
     {
       "name": "Gale Warning",
-      "tip": "A split gale of 3 becomes two breezes of 1: kind to a fern, but still enough to put out a candle.",
+      "tip": "Storm season: a gale of 3 rattles every room it reaches.",
       "wind": { "from": "W", "strength": 3 },
       "map": [
         "###########",
-        "#...#..c..#",
-        "#...#.....#",
-        "#.l.......#",
-        "#...#..n..#",
-        "#...#..f..#",
+        "#oo.f..oo.#",
+        "#.........#",
+        "####.###.##",
+        "#...l....o#",
+        "#.........#",
         "###########"
       ],
-      "fixed": [],
-      "inventory": { "window": 2, "splitter": 1, "curtain": 1 },
+      "fixed": [
+        { "type": "window", "x": 0, "y": 2 },
+        { "type": "window", "x": 4, "y": 0 }
+      ],
+      "inventory": { "deflector": 4, "curtain": 1 },
       "solution": [
-        { "type": "window", "x": 0, "y": 3 },
-        { "type": "splitter", "x": 7, "y": 3 },
-        { "type": "curtain", "x": 7, "y": 2 },
-        { "type": "window", "x": 7, "y": 6 }
+        { "type": "deflector", "x": 8, "y": 2, "d": 1 },
+        { "type": "deflector", "x": 8, "y": 5, "d": 0 },
+        { "type": "deflector", "x": 4, "y": 5, "d": 1 },
+        { "type": "curtain", "x": 4, "y": 2 }
       ]
     },
     {

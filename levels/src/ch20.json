@@ -4,6 +4,7 @@
   "levels": [
     {
       "name": "Full Circle",
+      "tip": "Fresh air at last: these final houses need every trick you know.",
       "wind": { "from": "E", "strength": 2 },
       "map": [
         "#############",

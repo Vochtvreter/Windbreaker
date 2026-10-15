@@ -34,7 +34,7 @@
     },
     {
       "name": "Smoke Signals",
-      "tip": "Stoves smoke. Blow it out of a window: smoke that hits a wall stays trapped. Hatched walls take no windows.",
+      "tip": "Blow the stove's smoke out of a window, never into a wall; hatched walls take no windows.",
       "wind": { "from": "W", "strength": 0 },
       "map": [
         "########%",
