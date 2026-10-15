@@ -3,21 +3,21 @@
   "title": "Kitchen Rush",
   "levels": [
     {
-      "name": "Back Door",
-      "tip": "Every pan is on tonight, and the back door is the only way out.",
-      "wind": {"from": "W", "strength": 2},
+      "name": "Pass-Through",
+      "tip": "Every range is lit tonight, and the old chimney stack stands right in the way.",
+      "wind": {"from": "W", "strength": 1},
       "map": [
-        "###########",
-        "#.n...s...#",
-        "#.........#",
-        "#.#########",
-        "#.s.l...oc#",
-        "#.......oo#",
-        "###########"
+        "%%%%%%%%%%%%",
+        "%..........%",
+        "%.....s...s%",
+        "#.....#....%",
+        "%.oco.s...c%",
+        "%.ooo.....o%",
+        "%##########%"
       ],
-      "fixed": [{"type": "window", "x": 0, "y": 1}, {"type": "window", "x": 10, "y": 1}, {"type": "window", "x": 0, "y": 4}],
-      "inventory": {"deflector": 2, "vent": 1},
-      "solution": [{"type": "deflector", "x": 5, "y": 4, "d": 0}, {"type": "vent", "x": 5, "y": 3}, {"type": "deflector", "x": 5, "y": 1, "d": 0}]
+      "fixed": [{"type": "window", "x": 0, "y": 3}],
+      "inventory": {"vent": 1, "deflector": 3, "window": 1},
+      "solution": [{"type": "vent", "x": 6, "y": 3}, {"type": "deflector", "x": 10, "y": 3, "d": 0}, {"type": "deflector", "x": 10, "y": 1, "d": 1}, {"type": "deflector", "x": 6, "y": 1, "d": 0}, {"type": "window", "x": 6, "y": 6}]
     },
     {
       "name": "Hot Plates",

@@ -11,6 +11,34 @@ the laundry dry, keep the candles lit and get the kitchen smoke outside.
 * plays with mouse or touch, on phones and desktops, in light or dark mode
 * no build step, no dependencies — just static files
 
+## How to play
+
+* The wind blows in from one side of the garden. A **window facing the wind**
+  lets a breeze in; every other window lets air out.
+* **A breeze only flows if it has a way out.** An inlet with no outlet stays
+  still (you see its path as a faint dashed line).
+* Strength is the number of lines in a stream: 1 is a gentle breeze, 2 is
+  strong, 3 is a gale. Breezes from different sources add up where they meet.
+* Make every object happy at the same time:
+
+  | object | wants |
+  |---|---|
+  | Pinwheel | any breeze |
+  | Candle | no air at all |
+  | Stove | its smoke blown outside or through a filter, never into a wall |
+  | Laundry | a strong breeze (2+) |
+  | Papers | at most a gentle breeze (1) |
+  | Fern | exactly a gentle breeze (1) |
+
+* Tools, one new every 5 levels: window, fan, deflector, curtain, wall vent,
+  splitter, extractor, skylight, air filter and ceiling fan.
+
+**Controls:** tap a tool, then a highlighted cell (or drag it onto the board).
+Tap a placed piece to turn it, drag it to move it, drag it off the board,
+right-click or long-press to remove it. Undo (Ctrl/Cmd+Z), redo
+(Ctrl/Cmd+Shift+Z), reset and a hint button are always there; `?` opens the
+rules. Progress is saved in your browser.
+
 ## Play
 
 Open `index.html` in a browser, or serve the folder:
@@ -37,7 +65,9 @@ All paths are relative, so it works from any sub-path.
 * `js/render.js`, `js/game.js`, `css/style.css`, `index.html` — the game.
 * `levels/src/chNN.json` — level sources, one file per chapter of 5 levels.
 * `js/levels.js` — generated from the sources with `npm run build`.
-* `tools/` — level checker, solver and ASCII viewer used to design levels.
+* `tools/` — level checker, solver, ASCII viewer and end-to-end test
+  (see `tools/README.md`).
+* `CHANGELOG.md` — what changed in each release.
 
 ## Development
 
@@ -45,6 +75,7 @@ All paths are relative, so it works from any sub-path.
 npm test             # engine + tooling unit tests
 npm run check        # validate every level and verify it is solvable
 npm run build        # regenerate js/levels.js from levels/src
+node tools/e2e.js    # play every level through the real UI (needs Playwright)
 ```
 
 No packages need to be installed; everything uses Node's standard library.
