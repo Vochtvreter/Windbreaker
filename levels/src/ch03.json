@@ -1,0 +1,104 @@
+{
+  "chapter": 3,
+  "title": "Deflectors",
+  "levels": [
+    {
+      "name": "Round the Corner",
+      "tip": "A deflector turns the breeze by 90 degrees. Tap it to flip between / and \\.",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "#########",
+        "#.......#",
+        "#####...#",
+        "~~~~#.p.#",
+        "~~~~#...#",
+        "~~~~#####"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 1 }, { "type": "window", "x": 6, "y": 5 }],
+      "inventory": { "deflector": 1 },
+      "solution": [{ "type": "deflector", "x": 6, "y": 1, "d": 1 }]
+    },
+    {
+      "name": "Candle Detour",
+      "wind": { "from": "E", "strength": 1 },
+      "map": [
+        "#########",
+        "#...oco.#",
+        "#.......#",
+        "#p......#",
+        "#########"
+      ],
+      "fixed": [{ "type": "window", "x": 8, "y": 1 }, { "type": "window", "x": 0, "y": 3 }],
+      "inventory": { "deflector": 2 },
+      "solution": [
+        { "type": "deflector", "x": 7, "y": 1, "d": 0 },
+        { "type": "deflector", "x": 7, "y": 3, "d": 0 }
+      ]
+    },
+    {
+      "name": "Clothesline",
+      "tip": "Laundry only dries in a strong breeze (2 or more). Air that reaches a fan gets pushed along.",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "#########",
+        "#.......#",
+        "###.##.##",
+        "#.....l.#",
+        "#.......#",
+        "%%%%%%%%%"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 1 }, { "type": "fan", "x": 3, "y": 3, "d": 1 }],
+      "inventory": { "deflector": 1, "window": 1 },
+      "solution": [
+        { "type": "deflector", "x": 3, "y": 1, "d": 1 },
+        { "type": "window", "x": 8, "y": 3 }
+      ]
+    },
+    {
+      "name": "One Way Out",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "######~~~~",
+        "#.p..#~~~~",
+        "#....#~~~~",
+        "###.######",
+        "#.p...l..#",
+        "#........#",
+        "##########"
+      ],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 1 },
+        { "type": "window", "x": 0, "y": 4 },
+        { "type": "window", "x": 9, "y": 4 }
+      ],
+      "inventory": { "fan": 1, "deflector": 1 },
+      "solution": [
+        { "type": "deflector", "x": 3, "y": 1, "d": 1 },
+        { "type": "fan", "x": 3, "y": 4, "d": 1 }
+      ]
+    },
+    {
+      "name": "Crossroads",
+      "wind": { "from": "N", "strength": 1 },
+      "map": [
+        "##########",
+        "#.s..#.c.#",
+        "#....#...#",
+        "##.####.##",
+        "#........#",
+        "#......l.#",
+        "##########"
+      ],
+      "fixed": [
+        { "type": "window", "x": 2, "y": 0 },
+        { "type": "window", "x": 7, "y": 0 },
+        { "type": "window", "x": 7, "y": 6 }
+      ],
+      "inventory": { "fan": 1, "deflector": 1 },
+      "solution": [
+        { "type": "fan", "x": 2, "y": 4, "d": 1 },
+        { "type": "deflector", "x": 7, "y": 4, "d": 1 }
+      ]
+    }
+  ]
+}

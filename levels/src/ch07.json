@@ -1,0 +1,102 @@
+{
+  "chapter": 7,
+  "title": "Extractors",
+  "levels": [
+    {
+      "name": "Upwind Exit",
+      "tip": "Extractors fit any outside wall, even the one facing the wind, and draw a gentle breeze toward them.",
+      "wind": { "from": "N", "strength": 1 },
+      "map": [
+        "#########",
+        "#...#...#",
+        "#.p.#...#",
+        "#....p..#",
+        "#########"
+      ],
+      "fixed": [
+        { "type": "window", "x": 2, "y": 0 },
+        { "type": "deflector", "x": 2, "y": 3, "d": 1 },
+        { "type": "deflector", "x": 6, "y": 3, "d": 0 }
+      ],
+      "inventory": { "extractor": 1 },
+      "solution": [{ "type": "extractor", "x": 6, "y": 0 }]
+    },
+    {
+      "name": "Range Hood",
+      "tip": "An extractor's gentle pull carries smoke along its line and out of the house.",
+      "wind": { "from": "N", "strength": 1 },
+      "map": [
+        "#########",
+        "#cs.#...#",
+        "#.....p.#",
+        "#####...#",
+        "#.......#",
+        "#########"
+      ],
+      "fixed": [{ "type": "window", "x": 6, "y": 0 }],
+      "inventory": { "window": 1, "extractor": 1 },
+      "solution": [
+        { "type": "extractor", "x": 2, "y": 0 },
+        { "type": "window", "x": 6, "y": 5 }
+      ]
+    },
+    {
+      "name": "Candlelit Supper",
+      "tip": "An extractor's pull stops at the first piece in its way.",
+      "wind": { "from": "N", "strength": 0 },
+      "map": [
+        "#########",
+        "##.p#.o.#",
+        "#s....c.#",
+        "##..#.o.#",
+        "#########"
+      ],
+      "fixed": [],
+      "inventory": { "fan": 1, "extractor": 1 },
+      "solution": [
+        { "type": "extractor", "x": 0, "y": 2 },
+        { "type": "fan", "x": 3, "y": 2, "d": 0 }
+      ]
+    },
+    {
+      "name": "Wash House",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "#########",
+        "#...f...#",
+        "#.s.....#",
+        "#.......#",
+        "####.####",
+        "#.......#",
+        "#...l...#",
+        "#########"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
+      "inventory": { "window": 1, "splitter": 1, "extractor": 1 },
+      "solution": [
+        { "type": "splitter", "x": 4, "y": 2 },
+        { "type": "extractor", "x": 4, "y": 7 },
+        { "type": "window", "x": 4, "y": 0 }
+      ]
+    },
+    {
+      "name": "Headwind Kitchen",
+      "wind": { "from": "E", "strength": 1 },
+      "map": [
+        "#########",
+        "#o.#....#",
+        "#.....l.#",
+        "##.###.##",
+        "#oco...s#",
+        "#########"
+      ],
+      "fixed": [{ "type": "window", "x": 8, "y": 1 }],
+      "inventory": { "fan": 1, "deflector": 1, "extractor": 1 },
+      "solution": [
+        { "type": "fan", "x": 6, "y": 1, "d": 2 },
+        { "type": "deflector", "x": 6, "y": 4, "d": 1 },
+        { "type": "extractor", "x": 8, "y": 4 }
+      ]
+    }
+  ]
+}

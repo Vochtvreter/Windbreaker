@@ -1,0 +1,82 @@
+{
+  "chapter": 2,
+  "title": "Fans",
+  "levels": [
+    {
+      "name": "Still Air",
+      "tip": "No wind today. Place the fan, then tap it to turn it until it blows on the pinwheel.",
+      "wind": { "from": "W", "strength": 0 },
+      "map": [
+        "#######",
+        "#.....#",
+        "#..p..#",
+        "#.....#",
+        "#######"
+      ],
+      "fixed": [],
+      "inventory": { "fan": 1 },
+      "solution": [ { "type": "fan", "x": 1, "y": 2, "d": 1 } ]
+    },
+    {
+      "name": "Turning Point",
+      "tip": "A fan pushes on any air that reaches it, even the wind, so it can steer a breeze round a corner.",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "#########",
+        "#....p..#",
+        "#..p....#",
+        "#.......#",
+        "#########"
+      ],
+      "fixed": [ { "type": "window", "x": 0, "y": 2 }, { "type": "window", "x": 5, "y": 0 } ],
+      "inventory": { "fan": 1 },
+      "solution": [ { "type": "fan", "x": 5, "y": 2, "d": 0 } ]
+    },
+    {
+      "name": "Smoke Signals",
+      "tip": "Stoves smoke. Blow the smoke out of a window: smoke pushed into a wall stays trapped.",
+      "wind": { "from": "W", "strength": 0 },
+      "map": [
+        "########%",
+        "#.....p.%",
+        "#.s.....%",
+        "#.......%",
+        "########%"
+      ],
+      "fixed": [ { "type": "fan", "x": 1, "y": 2, "d": 1 } ],
+      "inventory": { "fan": 1, "window": 1 },
+      "solution": [ { "type": "fan", "x": 6, "y": 2, "d": 0 }, { "type": "window", "x": 6, "y": 0 } ]
+    },
+    {
+      "name": "Into the Wind",
+      "wind": { "from": "N", "strength": 1 },
+      "map": [
+        "#######",
+        "#.....#",
+        "#.....#",
+        "#..p..#",
+        "###.###",
+        "#..c..#",
+        "#.....#",
+        "#######"
+      ],
+      "fixed": [ { "type": "window", "x": 3, "y": 0 }, { "type": "window", "x": 3, "y": 7 } ],
+      "inventory": { "fan": 1 },
+      "solution": [ { "type": "fan", "x": 3, "y": 4, "d": 0 } ]
+    },
+    {
+      "name": "Sunday Roast",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "###########",
+        "#....#....#",
+        "#...s..oc.#",
+        "#....#....#",
+        "###########"
+      ],
+      "fixed": [ { "type": "window", "x": 0, "y": 2 }, { "type": "window", "x": 10, "y": 2 } ],
+      "inventory": { "fan": 1, "window": 1 },
+      "solution": [ { "type": "fan", "x": 6, "y": 2, "d": 0 }, { "type": "window", "x": 6, "y": 0 } ]
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "chapter": 8,
+  "title": "Skylights",
+  "levels": [
+    {
+      "name": "Through the Roof",
+      "tip": "A skylight lets air out through the roof, so a breeze can flow even where no window will open.",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "#####%%%%",
+        "#...#...%",
+        "#.p...p.%",
+        "#...#...%",
+        "#####%%%%"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
+      "inventory": { "skylight": 1 },
+      "solution": [{ "type": "skylight", "x": 7, "y": 2 }]
+    },
+    {
+      "name": "Table for Two",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "#########",
+        "#.p..c..#",
+        "#.ooooo.#",
+        "#.p.c...#",
+        "#########"
+      ],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 1 },
+        { "type": "window", "x": 8, "y": 1 },
+        { "type": "fan", "x": 1, "y": 3, "d": 1 }
+      ],
+      "inventory": { "skylight": 1, "curtain": 1 },
+      "solution": [
+        { "type": "skylight", "x": 3, "y": 1 },
+        { "type": "curtain", "x": 3, "y": 3 }
+      ]
+    },
+    {
+      "name": "Windowless Kitchen",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "#####%%%%%",
+        "#.p.....c%",
+        "#...#.s..%",
+        "#...#....%",
+        "#####%%%%%"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 1 }],
+      "inventory": { "skylight": 1, "fan": 1 },
+      "solution": [
+        { "type": "fan", "x": 6, "y": 1, "d": 2 },
+        { "type": "skylight", "x": 6, "y": 3 }
+      ]
+    },
+    {
+      "name": "Dead End",
+      "wind": { "from": "N", "strength": 2 },
+      "map": [
+        "##########",
+        "#...l.#..#",
+        "#.....#.o#",
+        "#c.p...s.#",
+        "##########"
+      ],
+      "fixed": [{ "type": "window", "x": 4, "y": 0 }],
+      "inventory": { "splitter": 1, "curtain": 1, "skylight": 1 },
+      "solution": [
+        { "type": "splitter", "x": 4, "y": 3 },
+        { "type": "curtain", "x": 2, "y": 3 },
+        { "type": "skylight", "x": 8, "y": 3 }
+      ]
+    },
+    {
+      "name": "Laundry Chute",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "#########",
+        "#.......#",
+        "#....c..#",
+        "#######.#",
+        "#...l...#",
+        "#.s...c.#",
+        "#########"
+      ],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 2 },
+        { "type": "fan", "x": 1, "y": 5, "d": 1 }
+      ],
+      "inventory": { "deflector": 1, "vent": 1, "skylight": 1 },
+      "solution": [
+        { "type": "deflector", "x": 4, "y": 2, "d": 1 },
+        { "type": "vent", "x": 4, "y": 3 },
+        { "type": "skylight", "x": 4, "y": 5 }
+      ]
+    }
+  ]
+}

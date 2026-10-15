@@ -1,0 +1,101 @@
+{
+  "chapter": 10,
+  "title": "Ceiling Fans",
+  "levels": [
+    {
+      "name": "Overhead",
+      "tip": "A ceiling fan stirs a gentle breeze in all four directions at once, no window needed.",
+      "wind": { "from": "W", "strength": 0 },
+      "map": [
+        "#########",
+        "#...p...#",
+        "#.......#",
+        "#p.....p#",
+        "#...o...#",
+        "#########"
+      ],
+      "fixed": [],
+      "inventory": { "ceilingfan": 1 },
+      "solution": [{ "type": "ceilingfan", "x": 4, "y": 3 }]
+    },
+    {
+      "name": "Candle Corner",
+      "wind": { "from": "W", "strength": 0 },
+      "map": [
+        "~~~#####~~~",
+        "####.p.####",
+        "#.........#",
+        "#........p#",
+        "#.p.......#",
+        "#...oco...#",
+        "###########"
+      ],
+      "fixed": [],
+      "inventory": { "ceilingfan": 1, "deflector": 1 },
+      "solution": [
+        { "type": "ceilingfan", "x": 5, "y": 3 },
+        { "type": "deflector", "x": 5, "y": 4, "d": 0 }
+      ]
+    },
+    {
+      "name": "Backdraft",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "###########",
+        "#.o.p...o.#",
+        "#.........#",
+        "####.######",
+        "#.s.....l.#",
+        "#.........#",
+        "###########"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 4 }],
+      "inventory": { "ceilingfan": 1, "window": 1, "filter": 1 },
+      "solution": [
+        { "type": "ceilingfan", "x": 4, "y": 4 },
+        { "type": "window", "x": 10, "y": 4 },
+        { "type": "filter", "x": 1, "y": 4 }
+      ]
+    },
+    {
+      "name": "Drying Room",
+      "wind": { "from": "W", "strength": 0 },
+      "map": [
+        "###########",
+        "#....#....#",
+        "#.l..#....#",
+        "#....#....#",
+        "#...n...l.#",
+        "#....#....#",
+        "###########"
+      ],
+      "fixed": [],
+      "inventory": { "ceilingfan": 2, "vent": 1 },
+      "solution": [
+        { "type": "ceilingfan", "x": 2, "y": 4 },
+        { "type": "ceilingfan", "x": 8, "y": 2 },
+        { "type": "vent", "x": 5, "y": 2 }
+      ]
+    },
+    {
+      "name": "Gale House",
+      "wind": { "from": "N", "strength": 3 },
+      "map": [
+        "%%%%%######",
+        "%...#.#...#",
+        "%...#.#...#",
+        "%.s.l...f.#",
+        "%...#n#...#",
+        "%%%%%######"
+      ],
+      "fixed": [{ "type": "window", "x": 5, "y": 0 }],
+      "inventory": { "ceilingfan": 1, "splitter": 1, "window": 1, "filter": 1 },
+      "solution": [
+        { "type": "splitter", "x": 5, "y": 3 },
+        { "type": "ceilingfan", "x": 3, "y": 3 },
+        { "type": "window", "x": 10, "y": 3 },
+        { "type": "filter", "x": 1, "y": 3 }
+      ]
+    }
+  ]
+}

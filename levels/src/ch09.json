@@ -1,0 +1,83 @@
+{
+  "chapter": 9,
+  "title": "Filters",
+  "levels": [
+    {
+      "name": "Clean Air",
+      "tip": "Smoky air must never hit a wall. An air filter cleans the smoke out of any air passing through it.",
+      "wind": {"from": "W", "strength": 0},
+      "map": [
+        "#########",
+        "#.......#",
+        "#..s.p..#",
+        "#.......#",
+        "#########"
+      ],
+      "fixed": [{"type": "fan", "x": 1, "y": 2, "d": 1}],
+      "inventory": {"filter": 1},
+      "solution": [{"type": "filter", "x": 4, "y": 2}]
+    },
+    {
+      "name": "Two Burners",
+      "wind": {"from": "W", "strength": 0},
+      "map": [
+        "#########",
+        "#...c...#",
+        "#.s.....#",
+        "####.####",
+        "#.......#",
+        "#.....s.#",
+        "#########"
+      ],
+      "fixed": [{"type": "fan", "x": 1, "y": 2, "d": 1}, {"type": "fan", "x": 7, "y": 5, "d": 3}],
+      "inventory": {"filter": 1, "deflector": 1},
+      "solution": [{"type": "deflector", "x": 4, "y": 2, "d": 1}, {"type": "filter", "x": 4, "y": 5}]
+    },
+    {
+      "name": "Galley Kitchen",
+      "wind": {"from": "W", "strength": 1},
+      "map": [
+        "#########",
+        "#...#...#",
+        "#...#.s.#",
+        "#..s....#",
+        "#...#...#",
+        "#...#.s.#",
+        "#########"
+      ],
+      "fixed": [{"type": "window", "x": 0, "y": 3}],
+      "inventory": {"splitter": 1, "filter": 1, "window": 1},
+      "solution": [{"type": "splitter", "x": 6, "y": 3}, {"type": "window", "x": 6, "y": 6}, {"type": "filter", "x": 6, "y": 1}]
+    },
+    {
+      "name": "Supper Smoke",
+      "wind": {"from": "N", "strength": 2},
+      "map": [
+        "#########",
+        "#.l.#...#",
+        "#...#.o.#",
+        "#..s..c.#",
+        "#.n.#.o.#",
+        "#########"
+      ],
+      "fixed": [{"type": "window", "x": 2, "y": 0}],
+      "inventory": {"window": 1, "splitter": 1, "filter": 1, "curtain": 1},
+      "solution": [{"type": "splitter", "x": 2, "y": 3}, {"type": "window", "x": 0, "y": 3}, {"type": "filter", "x": 4, "y": 3}, {"type": "curtain", "x": 5, "y": 3}]
+    },
+    {
+      "name": "Hood and Hearth",
+      "wind": {"from": "W", "strength": 0},
+      "map": [
+        "#########",
+        "#...#p..#",
+        "#c.....s#",
+        "#...#...#",
+        "#.s.....#",
+        "#########"
+      ],
+      "fixed": [{"type": "extractor", "x": 8, "y": 2}],
+      "inventory": {"fan": 1, "deflector": 1, "filter": 1},
+      "solution": [{"type": "fan", "x": 1, "y": 4, "d": 1}, {"type": "deflector", "x": 5, "y": 4, "d": 0}, {"type": "filter", "x": 5, "y": 2}]
+    }
+  ]
+}

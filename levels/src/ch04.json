@@ -1,0 +1,114 @@
+{
+  "chapter": 4,
+  "title": "Curtains",
+  "levels": [
+    {
+      "name": "Shielded Flame",
+      "tip": "A curtain softens any air passing through it. A gentle breeze stops right there.",
+      "wind": { "from": "W", "strength": 0 },
+      "map": [
+        "##########",
+        "#....#...#",
+        "#.p....c.#",
+        "#....#...#",
+        "##########"
+      ],
+      "fixed": [
+        { "type": "fan", "x": 1, "y": 2, "d": 1 }
+      ],
+      "inventory": { "curtain": 1 },
+      "solution": [
+        { "type": "curtain", "x": 5, "y": 2 }
+      ]
+    },
+    {
+      "name": "Strong Enough",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "##########",
+        "#...#..c.#",
+        "#.......p#",
+        "#.o.#..p.#",
+        "#...#....#",
+        "##########"
+      ],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 2 },
+        { "type": "fan", "x": 7, "y": 4, "d": 0 }
+      ],
+      "inventory": { "window": 1, "curtain": 1 },
+      "solution": [
+        { "type": "window", "x": 9, "y": 2 },
+        { "type": "curtain", "x": 7, "y": 2 }
+      ]
+    },
+    {
+      "name": "Loose Papers",
+      "tip": "Papers scatter in strong wind: they can take a gentle breeze of 1 at most.",
+      "wind": { "from": "N", "strength": 2 },
+      "map": [
+        "#####~~~~",
+        "#...#~~~~",
+        "#...#####",
+        "#....n.p#",
+        "#.......#",
+        "#########"
+      ],
+      "fixed": [
+        { "type": "window", "x": 2, "y": 0 }
+      ],
+      "inventory": { "window": 1, "curtain": 1, "deflector": 1 },
+      "solution": [
+        { "type": "curtain", "x": 2, "y": 1 },
+        { "type": "deflector", "x": 2, "y": 3, "d": 1 },
+        { "type": "window", "x": 8, "y": 3 }
+      ]
+    },
+    {
+      "name": "Draught Stopper",
+      "wind": { "from": "N", "strength": 1 },
+      "map": [
+        "##########",
+        "#.c.#.p..%",
+        "#...#....%",
+        "#...#....%",
+        "#......l.%",
+        "##########"
+      ],
+      "fixed": [
+        { "type": "window", "x": 2, "y": 0 },
+        { "type": "window", "x": 6, "y": 0 },
+        { "type": "deflector", "x": 2, "y": 4, "d": 1 },
+        { "type": "fan", "x": 6, "y": 4, "d": 1 }
+      ],
+      "inventory": { "window": 1, "curtain": 1, "deflector": 1 },
+      "solution": [
+        { "type": "curtain", "x": 2, "y": 2 },
+        { "type": "deflector", "x": 8, "y": 4, "d": 1 },
+        { "type": "window", "x": 8, "y": 5 }
+      ]
+    },
+    {
+      "name": "Second Wind",
+      "wind": { "from": "S", "strength": 2 },
+      "map": [
+        "#########",
+        "#o..#...#",
+        "#.l.#...#",
+        "#...n...#",
+        "#ooo#o..#",
+        "#########"
+      ],
+      "fixed": [
+        { "type": "window", "x": 6, "y": 5 },
+        { "type": "window", "x": 2, "y": 0 }
+      ],
+      "inventory": { "curtain": 1, "fan": 1, "deflector": 1 },
+      "solution": [
+        { "type": "curtain", "x": 6, "y": 4 },
+        { "type": "deflector", "x": 6, "y": 3, "d": 1 },
+        { "type": "fan", "x": 2, "y": 3, "d": 0 }
+      ]
+    }
+  ]
+}

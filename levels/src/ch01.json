@@ -16,6 +16,73 @@
       "fixed": [{ "type": "window", "x": 0, "y": 2 }],
       "inventory": { "window": 1 },
       "solution": [{ "type": "window", "x": 8, "y": 2 }]
+    },
+    {
+      "name": "Wind Shift",
+      "tip": "The wind has turned! Open a window facing the wind, and one on the far side to let it out.",
+      "wind": { "from": "S", "strength": 1 },
+      "map": [
+        "#####",
+        "#...#",
+        "#..p#",
+        "#...#",
+        "#...#",
+        "#...#",
+        "#####"
+      ],
+      "fixed": [],
+      "inventory": { "window": 2 },
+      "solution": [{ "type": "window", "x": 3, "y": 6 }, { "type": "window", "x": 3, "y": 0 }]
+    },
+    {
+      "name": "Candlelight",
+      "tip": "Candles need still air. A window with no way out lets no breeze in.",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "#########",
+        "#..p....#",
+        "#.....c.#",
+        "#.......#",
+        "#########"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
+      "inventory": { "window": 2 },
+      "solution": [{ "type": "window", "x": 0, "y": 1 }, { "type": "window", "x": 8, "y": 1 }]
+    },
+    {
+      "name": "Doorway Draft",
+      "wind": { "from": "N", "strength": 1 },
+      "map": [
+        "#########",
+        "#.....p.#",
+        "#.......#",
+        "######.##",
+        "#.......#",
+        "#.....p.#",
+        "#########"
+      ],
+      "fixed": [],
+      "inventory": { "window": 2 },
+      "solution": [{ "type": "window", "x": 6, "y": 0 }, { "type": "window", "x": 6, "y": 6 }]
+    },
+    {
+      "name": "Garden Court",
+      "wind": { "from": "E", "strength": 1 },
+      "map": [
+        "###########",
+        "#.........#",
+        "#...###...#",
+        "#.p.#~#.c.#",
+        "#...#~#.p.#",
+        "#####~#####"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 3 }],
+      "inventory": { "window": 3 },
+      "solution": [
+        { "type": "window", "x": 4, "y": 3 },
+        { "type": "window", "x": 10, "y": 4 },
+        { "type": "window", "x": 6, "y": 4 }
+      ]
     }
   ]
 }

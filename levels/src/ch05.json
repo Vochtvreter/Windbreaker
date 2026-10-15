@@ -1,0 +1,117 @@
+{
+  "chapter": 5,
+  "title": "Wall Vents",
+  "levels": [
+    {
+      "name": "Through the Wall",
+      "tip": "Walls stop the wind. A wall vent in an inner wall lets air pass straight through.",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "##########",
+        "#...#....#",
+        "#.p.#.p..#",
+        "#........#",
+        "##########"
+      ],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 2 }
+      ],
+      "inventory": { "window": 1, "vent": 1 },
+      "solution": [
+        { "type": "vent", "x": 4, "y": 2 },
+        { "type": "window", "x": 9, "y": 2 }
+      ]
+    },
+    {
+      "name": "High Road",
+      "wind": { "from": "E", "strength": 1 },
+      "map": [
+        "###########",
+        "#p.#.p.#..#",
+        "#..#...#..#",
+        "#...c.....#",
+        "###########"
+      ],
+      "fixed": [
+        { "type": "window", "x": 10, "y": 1 },
+        { "type": "window", "x": 10, "y": 3 }
+      ],
+      "inventory": { "window": 1, "vent": 2 },
+      "solution": [
+        { "type": "vent", "x": 7, "y": 1 },
+        { "type": "vent", "x": 3, "y": 1 },
+        { "type": "window", "x": 0, "y": 1 }
+      ]
+    },
+    {
+      "name": "Potted Fern",
+      "tip": "Ferns are delicate: they want exactly one breeze, no more and no less.",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "##########",
+        "#...#....#",
+        "#..l#..f.#",
+        "#...#....#",
+        "#........#",
+        "##########"
+      ],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 2 }
+      ],
+      "inventory": { "window": 1, "vent": 1, "curtain": 1 },
+      "solution": [
+        { "type": "vent", "x": 4, "y": 2 },
+        { "type": "curtain", "x": 5, "y": 2 },
+        { "type": "window", "x": 9, "y": 2 }
+      ]
+    },
+    {
+      "name": "Side Door",
+      "wind": { "from": "N", "strength": 1 },
+      "map": [
+        "#########",
+        "#.p.#...#",
+        "#...#...#",
+        "#.###...#",
+        "#...#...#",
+        "#......p#",
+        "#...#...#",
+        "#########"
+      ],
+      "fixed": [
+        { "type": "window", "x": 2, "y": 0 }
+      ],
+      "inventory": { "window": 1, "vent": 1, "deflector": 1 },
+      "solution": [
+        { "type": "vent", "x": 2, "y": 3 },
+        { "type": "deflector", "x": 2, "y": 5, "d": 1 },
+        { "type": "window", "x": 8, "y": 5 }
+      ]
+    },
+    {
+      "name": "Blustery Washday",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "#######~~~~",
+        "#.....#~~~~",
+        "#.l...#~~~~",
+        "#.#########",
+        "#.....#...#",
+        "#...f.#...#",
+        "#.......l.#",
+        "###########"
+      ],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 2 },
+        { "type": "deflector", "x": 4, "y": 2, "d": 1 },
+        { "type": "window", "x": 10, "y": 6 }
+      ],
+      "inventory": { "vent": 1, "curtain": 1, "fan": 1 },
+      "solution": [
+        { "type": "vent", "x": 4, "y": 3 },
+        { "type": "curtain", "x": 4, "y": 4 },
+        { "type": "fan", "x": 4, "y": 6, "d": 1 }
+      ]
+    }
+  ]
+}

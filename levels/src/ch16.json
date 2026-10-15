@@ -1,0 +1,97 @@
+{
+  "chapter": 16,
+  "title": "Old Manor",
+  "levels": [
+    {
+      "name": "Reading Room",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "%%%%%%%%%%%%%",
+        "%o..o#...o..%",
+        "#.n..#oo....%",
+        "%o...#..l.o.%",
+        "%%.%%%%%.%%%%",
+        "%c......s...%",
+        "%%%%%%%%#%%%%"
+      ],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 2 }
+      ],
+      "inventory": { "curtain": 1, "fan": 1, "vent": 1, "window": 2 },
+      "solution": [
+        { "type": "curtain", "x": 1, "y": 2 },
+        { "type": "vent", "x": 5, "y": 2 },
+        { "type": "fan", "x": 8, "y": 2, "d": 2 },
+        { "type": "window", "x": 8, "y": 6 }
+      ]
+    },
+    {
+      "name": "Inner Court",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "%%%%%%%%%%%%%",
+        "%.....o.....#",
+        "%%.###%###.##",
+        "%...#~~~#..c%",
+        "%...#~~~#.l.%",
+        "%%.###%###.##",
+        "%...o.s.n...#",
+        "%%%%%%%%%%%%%"
+      ],
+      "fixed": [],
+      "inventory": { "window": 2, "deflector": 3, "curtain": 1 },
+      "solution": [
+        { "type": "window", "x": 8, "y": 3 },
+        { "type": "deflector", "x": 10, "y": 3, "d": 1 },
+        { "type": "deflector", "x": 10, "y": 6, "d": 0 },
+        { "type": "curtain", "x": 9, "y": 6 },
+        { "type": "deflector", "x": 5, "y": 6, "d": 1 },
+        { "type": "window", "x": 5, "y": 5 }
+      ]
+    },
+    {
+      "name": "Chimney Corner",
+      "wind": { "from": "E", "strength": 1 },
+      "map": [
+        "%%%%%%%%%%%%%",
+        "%.o..p#.....#",
+        "%.....#..o..#",
+        "%%%.%%%%.%%%%",
+        "%c....l.s...#",
+        "%%%%%%%%%%%%%"
+      ],
+      "fixed": [],
+      "inventory": { "window": 1, "vent": 1, "deflector": 2, "extractor": 1, "curtain": 1 },
+      "solution": [
+        { "type": "window", "x": 12, "y": 1 },
+        { "type": "vent", "x": 6, "y": 1 },
+        { "type": "deflector", "x": 3, "y": 1, "d": 0 },
+        { "type": "deflector", "x": 3, "y": 4, "d": 1 },
+        { "type": "extractor", "x": 12, "y": 4 }
+      ]
+    },
+    {
+      "name": "Servants' Pantry",
+      "wind": { "from": "N", "strength": 2 },
+      "map": [
+        "%%%%###%%%%%%",
+        "%o...l..#.o.%",
+        "%.......#.f.%",
+        "%..o....#.o.%",
+        "%%%.%%%%%%.%%",
+        "#s.........o%",
+        "%%%%%%%%%%%%%"
+      ],
+      "fixed": [],
+      "inventory": { "window": 2, "splitter": 1, "vent": 1, "deflector": 2, "curtain": 1 },
+      "solution": [
+        { "type": "window", "x": 5, "y": 0 },
+        { "type": "splitter", "x": 5, "y": 2 },
+        { "type": "vent", "x": 8, "y": 2 },
+        { "type": "deflector", "x": 3, "y": 2, "d": 0 },
+        { "type": "deflector", "x": 3, "y": 5, "d": 0 },
+        { "type": "window", "x": 0, "y": 5 }
+      ]
+    }
+  ]
+}

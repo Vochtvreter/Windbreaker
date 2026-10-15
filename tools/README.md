@@ -153,10 +153,16 @@ The full argument is in the header of `solve.js`; in short:
 * Counted solutions are **irredundant**: removing any one piece breaks them.
   Every minimal solution is counted.
 
-Verified against brute force (every placement of every inventory subset, no
-pruning) on the hand-made levels in `tests/fixtures/tiny-levels.json`, 40
-deterministic random levels in the test suite, and ~13,000 random levels
-during development.
+Verified against an independent brute force (`tests/fixtures/bruteforce.js`:
+every placement of every inventory subset, no pruning) on the hand-made levels
+in `tests/fixtures/tiny-levels.json` and in `tests/tools.test.js`, ~400 seeded
+random levels in the test suite (maps up to 13x10, all tools, 1-6 pieces,
+stoves, notched outlines, interior walls), the real levels in `levels/src`,
+and ~20,000 random levels during development (two audits). The test compares
+the solvable verdict, `minPieces`, every reported solution (re-simulated with
+both engines, valid, irredundant), and requires every minimal solution, hence
+every brute-force solution is *reducible* to a reported one (a reported
+solution is a subset of it).
 
 ### Performance (4-core container, Node 22, optimised engine)
 
@@ -181,7 +187,7 @@ are still exact. Use `--time 60000` for important checks.
 
 ```
 node tools/check-levels.js [--file chNN.json | --level 7,12-15 | --chapter 3] [--src dir]
-                           [--fast] [--time ms] [--jobs N] [--targets] [--json]
+                           [--fast] [--time ms] [--intro-time ms] [--jobs N] [--targets] [--json]
 ```
 
 A bare positional argument works too: `check-levels.js 6-10` or `check-levels.js levels/src/ch02.json`.
@@ -190,14 +196,15 @@ A bare positional argument works too: `check-levels.js 6-10` or `check-levels.js
 
 * chapter files: invalid JSON (with line/col), more than 5 levels, `chapter` not matching the file name, duplicate chapters
 * `WB.validateLevel` errors (map, sealing, size, placements, overlaps, solution fits inventory)
+* malformed piece fields in `fixed` / `solution`: `x`, `y`, `d` must be integers (the engine reads `d: "E"` as 0 and `x: 2.5` as 2)
 * `WB.introErrors` with the real level number (tools, objects, wind strengths not yet introduced)
 * level already solved before anything is placed
 * reference solution missing or does not solve
-* tool intro levels (1, 6, 11, ..., 46): the new tool is missing from the inventory, or the level **is solvable without it** (solver with that tool excluded)
-* the solver exhaustively proves the level unsolvable although the reference solves it (engine/solver bug)
+* tool intro levels (1, 6, 11, ..., 46): the new tool is missing from the inventory, or the level **is solvable without it**, or this could **not be proven**: the search with that tool excluded must finish (exhaustive). It has its own budget, `--intro-time` (default 60 s); a timeout fails the level - tutorial levels should be small
+* the solver exhaustively proves the level unsolvable although the reference solves it, or misses a reference solution that is minimal (engine/solver bug)
 
 **Warnings**: partial chapters, unknown level keys (typos), intro level without
-a `tip`, intro check `unknown` (solver timeout), solvable with fewer pieces
+a `tip`, unknown piece keys, solvable with fewer pieces
 than the reference, reference uses fewer pieces than the inventory (decoys)
 before level 76, solver timeout, difficulty much lower than the previous
 level's (more than max(5, 25%) lower; not reported on tool intro levels, which
@@ -209,20 +216,21 @@ targets (inventory / objects / rooms per level range).
    1  First Breeze           9x5    1   1   1   1  0 W1    ok   exh       1   1        4      1   4.5
    2  Two Pinwheels          9x5    1   2   2   2  0 W1    -    exh       1   2        8      4   8.0
 warn  ch01.json: partial chapter (2/5 levels)
-OK: 2 levels, 0 failures, 1 warning (0.1 s, solver 3000 ms/search)
+OK: 2 levels, 0 failures, 1 warning (0.1 s, solver 3000 ms/search, intro proofs up to 60000 ms)
 ```
 
 Columns: `rm` rooms (connected floor areas), `inv` inventory pieces, `ref`
 reference-solution pieces, `obj` objects, `hz` hazards (candles, papers,
 ferns), `wind` (`W2` = from west, strength 2), `w/o` intro check (`ok` = not
-solvable without the new tool, `FAIL`, `?` = timeout, `-` = not an intro
+solvable without the new tool, `FAIL`, `?` = not proven (a failure), `-` = not an intro
 level), `solver` (`exh`austive / `TIME`out / `cap`ped), `sols` counted
 solutions, `min` fewest pieces, `space` configurations evaluated in the final
 search pass, `ms` solver time, `diff` difficulty (`~` = estimate after a
-timeout). Failing rows end in `FAIL`; the issue list follows the table.
+timeout or after hitting the 1000-solution cap). Failing rows end in `FAIL`; the issue list follows the table.
 
 `--fast` skips the solver (no intro-exclusion check, no difficulty). `--time`
-is per search (intro levels run two searches), default 3000. Levels are
+is per search, default 3000; the intro-exclusion proof uses `--intro-time`
+instead (default 60000, usually a few ms). Levels are
 checked in parallel worker threads (`--jobs`, default min(4, cores - 1)).
 `--json` prints `{summary, fileErrors, fileWarnings, levels: [...]}`, one level
 per line.

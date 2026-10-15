@@ -5,17 +5,23 @@
  * compact stats table. Exit code 1 on any hard failure.
  *
  *   node tools/check-levels.js [--file chNN.json | --level 7,12-15 | --chapter 3]
- *                              [--fast] [--time ms] [--json] [--jobs N] [--targets] [--src dir]
+ *                              [--fast] [--time ms] [--intro-time ms] [--json] [--jobs N] [--targets] [--src dir]
  *
  * Hard failures: chapter file problems (bad JSON, >5 levels, wrong chapter
- * number), WB.validateLevel errors, WB.introErrors (with the real level
- * number), level solved before anything is placed, reference solution does not
- * solve, intro level (1, 6, ..., 46) missing its new tool or solvable without
- * it, solver proves the level unsolvable although the reference solves it.
- * Warnings: partial chapters, unknown level keys, intro level without a tip,
- * "unknown" intro verdict (solver timeout), solvable with fewer pieces than the
- * reference, decoy pieces before level 76, big difficulty drop vs the previous
- * level, and (with --targets) DESIGN.md section 7 rough-target deviations.
+ * number), WB.validateLevel errors, malformed piece fields (x/y/d not integers,
+ * e.g. d: "E", which the engine would silently read as 0), WB.introErrors (with
+ * the real level number), level solved before anything is placed, reference
+ * solution does not solve, intro level (1, 6, ..., 46) missing its new tool or
+ * solvable without it, or NOT PROVEN unsolvable without it (the exclusion
+ * search must be exhaustive: it gets its own, much larger budget, --intro-time,
+ * default 60 s; tutorial levels are small, so a timeout means the level is too
+ * big for an intro level or the budget too small), solver proves the level
+ * unsolvable although the reference solves it or (exhaustive search) does not
+ * report a reference solution that is minimal.
+ * Warnings: partial chapters, unknown level / piece keys, intro level without a
+ * tip, solvable with fewer pieces than the reference, decoy pieces before level
+ * 76, solver timeout, big difficulty drop vs the previous level, and (with
+ * --targets) DESIGN.md section 7 rough-target deviations.
  *
  * DIFFICULTY (higher = harder; level 1 is about 5, a hard level 30-40):
  *     D = log2(space)            configurations the pruned solver search had to evaluate
@@ -36,7 +42,9 @@ const { solve } = require('./solve');
 const WB = lib.WB;
 
 const DEFAULT_TIME = 3000;
+const DEFAULT_INTRO_TIME = 60000;
 const DECOY_FROM = 76;
+const PIECE_KEYS = ['type', 'x', 'y', 'd'];
 
 const TARGETS = [
   // [first, last, inv, objects, rooms] from DESIGN.md section 7
@@ -54,7 +62,8 @@ function introTool(n) {
 
 function difficulty(f, s) {
   if (!s) return { value: null, approx: false };
-  const exact = s.status !== 'timeout';
+  // 'timeout' and 'capped' searches stopped early: space and count are lower bounds.
+  const exact = s.status === 'exhaustive';
   const minPieces = s.minPieces != null ? s.minPieces : f.ref;
   const count = Math.max(1, s.count);
   const space = Math.max(1, s.space);
@@ -65,8 +74,42 @@ function difficulty(f, s) {
 }
 
 /**
+ * Piece fields the engine reads leniently (x | 0, d | 0): a typo such as
+ * d: "E" or x: 2.5 would silently become 0 / 2 in the game. Returns
+ * { errors, warnings } for the fixed and solution lists.
+ */
+function pieceFieldIssues(def) {
+  const errors = [], warnings = [];
+  for (const list of ['fixed', 'solution']) {
+    const v = def[list];
+    if (v == null) continue;
+    if (!Array.isArray(v)) { errors.push(list + ' must be an array'); continue; }
+    v.forEach((p, i) => {
+      const label = list + '[' + i + ']';
+      if (!p || typeof p !== 'object' || Array.isArray(p)) { errors.push(label + ' is not an object'); return; }
+      for (const k of ['x', 'y']) {
+        if (!Number.isInteger(p[k])) errors.push(label + ': ' + k + ' must be an integer (got ' + JSON.stringify(p[k]) + ')');
+      }
+      if (p.d !== undefined && !Number.isInteger(p.d)) {
+        errors.push(label + ': d must be an integer rotation (got ' + JSON.stringify(p.d) + '; fans 0-3 = N E S W, deflectors 0 = / 1 = \\)');
+      }
+      for (const k of Object.keys(p)) if (!PIECE_KEYS.includes(k)) warnings.push(label + ': unknown key "' + k + '" (ignored)');
+    });
+  }
+  return { errors, warnings };
+}
+
+/** No proper subset of the (solving) piece list solves the level. */
+function isMinimalSolution(L, fixed, sol) {
+  for (let m = 0; m < (1 << sol.length) - 1; m++) {
+    if (WB.isSolved(L, fixed.concat(sol.filter((_, i) => m & (1 << i))))) return false;
+  }
+  return true;
+}
+
+/**
  * Check one level entry ({ n, chapter, index, def, file }).
- * opts: { fast, timeMs, targets }. Returns a plain report object.
+ * opts: { fast, timeMs, introTimeMs, targets }. Returns a plain report object.
  */
 function checkLevel(entry, opts) {
   opts = opts || {};
@@ -89,9 +132,12 @@ function checkLevel(entry, opts) {
   if (!def.name) err('level has no name');
 
   // 1-2: structure, placement, inventory.
+  const pf = pieceFieldIssues(def);
+  pf.errors.forEach(err);
+  pf.warnings.forEach(warn);
   const verrs = WB.validateLevel(def);
   verrs.forEach(err);
-  if (verrs.length) { rep.ms = Date.now() - t0; return rep; }
+  if (verrs.length || pf.errors.length) { rep.ms = Date.now() - t0; return rep; }
   const f = rep.facts = lib.levelFacts(def);
 
   // 3: introductions.
@@ -113,10 +159,16 @@ function checkLevel(entry, opts) {
     if (!((def.inventory || {})[tool] > 0)) err('intro level for ' + tool + ' but ' + tool + ' is not in the inventory');
     if (!def.tip) warn('intro level for ' + tool + ' has no tip');
     if (!opts.fast) {
-      const x = solve(def, { timeMs: opts.timeMs, maxSolutions: 1, excludeTools: [tool] });
-      rep.excluded = { tool, status: x.status, solvable: x.solvable, ms: x.ms, nodes: x.nodes };
+      // Must be a proof: the exclusion search gets its own, larger budget and
+      // anything short of an exhaustive "unsolvable" fails the check.
+      const introTime = opts.introTimeMs != null ? opts.introTimeMs : DEFAULT_INTRO_TIME;
+      const x = solve(def, { timeMs: introTime, maxSolutions: 1, excludeTools: [tool] });
+      rep.excluded = { tool, status: x.status, solvable: x.solvable, ms: x.ms, nodes: x.nodes, completedDepth: x.completedDepth, maxDepth: x.maxDepth };
       if (x.solvable === true) err('solvable without ' + tool + ': ' + lib.piecesShort(x.solutions[0]));
-      else if (x.solvable === null) warn('unknown whether solvable without ' + tool + ' (solver ' + x.status + ' after ' + x.ms + ' ms)');
+      else if (x.solvable === null) {
+        err('could not prove the level unsolvable without ' + tool + ' (solver ' + x.status + ' after ' + x.ms +
+          ' ms, exhaustive up to ' + x.completedDepth + ' of ' + x.maxDepth + ' pieces): make the intro level smaller or raise --intro-time');
+      }
     }
   }
 
@@ -129,6 +181,12 @@ function checkLevel(entry, opts) {
       first: s.solutions.length ? s.solutions[0] : null
     };
     if (s.solvable === false && refSolves) err('solver says unsolvable but the reference solution solves it (solver/engine bug?)');
+    // Runtime completeness cross-check: an exhaustive search reports every
+    // minimal solution, so a minimal reference solution must be among them.
+    if (s.status === 'exhaustive' && refSolves && sol.length <= 12 && isMinimalSolution(L, fixed, sol)) {
+      const key = JSON.stringify(lib.sortPieces(sol));
+      if (!s.solutions.some((x) => JSON.stringify(x) === key)) err('solver did not report the (minimal) reference solution: solver bug, please report');
+    }
     if (s.minPieces != null && s.minPieces < sol.length) {
       warn('solvable with ' + s.minPieces + ' piece' + (s.minPieces === 1 ? '' : 's') + ' (reference uses ' + sol.length + '): ' + lib.piecesShort(s.solutions[0]));
     }
@@ -240,6 +298,8 @@ selection (default: every levels/src/chNN.json):
 options:
   --fast             skip the solver (no intro-exclusion check, no difficulty)
   --time ms          solver time limit per search (default ${DEFAULT_TIME})
+  --intro-time ms    budget for the exhaustive "unsolvable without the new tool"
+                     proof on intro levels (default ${DEFAULT_INTRO_TIME}; a timeout FAILS)
   --jobs N           parallel workers (default: cores - 1, max 4)
   --targets          also warn about DESIGN.md section 7 rough targets
   --json             machine-readable output
@@ -317,7 +377,7 @@ function table(reports) {
 
 async function main(argv) {
   const a = lib.parseArgs(argv, {
-    values: ['file', 'level', 'chapter', 'time', 'jobs', 'src', 'n'],
+    values: ['file', 'level', 'chapter', 'time', 'intro-time', 'jobs', 'src', 'n'],
     bools: ['fast', 'json', 'targets']
   });
   if (a.flags.help) { console.log(USAGE); return 0; }
@@ -330,7 +390,10 @@ async function main(argv) {
   const os = require('os');
   const cores = typeof os.availableParallelism === 'function' ? os.availableParallelism() : os.cpus().length;
   const jobs = Math.max(1, Math.floor(lib.numFlag(a.flags, 'jobs', Math.min(4, Math.max(1, cores - 1)))));
-  const opts = { fast: !!a.flags.fast, timeMs: lib.numFlag(a.flags, 'time', DEFAULT_TIME), targets: !!a.flags.targets };
+  const opts = {
+    fast: !!a.flags.fast, timeMs: lib.numFlag(a.flags, 'time', DEFAULT_TIME),
+    introTimeMs: lib.numFlag(a.flags, 'intro-time', DEFAULT_INTRO_TIME), targets: !!a.flags.targets
+  };
   if (!levels.length && !problems.some((p) => p.severity === 'error')) {
     throw new Error('no levels to check' + (a.flags.level ? ' (--level ' + a.flags.level + ')' : '') +
       (a.flags.chapter ? ' (--chapter ' + a.flags.chapter + ')' : ''));
@@ -366,10 +429,13 @@ async function main(argv) {
   if (issues.length) console.log(issues.join('\n'));
   console.log((failures ? 'FAILED' : 'OK') + ': ' + reports.length + ' level' + (reports.length === 1 ? '' : 's') +
     ', ' + failures + ' failure' + (failures === 1 ? '' : 's') + ', ' + warnings + ' warning' + (warnings === 1 ? '' : 's') +
-    ' (' + (summary.ms / 1000).toFixed(1) + ' s' + (opts.fast ? ', --fast: solver skipped' : ', solver ' + opts.timeMs + ' ms/search') + ')');
+    ' (' + (summary.ms / 1000).toFixed(1) + ' s' + (opts.fast ? ', --fast: solver skipped' : ', solver ' + opts.timeMs + ' ms/search, intro proofs up to ' + opts.introTimeMs + ' ms') + ')');
   return failures ? 1 : 0;
 }
 
-module.exports = { checkLevel, safeCheck, addSequenceWarnings, difficulty, introTool, runParallel, table, DEFAULT_TIME };
+module.exports = {
+  checkLevel, safeCheck, addSequenceWarnings, difficulty, introTool, pieceFieldIssues, isMinimalSolution, runParallel, table,
+  DEFAULT_TIME, DEFAULT_INTRO_TIME
+};
 
 if (isMainThread && require.main === module) lib.runCli(main);

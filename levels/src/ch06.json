@@ -1,0 +1,102 @@
+{
+  "chapter": 6,
+  "title": "Splitters",
+  "levels": [
+    {
+      "name": "Forked Breeze",
+      "tip": "A splitter sends a stream out to both sides. Air flows as long as one branch can get outside.",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "#########",
+        "#...p...#",
+        "#.......#",
+        "#...p...#",
+        "#########"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
+      "inventory": { "splitter": 1, "window": 1 },
+      "solution": [
+        { "type": "splitter", "x": 4, "y": 2 },
+        { "type": "window", "x": 4, "y": 0 }
+      ]
+    },
+    {
+      "name": "Smoke and Spin",
+      "wind": { "from": "E", "strength": 1 },
+      "map": [
+        "########",
+        "#.p.#..#",
+        "#...#..#",
+        "#......#",
+        "##.##..#",
+        "#.s.#..#",
+        "########"
+      ],
+      "fixed": [{ "type": "window", "x": 7, "y": 3 }],
+      "inventory": { "splitter": 1, "window": 1 },
+      "solution": [
+        { "type": "splitter", "x": 2, "y": 3 },
+        { "type": "window", "x": 2, "y": 6 }
+      ]
+    },
+    {
+      "name": "Gentle Halves",
+      "tip": "Each half of a split stream gets half the strength, rounded down, but never less than 1.",
+      "wind": { "from": "N", "strength": 3 },
+      "map": [
+        "###########",
+        "#..#.l.#..#",
+        "#..#...#..#",
+        "%.f.....n.#",
+        "#..#...#..#",
+        "#..#.c.#..#",
+        "###########"
+      ],
+      "fixed": [{ "type": "window", "x": 5, "y": 0 }],
+      "inventory": { "splitter": 1, "window": 1 },
+      "solution": [
+        { "type": "splitter", "x": 5, "y": 3 },
+        { "type": "window", "x": 10, "y": 3 }
+      ]
+    },
+    {
+      "name": "Orangery",
+      "wind": { "from": "W", "strength": 3 },
+      "map": [
+        "#########",
+        "#..l..oo#",
+        "####.####",
+        "#.......#",
+        "%.f...f.#",
+        "#########"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 1 }],
+      "inventory": { "deflector": 1, "splitter": 1, "window": 1 },
+      "solution": [
+        { "type": "deflector", "x": 4, "y": 1, "d": 1 },
+        { "type": "splitter", "x": 4, "y": 4 },
+        { "type": "window", "x": 8, "y": 4 }
+      ]
+    },
+    {
+      "name": "Two to Dry",
+      "wind": { "from": "W", "strength": 3 },
+      "map": [
+        "#########",
+        "####l####",
+        "#.......#",
+        "#loo..oo#",
+        "#.......#",
+        "####l####",
+        "####%####"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 3 }],
+      "inventory": { "splitter": 1, "fan": 1, "window": 1 },
+      "solution": [
+        { "type": "splitter", "x": 4, "y": 3 },
+        { "type": "fan", "x": 5, "y": 3, "d": 3 },
+        { "type": "window", "x": 4, "y": 0 }
+      ]
+    }
+  ]
+}

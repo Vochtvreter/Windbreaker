@@ -502,3 +502,237 @@ test('levels/src: every chapter loads and validates', () => {
   assert.ok(levels.length >= 1);
   for (const e of levels) assert.deepEqual(WB.validateLevel(e.def), [], '#' + e.n);
 });
+
+// ---------------------------------------------------------------------------
+// Adversarial audit of the solver against the independent brute force in
+// tests/fixtures/bruteforce.js: every subset of the inventory on every valid
+// cell and rotation, no pruning, solved configurations extended too. See that
+// file's header for the exact definitions of solution / minimal / irredundant /
+// reducible. compareWithSolver() demands: same solvable verdict and minPieces,
+// every reported solution valid, solved (engine AND reference engine), a
+// brute-force solution and irredundant, every minimal solution reported, and
+// every brute-force solution reducible to a reported one.
+
+const BF = require('./fixtures/bruteforce');
+const REF_ENGINE = require('./fixtures/engine-reference');
+
+function audit(def, solveOpts, invOverride) {
+  const bfOpts = {};
+  if (invOverride) bfOpts.inventory = invOverride;
+  if (solveOpts && solveOpts.maxPieces != null) bfOpts.maxPieces = solveOpts.maxPieces;
+  const b = BF.bruteForce(def, bfOpts);
+  const r = solve(def, Object.assign({ timeMs: 120000, maxSolutions: 1e9 }, solveOpts));
+  const probs = BF.compareWithSolver(def, b, r, Object.assign({ refEngine: REF_ENGINE }, bfOpts));
+  assert.deepEqual(probs, [], def.name + ' ' + JSON.stringify(solveOpts || {}) + '\n' + JSON.stringify(def));
+  return { b, r };
+}
+
+function randomLevels(cfg, n, firstSeed) {
+  const out = [];
+  for (let seed = firstSeed || 1; out.length < n && seed < (firstSeed || 1) + 100 * n; seed++) {
+    const def = BF.randomLevel(seed, cfg);
+    if (def) out.push(def);
+  }
+  assert.equal(out.length, n, 'generator produced enough levels for ' + JSON.stringify(cfg));
+  return out;
+}
+
+test('audit: the brute-force oracle itself (definitions, and it catches a broken solver)', () => {
+  const def = tiny('T1'); // window opposite the inlet; inventory window 2
+  const b = BF.bruteForce(def);
+  const one = BF.configKey([{ type: 'window', x: 6, y: 2 }]);
+  assert.deepEqual([...b.minimal], [one]);
+  assert.ok(b.irredundant.has(one));
+  assert.ok(b.solved.size > 1, 'two-window supersets also solve');
+  for (const [k, ps] of b.solved) {
+    if (k === one) continue;
+    assert.ok(!b.irredundant.has(k), 'a superset of the minimal solution is redundant: ' + k);
+    assert.equal(BF.reducibleTo(ps, new Set([one])), one, 'reducible to the minimal solution');
+  }
+  assert.equal(BF.reducibleTo([], new Set([''])), '', 'the empty solution is reducible to itself');
+  assert.equal(BF.reducibleTo([{ type: 'window', x: 6, y: 1 }], new Set([one])), null);
+
+  // Mutations of a correct result must all be caught.
+  const good = solve(def, { timeMs: 60000, maxSolutions: 1e9 });
+  assert.deepEqual(BF.compareWithSolver(def, b, good), []);
+  const drop = Object.assign({}, good, { solutions: [], count: 0, solvable: false, minPieces: null });
+  assert.ok(BF.compareWithSolver(def, b, drop).some((p) => /missing minimal solution/.test(p)));
+  assert.ok(BF.compareWithSolver(def, b, drop).some((p) => /not reducible/.test(p)));
+  const fake = [{ type: 'window', x: 6, y: 1 }];
+  const extra = Object.assign({}, good, { solutions: good.solutions.concat([fake]), count: good.count + 1 });
+  assert.ok(BF.compareWithSolver(def, b, extra).some((p) => /does not solve/.test(p)));
+  const red = [{ type: 'window', x: 6, y: 1 }, { type: 'window', x: 6, y: 2 }];
+  const redundant = Object.assign({}, good, { solutions: good.solutions.concat([red]), count: good.count + 1 });
+  assert.ok(BF.compareWithSolver(def, b, redundant).some((p) => /redundant/.test(p)));
+});
+
+test('audit: solver == brute force on 250 seeded random levels (all tools, 5 generator focuses)', () => {
+  let solvable = 0, multi = 0;
+  for (const focus of [null, 'passive', 'stalled', 'pull', 'smoke']) {
+    for (const def of randomLevels({ focus, maxConfigs: 20000, maxObj: 4, planted: 0.8 }, 50, 1)) {
+      const { b } = audit(def);
+      if (b.solved.size) solvable++;
+      if (b.minPieces >= 2) multi++;
+    }
+  }
+  assert.ok(solvable >= 150, 'enough solvable levels (' + solvable + ')');
+  assert.ok(multi >= 5, 'some levels need 2+ pieces (' + multi + '; the 3+ piece test below covers more)');
+});
+
+test('audit: solver == brute force on random levels whose fewest-piece solution needs 3-4 pieces', () => {
+  // Seeds found by searching the generator (focus, maxInv 4, maxObj 4, planted 0.95).
+  const HARD = {
+    passive: [140, 389, 2195, 3410], stalled: [62, 179, 318, 820], pull: [221, 280, 343, 1568],
+    smoke: [38, 790, 895, 1071], null: [472, 564, 860, 912]
+  };
+  for (const [f, seeds] of Object.entries(HARD)) {
+    for (const seed of seeds) {
+      const def = BF.randomLevel(seed, { focus: f === 'null' ? null : f, maxInv: 4, maxObj: 4, planted: 0.95, maxConfigs: 25000 });
+      assert.ok(def, 'seed ' + seed + ' still generates a level');
+      const { b } = audit(def);
+      assert.ok(b.minPieces >= 3, def.name + ' needs 3+ pieces');
+    }
+  }
+});
+
+test('audit: solver == brute force on large maps (up to 13x10, 1-2 pieces) and on 5-6 piece inventories', () => {
+  for (const def of randomLevels({ maxW: 13, maxH: 10, minW: 8, minH: 6, maxInv: 2, maxObj: 4, planted: 0.8, maxConfigs: 40000 }, 30, 1)) audit(def);
+  // More than 4 passives exercises the solver's string-keyed visited set.
+  const many = randomLevels({ focus: 'passive', maxW: 6, maxH: 5, minW: 5, minH: 4, minInv: 5, maxInv: 6, maxObj: 4, planted: 0.9, maxConfigs: 60000 }, 12, 1);
+  for (const def of many) audit(def);
+});
+
+test('audit: solver options (maxPieces, excludeTools, inventory) == restricted brute force; pruneIdle off agrees', () => {
+  let runs = 0;
+  for (const def of randomLevels({ maxInv: 4, maxObj: 3, planted: 0.8, maxConfigs: 15000 }, 40, 1)) {
+    const rnd = BF.mulberry32(def.name.length * 7919 + runs);
+    const invKeys = Object.keys(def.inventory);
+    const total = invKeys.reduce((t, k) => t + def.inventory[k], 0);
+    audit(def, { maxPieces: Math.floor(rnd() * (total + 1)) });
+    const ex = invKeys[Math.floor(rnd() * invKeys.length)];
+    const rest = {};
+    for (const k of invKeys) if (k !== ex) rest[k] = def.inventory[k];
+    audit(def, { excludeTools: [ex] }, rest);
+    const over = { deflector: 1, window: 1 };
+    over[WB.TOOL_ORDER[Math.floor(rnd() * WB.TOOL_ORDER.length)]] = 1;
+    if (BF.estimateConfigs(def, over) <= 30000) audit(def, { inventory: over }, over);
+    audit(def, { pruneIdle: false });
+    runs++;
+  }
+  assert.equal(runs, 40);
+});
+
+test('audit: hand-made adversarial levels (pull cut by passives, stalled chains, smoke, splitter, curtains)', () => {
+  const cases = [
+    { name: 'A1 pull line cut by a curtain or deflector', wind: { from: 'N', strength: 0 },
+      map: ['#######', '#c...p#', '#.....#', '#######'],
+      fixed: [{ type: 'extractor', x: 6, y: 1 }], inventory: { curtain: 1, deflector: 1 },
+      minimal: ['curtain@2,1:0', 'curtain@3,1:0', 'curtain@4,1:0', 'deflector@2,1:0', 'deflector@2,1:1',
+        'deflector@3,1:0', 'deflector@3,1:1', 'deflector@4,1:0', 'deflector@4,1:1'] },
+    { name: 'A2 stalled inlet: vent, then an outlet (window, or deflector + window)', wind: { from: 'W', strength: 1 },
+      map: ['###########', '#.........#', '#....#....#', '#....#..p.#', '###########'],
+      fixed: [{ type: 'window', x: 0, y: 3 }], inventory: { vent: 1, window: 1, deflector: 1 },
+      minimal: ['vent@5,3:0 window@10,3:0', 'deflector@9,3:0 vent@5,3:0 window@9,0:0', 'deflector@9,3:1 vent@5,3:0 window@9,4:0'] },
+    { name: 'A3 fan turning the inlet stream onto the laundry', wind: { from: 'W', strength: 2 },
+      map: ['#######', '#.....#', '#.....#', '#..l..#', '#######'],
+      fixed: [{ type: 'window', x: 0, y: 1 }, { type: 'window', x: 3, y: 4 }], inventory: { fan: 1 },
+      minimal: ['fan@3,1:2'] },
+    { name: 'A4 splitter feeds two pinwheels', wind: { from: 'S', strength: 2 },
+      map: ['#######', '#p...p#', '#.....#', '#.....#', '#######'],
+      fixed: [{ type: 'window', x: 3, y: 4 }, { type: 'window', x: 0, y: 1 }, { type: 'window', x: 6, y: 1 }],
+      inventory: { splitter: 1, deflector: 1 }, minimal: ['splitter@3,1:0'] },
+    { name: 'A5 stalled smoke: only a skylight activates the inlet', wind: { from: 'W', strength: 1 },
+      map: ['########', '#..s...#', '#......#', '########'],
+      fixed: [{ type: 'window', x: 0, y: 1 }], inventory: { filter: 1, skylight: 1, curtain: 1 },
+      minimal: ['skylight@4,1:0', 'skylight@5,1:0', 'skylight@6,1:0'] },
+    { name: 'A6 curtain softens the laundry wind for the papers', wind: { from: 'W', strength: 2 },
+      map: ['#########', '#.l...n.#', '#.......#', '#########'],
+      fixed: [{ type: 'window', x: 0, y: 1 }, { type: 'window', x: 8, y: 1 }], inventory: { curtain: 2, deflector: 1 },
+      minimal: ['curtain@3,1:0', 'curtain@4,1:0', 'curtain@5,1:0'] },
+    { name: 'A7 two extractors with crossing pull lines', wind: { from: 'E', strength: 1 },
+      map: ['#######', '#.....#', '#.c...#', '#...f.#', '#.....#', '#######'],
+      fixed: [{ type: 'extractor', x: 0, y: 3 }, { type: 'extractor', x: 2, y: 0 }], inventory: { filter: 1, skylight: 1, deflector: 1 },
+      minimal: ['deflector@2,1:0', 'deflector@2,1:1', 'filter@2,1:0', 'skylight@2,1:0'] },
+    { name: 'A8 smoky branch of an active tree needs a filter', wind: { from: 'W', strength: 1 },
+      map: ['########', '#s.....#', '#......#', '########'],
+      fixed: [{ type: 'window', x: 0, y: 1 }, { type: 'splitter', x: 3, y: 1 }, { type: 'window', x: 3, y: 3 }],
+      inventory: { filter: 1, deflector: 1 }, minimal: ['filter@2,1:0'] }
+  ];
+  for (const c of cases) {
+    const def = Object.assign({ solution: [] }, c);
+    const { b } = audit(def);
+    assert.deepEqual([...b.minimal].sort(), c.minimal.slice().sort(), c.name + ': intended minimal solutions');
+    audit(def, { pruneIdle: false });
+  }
+});
+
+test('audit: the real levels in levels/src agree with brute force (incl. intro exclusions)', () => {
+  const { levels } = lib.loadAllLevels();
+  let checked = 0;
+  for (const e of levels) {
+    if (WB.validateLevel(e.def).length) continue;
+    const def = Object.assign({}, e.def, { name: '#' + e.n + ' ' + e.def.name });
+    if (BF.estimateConfigs(def) <= 40000) {
+      const { b } = audit(def);
+      if (def.solution && def.solution.length && WB.isSolved(WB.parseLevel(def), WB.parseLevel(def).fixed.concat(def.solution))) {
+        assert.ok(b.solved.has(BF.configKey(def.solution)), def.name + ': reference solution is a brute-force solution');
+      }
+      checked++;
+    }
+    const tool = checker.introTool(e.n);
+    if (tool) {
+      const rest = Object.assign({}, def.inventory);
+      delete rest[tool];
+      if (BF.estimateConfigs(def, rest) <= 40000) audit(def, { excludeTools: [tool] }, rest);
+    }
+  }
+  assert.ok(checked >= Math.min(1, levels.length));
+});
+
+// ---------------------------------------------------------------------------
+// check-levels: section 6 hardening
+
+test('check: intro "unsolvable without the new tool" must be an exhaustive proof', () => {
+  const good = lib.readJson(path.join(FIX, 'good', 'ch01.json')).levels[0];
+  let rep = checker.checkLevel({ n: 1, def: good }, { timeMs: 2000 });
+  assert.equal(rep.excluded.status, 'exhaustive');
+  assert.equal(rep.excluded.solvable, false);
+  assert.deepEqual(rep.errors, []);
+  // A big level posing as the deflector intro. Without the deflector it needs 3+ pieces (no solution
+  // with <= 2: 31k configurations), so with a 0 ms budget the exclusion search times out -> FAIL, not a warning.
+  const big = {
+    name: 'big', tip: 't', wind: { from: 'W', strength: 2 },
+    map: ['#############', '#.....#.....#', '#..p..#..p..#', '#.....#.....#', '##.####..o..#',
+      '#..p..#..p..#', '#.....#.....#', '#.....#.....#', '#############'],
+    fixed: [{ type: 'window', x: 0, y: 2 }],
+    inventory: { window: 2, fan: 1, deflector: 2 }, solution: []
+  };
+  rep = checker.checkLevel({ n: 11, def: Object.assign({}, big, { inventory: { window: 3, fan: 2, deflector: 1 } }) }, { timeMs: 30, introTimeMs: 0 });
+  assert.equal(rep.excluded.status, 'timeout');
+  assert.ok(rep.errors.some((e) => /could not prove the level unsolvable without deflector/.test(e)), rep.errors.join('\n'));
+  assert.ok(!rep.warnings.some((w) => /unknown whether/.test(w)));
+  assert.equal(checker.DEFAULT_INTRO_TIME >= 30000, true, 'intro proofs get a large default budget');
+});
+
+test('check: malformed piece fields are hard failures (the engine would read d: "E" as 0)', () => {
+  const good = lib.readJson(path.join(FIX, 'good', 'ch01.json')).levels[0];
+  const bad = Object.assign({}, good, {
+    fixed: [{ type: 'window', x: 0, y: 2, d: 'E' }],
+    solution: [{ type: 'window', x: 8.5, y: 2, note: 'x' }]
+  });
+  const rep = checker.checkLevel({ n: 2, def: bad }, { fast: true });
+  assert.ok(rep.errors.some((e) => /fixed\[0\]: d must be an integer rotation \(got "E"/.test(e)), rep.errors.join('\n'));
+  assert.ok(rep.errors.some((e) => /solution\[0\]: x must be an integer \(got 8\.5\)/.test(e)), rep.errors.join('\n'));
+  assert.ok(rep.warnings.some((w) => /solution\[0\]: unknown key "note"/.test(w)));
+  assert.deepEqual(checker.pieceFieldIssues(good), { errors: [], warnings: [] });
+});
+
+test('check: capped searches give approximate difficulty; minimal reference must be reported', () => {
+  const f = { inv: 2, hazards: 0, objects: 1, rooms: 1, ref: 2 };
+  assert.equal(checker.difficulty(f, { status: 'capped', count: 1000, minPieces: 2, space: 5000 }).approx, true);
+  assert.equal(checker.difficulty(f, { status: 'exhaustive', count: 3, minPieces: 2, space: 5000 }).approx, false);
+  const t3 = tiny('T3');
+  const L = WB.parseLevel(t3);
+  assert.equal(checker.isMinimalSolution(L, L.fixed, t3.solution), true);
+  assert.equal(checker.isMinimalSolution(L, L.fixed, t3.solution.concat([{ type: 'deflector', x: 5, y: 1, d: 0 }])), false);
+});
