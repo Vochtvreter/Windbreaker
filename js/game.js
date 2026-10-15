@@ -799,7 +799,7 @@
     var txt = goalText(g);
     if (!off.length) txt = (goals.length > 1 ? 'All ' + goals.length + ' ' + WB.OBJECTS[type].name.toLowerCase() + ' are happy' : WB.OBJECTS[type].name + ' is happy') + ' · ' + NEED[type].replace(/^$/, 'smoke is cleared');
     else if (off.length > 1) txt += ' (' + off.length + ' unhappy)';
-    showToast(txt, null, null, { ms: 3200 });
+    showToast(txt, null, null, { ms: 3200, near: g });
   }
 
   function updateButtons() {
@@ -934,7 +934,7 @@
     if (!msg || (!dom.toast.hidden && dom.toast.getAttribute('data-kind') === 'hint')) return;
     clearTimeout(G.coachTimer);
     G.coachTimer = setTimeout(function () {
-      if (G.screen !== 'game' || G.sim.solved || G.won) return;
+      if (G.screen !== 'game' || G.sim.solved || G.won || !dom.toast.hidden) return;
       store.seenTips.push(key);
       saveStore();
       showToast(msg, null, null, { ms: 5200, kind: 'coach' });
@@ -1053,7 +1053,7 @@
       if (wrongTurn) {
         G.hint = nextP;
         G.conflicts = null;
-        showToast('Almost — try turning this ' + toolName(nextP.type).toLowerCase() + '.', null, null, { kind: 'hint' });
+        showToast('Almost — try turning this ' + toolName(nextP.type).toLowerCase() + '.', null, null, { kind: 'hint', near: nextP });
         return;
       }
       G.hint = null;
@@ -1065,7 +1065,7 @@
         commit(G.pieces.filter(function (p) { return conflicts.indexOf(p) < 0; }));
         Sound.whoosh();
         hint();
-      }, { kind: 'hint', ms: 10000 });
+      }, { kind: 'hint', ms: 10000, near: conflicts[0] });
       return;
     }
     if (nextP) {
@@ -1073,7 +1073,7 @@
       var how = '';
       if (nextP.type === 'fan') how = ', blowing ' + DIR_WORD[nextP.d];
       else if (nextP.type === 'deflector') how = nextP.d === 0 ? ', slanted like /' : ', slanted like \\';
-      showToast('Try a ' + toolName(nextP.type).toLowerCase() + ' here' + how + '.', null, null, { kind: 'hint' });
+      showToast('Try a ' + toolName(nextP.type).toLowerCase() + ' here' + how + '.', null, null, { kind: 'hint', near: nextP });
     }
   }
 
@@ -1082,6 +1082,7 @@
   function showToast(text, actionLabel, actionFn, opts) {
     opts = opts || {};
     clearTimeout(G.toastTimer);
+    if (opts.kind !== 'coach') clearTimeout(G.coachTimer); // coaching never replaces a real message
     dom.toastText.textContent = text;
     dom.toast.setAttribute('data-kind', opts.kind || 'info');
     if (actionLabel) {
@@ -1092,6 +1093,9 @@
       dom.toastAction.hidden = true;
       dom.toastAction.onclick = null;
     }
+    // keep the toast away from the cell it talks about
+    var top = !!(opts.near && G.L && opts.near.y >= G.L.h / 2 && dom.newtool.hidden);
+    dom.toast.classList.toggle('at-top', top);
     dom.toast.hidden = false;
     G.toastTimer = setTimeout(hideToast, opts.ms || (actionLabel ? 9000 : 5000));
   }

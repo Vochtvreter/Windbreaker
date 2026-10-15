@@ -673,6 +673,7 @@ button {
 }
 .toast > span { flex: 1; min-width: 0; }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 6px); } }
+.toast.at-top { top: 12px; bottom: auto; }
 
 /* "New: <tool>" card floats over the top of the garden; the board reserves room for it */
 .newtool {
