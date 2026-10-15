@@ -1,0 +1,110 @@
+{
+  "chapter": 12,
+  "title": "Greenhouse",
+  "levels": [
+    {
+      "name": "Twin Ferns",
+      "tip": "In the greenhouse every fern wants a breeze of exactly 1, no more and no less.",
+      "wind": { "from": "N", "strength": 2 },
+      "map": [
+        "#########",
+        "%...p...#",
+        "%oo...oo#",
+        "%f.....f#",
+        "%oo.c.oo#",
+        "#########"
+      ],
+      "fixed": [],
+      "inventory": { "window": 2, "splitter": 1 },
+      "solution": [
+        { "type": "window", "x": 4, "y": 0 },
+        { "type": "splitter", "x": 4, "y": 3 },
+        { "type": "window", "x": 8, "y": 3 }
+      ]
+    },
+    {
+      "name": "Fern Aisle",
+      "wind": { "from": "E", "strength": 2 },
+      "map": [
+        "##########",
+        "%.....p..#",
+        "#.l#.ooo.#",
+        "#..#.ooo.#",
+        "#.f#.....#",
+        "##########"
+      ],
+      "fixed": [{ "type": "window", "x": 9, "y": 1 }],
+      "inventory": { "window": 1, "fan": 1, "curtain": 1 },
+      "solution": [
+        { "type": "fan", "x": 2, "y": 1, "d": 2 },
+        { "type": "curtain", "x": 2, "y": 3 },
+        { "type": "window", "x": 2, "y": 5 }
+      ]
+    },
+    {
+      "name": "Potting Shed",
+      "wind": { "from": "W", "strength": 3 },
+      "map": [
+        "%%%%%%%%%%%",
+        "#..#oofoo.#",
+        "#..#......#",
+        "#.p.......#",
+        "#..#......#",
+        "#..#oo..l.#",
+        "###########"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 3 }],
+      "inventory": { "window": 1, "fan": 1, "splitter": 1 },
+      "solution": [
+        { "type": "splitter", "x": 6, "y": 3 },
+        { "type": "fan", "x": 6, "y": 5, "d": 1 },
+        { "type": "window", "x": 10, "y": 5 }
+      ]
+    },
+    {
+      "name": "Quiet Wing",
+      "wind": { "from": "N", "strength": 3 },
+      "map": [
+        "%%#%%%#%%%",
+        "#...#...o%",
+        "#.f.#.l.o%",
+        "#...#...o%",
+        "#.o.#....%",
+        "#..oc...p#",
+        "#####%%%%%"
+      ],
+      "fixed": [
+        { "type": "window", "x": 2, "y": 0 },
+        { "type": "window", "x": 6, "y": 0 },
+        { "type": "deflector", "x": 2, "y": 5, "d": 1 }
+      ],
+      "inventory": { "window": 1, "fan": 2 },
+      "solution": [
+        { "type": "fan", "x": 6, "y": 5, "d": 1 },
+        { "type": "window", "x": 9, "y": 5 },
+        { "type": "fan", "x": 2, "y": 3, "d": 0 }
+      ]
+    },
+    {
+      "name": "Glasshouse Storm",
+      "wind": { "from": "S", "strength": 3 },
+      "map": [
+        "###########",
+        "#o.o#f....#",
+        "#...#.ooo.#",
+        "#...l.....#",
+        "#.p.#.ooo.#",
+        "#o.o#f....#",
+        "%%#%%%%%%%%"
+      ],
+      "fixed": [{ "type": "window", "x": 2, "y": 6 }],
+      "inventory": { "window": 1, "fan": 1, "curtain": 1, "splitter": 1 },
+      "solution": [
+        { "type": "fan", "x": 2, "y": 3, "d": 1 },
+        { "type": "curtain", "x": 3, "y": 3 },
+        { "type": "splitter", "x": 5, "y": 3 },
+        { "type": "window", "x": 5, "y": 0 }
+      ]
+    }
+  ]
+}

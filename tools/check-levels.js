@@ -407,7 +407,7 @@ async function main(argv) {
   const warnings = fileWarnings.length + reports.reduce((t, r) => t + r.warnings.length, 0);
   const summary = {
     levels: reports.length, failures, warnings, failedLevels: reports.filter((r) => r.errors.length).map((r) => r.n),
-    ms: Date.now() - t0, fast: opts.fast, timeMs: opts.timeMs
+    ms: Date.now() - t0, fast: opts.fast, timeMs: opts.timeMs, introTimeMs: opts.introTimeMs
   };
 
   if (a.flags.json) {
