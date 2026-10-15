@@ -443,8 +443,16 @@
         if (nd.m && nd.term === 'blocked') failed |= nd.m;
       });
       if (nStoves && reached) {
-        var cyc = cycleNodes(nodes);
-        cyc.forEach(function (nd) { failed |= nd.m; });
+        // Per stove: a cycle among the states that carry its smoke traps it.
+        for (var b = 0; b < nStoves; b++) {
+          var bit = 1 << b;
+          if (!(reached & bit)) continue;
+          var sub = new Map();
+          nodes.forEach(function (nd) {
+            if (nd.m & bit) sub.set(nd.key, { key: nd.key, m: nd.m, next: nd.next.filter(function (k) { var t = nodes.get(k); return t && (t.m & bit); }) });
+          });
+          if (cycleNodes(sub).length) failed |= bit;
+        }
       }
 
       return {

@@ -3,51 +3,6 @@
   "title": "Drafts",
   "levels": [
     {
-      "name": "Fork in the Road",
-      "wind": {
-        "from": "N",
-        "strength": 2
-      },
-      "map": [
-        "~~~~###~~~~",
-        "~~~~#.#~~~~",
-        "~~~~#l#~~~~",
-        "#####.#####",
-        "#c.s...p.c#",
-        "#....c....#",
-        "###########"
-      ],
-      "fixed": [
-        {
-          "type": "window",
-          "x": 5,
-          "y": 0
-        }
-      ],
-      "inventory": {
-        "splitter": 1,
-        "skylight": 1,
-        "curtain": 1
-      },
-      "solution": [
-        {
-          "type": "splitter",
-          "x": 5,
-          "y": 4
-        },
-        {
-          "type": "skylight",
-          "x": 2,
-          "y": 4
-        },
-        {
-          "type": "curtain",
-          "x": 8,
-          "y": 4
-        }
-      ]
-    },
-    {
       "name": "Borrowed Breeze",
       "wind": {
         "from": "W",
@@ -88,6 +43,51 @@
           "type": "window",
           "x": 8,
           "y": 0
+        }
+      ]
+    },
+    {
+      "name": "Fork in the Road",
+      "wind": {
+        "from": "N",
+        "strength": 2
+      },
+      "map": [
+        "~~~~###~~~~",
+        "~~~~#.#~~~~",
+        "~~~~#l#~~~~",
+        "#####.#####",
+        "#c.sf..p.c#",
+        "#....c....#",
+        "###########"
+      ],
+      "fixed": [
+        {
+          "type": "window",
+          "x": 5,
+          "y": 0
+        }
+      ],
+      "inventory": {
+        "splitter": 1,
+        "skylight": 1,
+        "curtain": 1
+      },
+      "solution": [
+        {
+          "type": "splitter",
+          "x": 5,
+          "y": 4
+        },
+        {
+          "type": "skylight",
+          "x": 2,
+          "y": 4
+        },
+        {
+          "type": "curtain",
+          "x": 8,
+          "y": 4
         }
       ]
     },
@@ -153,7 +153,6 @@
         "#...c...#",
         "#.......#",
         "#.....l.#",
-        "#.......#",
         "#...s...#",
         "#########"
       ],
@@ -183,7 +182,7 @@
         {
           "type": "window",
           "x": 4,
-          "y": 6
+          "y": 5
         },
         {
           "type": "window",

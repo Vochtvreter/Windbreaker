@@ -169,14 +169,20 @@ describe('audit: splitters entered again and splitter loops', function () {
     assert.equal(goal(R, 5, 5).state, 'bad');
   });
 
-  it('a filter on that loop: still trapped (literal §4 reading, see note)', function () {
-    // NOTE: the smoke always goes through the filter here, so the plain-words summary
-    // ("blow it out or through a filter") suggests the stove is fine. The exact rule
-    // says no smoky state may lie on a cycle, and the states between the stove and the
-    // filter lie on one. This test records the current, literal behaviour.
+  it('a filter on that loop: cleared (smoke is trapped only by a loop that stays smoky)', function () {
+    // The smoke always goes through the filter, so no loop of smoky states exists:
+    // the states after the filter are clean. DESIGN.md §4 Smoke.
     const L = lvl(withRow(ROOM97, 5, '#....s..#'), 'W', 3);
     const R = WB.simulate(L, LOOP.concat([pc('window', 4, 0), pc('filter', 6, 4)]));
     assert.deepEqual(R.trees[0].ends, [{ x: 4.5, y: 0, type: 'outlet' }], 'smoke never reaches the outlet');
+    assert.deepEqual(R.stoves, [{ x: 5, y: 5, reached: true, cleared: true }]);
+    assert.equal(goal(R, 5, 5).state, 'happy');
+    assert.equal(WB.isSolved(L, LOOP.concat([pc('window', 4, 0), pc('filter', 6, 4)])), true);
+  });
+
+  it('a filter off the loop does not help: the loop itself stays smoky', function () {
+    const L = lvl(withRow(ROOM97, 5, '#....s..#'), 'W', 3);
+    const R = WB.simulate(L, LOOP.concat([pc('window', 4, 0)]));
     assert.deepEqual(R.stoves, [{ x: 5, y: 5, reached: true, cleared: false }]);
   });
 

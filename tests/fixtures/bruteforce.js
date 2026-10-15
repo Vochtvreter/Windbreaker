@@ -296,7 +296,7 @@ function randomLevel(seed, cfg) {
     def.fixed.push({ type: t, x: c.x, y: c.y, d: ri(WB.TOOLS[t].rotations) });
   }
 
-  // Inventory: 1-3 pieces drawn from all tool types.
+  // Inventory: minInv..maxInv pieces drawn from the tool pool (all tools by default).
   const minInv = cfg.minInv || 1;
   const nInv = minInv + ri(Math.max(1, (cfg.maxInv || 3) - minInv + 1));
   const invList = [];

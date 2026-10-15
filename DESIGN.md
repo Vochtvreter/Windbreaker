@@ -176,8 +176,9 @@ A stove is **cleared** when both hold:
 
 1. at least one active tree reaches the stove's cell, and
 2. in every active tree, no state carrying that stove's smoke leads to a
-   **blocked** terminal, and no state carrying it lies on a cycle
-   (smoke going round in circles never leaves).
+   **blocked** terminal, and the states carrying it contain no cycle among
+   themselves (smoke going round in circles never leaves — unless the loop
+   passes a filter, which cleans it every lap).
 
 In words: *blow the smoke outside (window, extractor, skylight) or through a
 filter, and don't let smoky air hit a wall.*

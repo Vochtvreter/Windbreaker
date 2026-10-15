@@ -580,57 +580,60 @@
       }
     }
 
-    // Smoke on a cycle never leaves: OR the smoke of every state on a cycle.
+    // Smoke going round a loop (without passing a filter) never leaves.
     // Without merge edges the state graph is a forest, so there is no cycle.
-    if (cx_nStoves && reached && merges) failed |= cycleSmoke(nNodes);
+    if (cx_nStoves && reached && merges) failed |= cycleSmoke(nNodes, reached);
 
     tr_outlet = outlet; tr_reached = reached; tr_failed = failed; tr_touched = nTouched;
   }
 
-  // OR of the smoke masks of all states that lie on a directed cycle of the
-  // state graph (iterative Tarjan SCC; every state has at most 2 successors).
-  // Only SCCs that contain a smoky state matter, and every such SCC is found
-  // by a DFS started from its smoky states, so only those are used as roots.
-  function cycleSmoke(n) {
+  // Mask of stoves whose smoke is trapped circling: stove b is trapped when the
+  // states carrying b's smoke contain a directed cycle among themselves. A loop
+  // that passes through a filter is broken (the states after the filter are
+  // clean), so filtered loops are fine. Iterative Tarjan SCC per stove bit,
+  // restricted to states whose mask has that bit (each state has <= 2 successors).
+  function cycleSmoke(n, reached) {
     var nm = SC.nm, nn0 = SC.nn0, nn1 = SC.nn1;
     var idx = SC.tidx, low = SC.tlow, stk = SC.tstk, on = SC.ton, wn = SC.wn, we = SC.we;
-    var v, w, i;
-    for (i = 0; i < n; i++) { idx[i] = -1; on[i] = 0; }
-    var index = 0, sp = 0, wp = 0, smoke = 0;
-    for (var root = 0; root < n; root++) {
-      if (idx[root] >= 0 || nm[root] === 0) continue;
-      idx[root] = low[root] = index++;
-      stk[sp++] = root; on[root] = 1;
-      wn[wp] = root; we[wp] = 0; wp++;
-      while (wp > 0) {
-        v = wn[wp - 1];
-        var e = we[wp - 1];
-        if (e < 2) {
-          we[wp - 1] = e + 1;
-          w = e === 0 ? nn0[v] : nn1[v];
-          if (w < 0) continue;
-          if (idx[w] < 0) {
-            idx[w] = low[w] = index++;
-            stk[sp++] = w; on[w] = 1;
-            wn[wp] = w; we[wp] = 0; wp++;
-          } else if (on[w] && idx[w] < low[v]) {
-            low[v] = idx[w];
-          }
-        } else {
-          wp--;
-          if (wp > 0) {
-            var u = wn[wp - 1];
-            if (low[v] < low[u]) low[u] = low[v];
-          }
-          if (low[v] === idx[v]) {
-            var size = 0, mm = 0;
-            do {
-              w = stk[--sp];
-              on[w] = 0;
-              size++;
-              mm |= nm[w];
-            } while (w !== v);
-            if (size > 1 || nn0[v] === v || nn1[v] === v) smoke |= mm;
+    var v, w, i, smoke = 0;
+    for (var bit = 1; bit <= reached; bit <<= 1) {
+      if ((reached & bit) === 0) continue;
+      for (i = 0; i < n; i++) { idx[i] = -1; on[i] = 0; }
+      var index = 0, sp = 0, wp = 0;
+      for (var root = 0; root < n && (smoke & bit) === 0; root++) {
+        if (idx[root] >= 0 || (nm[root] & bit) === 0) continue;
+        idx[root] = low[root] = index++;
+        stk[sp++] = root; on[root] = 1;
+        wn[wp] = root; we[wp] = 0; wp++;
+        while (wp > 0) {
+          v = wn[wp - 1];
+          var e = we[wp - 1];
+          if (e < 2) {
+            we[wp - 1] = e + 1;
+            w = e === 0 ? nn0[v] : nn1[v];
+            if (w < 0 || (nm[w] & bit) === 0) continue;
+            if (idx[w] < 0) {
+              idx[w] = low[w] = index++;
+              stk[sp++] = w; on[w] = 1;
+              wn[wp] = w; we[wp] = 0; wp++;
+            } else if (on[w] && idx[w] < low[v]) {
+              low[v] = idx[w];
+            }
+          } else {
+            wp--;
+            if (wp > 0) {
+              var u = wn[wp - 1];
+              if (low[v] < low[u]) low[u] = low[v];
+            }
+            if (low[v] === idx[v]) {
+              var size = 0;
+              do {
+                w = stk[--sp];
+                on[w] = 0;
+                size++;
+              } while (w !== v);
+              if (size > 1 || nn0[v] === v || nn1[v] === v) smoke |= bit;
+            }
           }
         }
       }
