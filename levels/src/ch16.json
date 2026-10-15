@@ -4,15 +4,15 @@
   "levels": [
     {
       "name": "Locked Study",
-      "tip": "The old study has been locked for years, but its window is still stuck open.",
+      "tip": "The old study is locked tight, but its window is stuck open: the breeze needs another way out.",
       "wind": { "from": "W", "strength": 2 },
       "map": [
         "%%%%%%%%%%%%%",
         "%o..o#...o..#",
-        "#.n..#oo....#",
+        "#.n..#oo...c#",
         "%o...#..l.o.#",
         "%%%%%%%%.%%%%",
-        "%c......s...%",
+        "%.......s...%",
         "%..o.....o..%",
         "%%%%##%%#%##%"
       ],
@@ -81,9 +81,8 @@
         "%.......#.f.%",
         "%..o....#..o%",
         "%%%.%%%%%%%%%",
-        "#s.........o%",
-        "%...o.......%",
-        "%%%%%%%%%%%%%"
+        "#s..o..%~~~~~",
+        "%%%%%%%%~~~~~"
       ],
       "fixed": [],
       "inventory": { "window": 2, "splitter": 1, "vent": 1, "deflector": 2 },
@@ -106,7 +105,6 @@
         "%.o..%.%..o.%",
         "%....%s%....%",
         "%c.f.......s#",
-        "%....%.%....%",
         "%%%%%%.%%%%%%",
         "%.....l.....%",
         "%%%%%%#%%%%%%"
@@ -119,7 +117,7 @@
         { "type": "ceilingfan", "x": 6, "y": 5 },
         { "type": "curtain", "x": 2, "y": 5 },
         { "type": "window", "x": 12, "y": 5 },
-        { "type": "window", "x": 6, "y": 9 }
+        { "type": "window", "x": 6, "y": 8 }
       ]
     }
   ]
