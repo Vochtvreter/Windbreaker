@@ -3,57 +3,6 @@
   "title": "Fresh Air",
   "levels": [
     {
-      "name": "Linen Passage",
-      "wind": { "from": "W", "strength": 2 },
-      "map": [
-        "%####%%%%%%%%",
-        "#o...#c.....#",
-        "#....#.f....#",
-        "#.l.o#......#",
-        "%####%#.####%",
-        "~~~~~~%..s.l%",
-        "~~~~~~%%%%%%%"
-      ],
-      "fixed": [
-        { "type": "window", "x": 0, "y": 3 }
-      ],
-      "inventory": { "vent": 1, "splitter": 1, "deflector": 1, "window": 1, "filter": 1, "fan": 1 },
-      "solution": [
-        { "type": "vent", "x": 5, "y": 3 },
-        { "type": "splitter", "x": 7, "y": 3 },
-        { "type": "deflector", "x": 7, "y": 1, "d": 0 },
-        { "type": "window", "x": 12, "y": 1 },
-        { "type": "fan", "x": 7, "y": 5, "d": 1 },
-        { "type": "filter", "x": 10, "y": 5 }
-      ]
-    },
-    {
-      "name": "Long Draw",
-      "wind": { "from": "N", "strength": 3 },
-      "map": [
-        "%%#%%%%%%%%%%",
-        "#.s.#.o.....#",
-        "#.l.#....o.l#",
-        "##.#######.##",
-        "#c.f..n.....#",
-        "##.#######.##",
-        "#...o..p....#",
-        "#############"
-      ],
-      "fixed": [
-        { "type": "window", "x": 2, "y": 0 }
-      ],
-      "inventory": { "extractor": 1, "filter": 1, "deflector": 3, "window": 1 },
-      "solution": [
-        { "type": "extractor", "x": 12, "y": 4 },
-        { "type": "filter", "x": 2, "y": 4 },
-        { "type": "deflector", "x": 2, "y": 6, "d": 1 },
-        { "type": "deflector", "x": 10, "y": 6, "d": 0 },
-        { "type": "deflector", "x": 10, "y": 2, "d": 0 },
-        { "type": "window", "x": 12, "y": 2 }
-      ]
-    },
-    {
       "name": "Full Circle",
       "wind": { "from": "E", "strength": 2 },
       "map": [
@@ -82,13 +31,64 @@
       ]
     },
     {
+      "name": "Linen Passage",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "%####%%%%%%%%",
+        "#o...#c.....#",
+        "#....#.f....#",
+        "#.l.o#......#",
+        "%####%#.####%",
+        "~~~~~~%..s.l%",
+        "~~~~~~%%%%%%%"
+      ],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 3 }
+      ],
+      "inventory": { "vent": 1, "splitter": 1, "deflector": 1, "window": 1, "filter": 1, "fan": 1, "curtain": 1 },
+      "solution": [
+        { "type": "vent", "x": 5, "y": 3 },
+        { "type": "splitter", "x": 7, "y": 3 },
+        { "type": "deflector", "x": 7, "y": 1, "d": 0 },
+        { "type": "window", "x": 12, "y": 1 },
+        { "type": "fan", "x": 7, "y": 5, "d": 1 },
+        { "type": "filter", "x": 10, "y": 5 }
+      ]
+    },
+    {
+      "name": "Long Draw",
+      "wind": { "from": "N", "strength": 3 },
+      "map": [
+        "%%#%%%%%%%%%%",
+        "#.s.#.o.....#",
+        "#.l.#....o.l#",
+        "##.#######.##",
+        "#c.f..n.....#",
+        "##.#######.##",
+        "#...o..p....#",
+        "#############"
+      ],
+      "fixed": [
+        { "type": "window", "x": 2, "y": 0 }
+      ],
+      "inventory": { "extractor": 1, "filter": 1, "deflector": 3, "window": 1, "splitter": 1 },
+      "solution": [
+        { "type": "extractor", "x": 12, "y": 4 },
+        { "type": "filter", "x": 2, "y": 4 },
+        { "type": "deflector", "x": 2, "y": 6, "d": 1 },
+        { "type": "deflector", "x": 10, "y": 6, "d": 0 },
+        { "type": "deflector", "x": 10, "y": 2, "d": 0 },
+        { "type": "window", "x": 12, "y": 2 }
+      ]
+    },
+    {
       "name": "Pushback",
       "wind": { "from": "W", "strength": 3 },
       "map": [
         "#############",
-        "#f.o..c#o..o#",
-        "#.o.lo.#..o.#",
-        "#o.....#.p..#",
+        "#f.o..c#...o#",
+        "#...l..#....#",
+        "#......#.p..#",
         "##########.##",
         "#..s.o..o...#",
         "#############"
@@ -117,7 +117,7 @@
         "%...%.l.#...%",
         "%.p.%o.o%.p.%",
         "%%.%%%.%%%.%%",
-        "#.l........o%",
+        "#.l........o#",
         "%%.%%%.%%%.%%",
         "%...%...%...%",
         "%os.%ofo%.l.%",
