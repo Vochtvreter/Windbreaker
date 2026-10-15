@@ -4,6 +4,16 @@ Every release is merged to `main` with a version bump; work in progress lives
 on the `dev` branch. The version is shown at the bottom of the level-select
 screen.
 
+## v0.6 — Polished levels
+
+* Applied the chapter reviewers' remaining notes across all 20 chapters
+  (each verified with the solver first): clearer, shorter tips, tidier
+  maps, fewer pointless tables, reworked levels that repeated an earlier
+  idea or scored low on fun.
+* All 100 levels still pass every check and are played through the real
+  UI by the end-to-end test.
+* Next: game-wide curation of names, order and difficulty curve.
+
 ## v0.5 — All 100 levels
 
 * The full game: 100 levels in 20 chapters. Chapters 1-10 introduce a

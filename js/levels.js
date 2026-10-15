@@ -46,7 +46,7 @@
       "map": [
         "#####",
         "#...#",
-        "#..p#",
+        "#.p.#",
         "#...#",
         "#...#",
         "#...#",
@@ -54,11 +54,11 @@
       ],
       "fixed": [],
       "inventory": { "window": 2 },
-      "solution": [{ "type": "window", "x": 3, "y": 6 }, { "type": "window", "x": 3, "y": 0 }]
+      "solution": [{ "type": "window", "x": 2, "y": 6 }, { "type": "window", "x": 2, "y": 0 }]
     },
     {
       "id": 3, "chapter": 1, "name": "Candlelight",
-      "tip": "Candles need still air. A window with no way out lets no breeze in.",
+      "tip": "Candles need still air, and a breeze only flows when it has a way out.",
       "wind": { "from": "W", "strength": 1 },
       "map": [
         "#########",
@@ -76,7 +76,7 @@
       "wind": { "from": "N", "strength": 1 },
       "map": [
         "#########",
-        "#.....p.#",
+        "#.......#",
         "#.......#",
         "######.##",
         "#.......#",
@@ -91,19 +91,19 @@
       "id": 5, "chapter": 1, "name": "Garden Court",
       "wind": { "from": "E", "strength": 1 },
       "map": [
-        "###########",
-        "#.........#",
-        "#...###...#",
-        "#.p.#~#.c.#",
-        "#...#~#.p.#",
-        "#####~#####"
+        "############",
+        "#..........#",
+        "#...####...#",
+        "#.p.#~~#.c.#",
+        "#...#~~#.p.#",
+        "#####~~#####"
       ],
       "fixed": [{ "type": "window", "x": 0, "y": 3 }],
       "inventory": { "window": 3 },
       "solution": [
         { "type": "window", "x": 4, "y": 3 },
-        { "type": "window", "x": 10, "y": 4 },
-        { "type": "window", "x": 6, "y": 4 }
+        { "type": "window", "x": 11, "y": 4 },
+        { "type": "window", "x": 7, "y": 4 }
       ]
     },
     {
@@ -214,7 +214,7 @@
     },
     {
       "id": 13, "chapter": 3, "name": "Clothesline",
-      "tip": "Laundry needs a breeze of 2 or more to dry. Breezes that cross on the same spot add up.",
+      "tip": "Laundry only dries in a breeze of 2 or more, and breezes that cross on it add up.",
       "wind": { "from": "W", "strength": 1 },
       "map": [
         "#########",
@@ -270,7 +270,7 @@
     },
     {
       "id": 16, "chapter": 4, "name": "Shielded Flame",
-      "tip": "A curtain softens any air passing through it. A gentle breeze stops right there.",
+      "tip": "A curtain takes 1 off any breeze passing through it, so a gentle breeze stops right there.",
       "wind": { "from": "W", "strength": 0 },
       "map": [
         "##########",
@@ -287,16 +287,16 @@
       "id": 17, "chapter": 4, "name": "Strong Enough",
       "wind": { "from": "W", "strength": 2 },
       "map": [
-        "##########",
-        "#...#..c.#",
-        "#.......p#",
-        "#.o.#..p.#",
-        "#...#....#",
-        "##########"
+        "#########",
+        "#..#..c.#",
+        "#......p#",
+        "#..#..p.#",
+        "#..#....#",
+        "#########"
       ],
-      "fixed": [{ "type": "window", "x": 0, "y": 2 }, { "type": "fan", "x": 7, "y": 4, "d": 0 }],
+      "fixed": [{ "type": "window", "x": 0, "y": 2 }, { "type": "fan", "x": 6, "y": 4, "d": 0 }],
       "inventory": { "window": 1, "curtain": 1 },
-      "solution": [{ "type": "window", "x": 9, "y": 2 }, { "type": "curtain", "x": 7, "y": 2 }]
+      "solution": [{ "type": "window", "x": 8, "y": 2 }, { "type": "curtain", "x": 6, "y": 2 }]
     },
     {
       "id": 18, "chapter": 4, "name": "Loose Papers",
@@ -320,26 +320,29 @@
     },
     {
       "id": 19, "chapter": 4, "name": "Draught Stopper",
-      "wind": { "from": "N", "strength": 1 },
+      "wind": { "from": "E", "strength": 1 },
       "map": [
-        "##########",
-        "#.c.#.p..%",
-        "#...#....%",
-        "#...#....%",
-        "#......l.%",
-        "##########"
+        "######",
+        "#....#",
+        "#...c#",
+        "#....#",
+        "#.####",
+        "#...p#",
+        "#l...#",
+        "#....#",
+        "#%%%%#"
       ],
       "fixed": [
-        { "type": "window", "x": 2, "y": 0 },
-        { "type": "window", "x": 6, "y": 0 },
-        { "type": "deflector", "x": 2, "y": 4, "d": 1 },
-        { "type": "fan", "x": 6, "y": 4, "d": 1 }
+        { "type": "window", "x": 5, "y": 2 },
+        { "type": "window", "x": 5, "y": 5 },
+        { "type": "deflector", "x": 1, "y": 2, "d": 0 },
+        { "type": "fan", "x": 1, "y": 5, "d": 2 }
       ],
       "inventory": { "window": 1, "deflector": 1, "curtain": 1 },
       "solution": [
-        { "type": "curtain", "x": 2, "y": 2 },
-        { "type": "deflector", "x": 8, "y": 4, "d": 1 },
-        { "type": "window", "x": 8, "y": 5 }
+        { "type": "curtain", "x": 3, "y": 2 },
+        { "type": "deflector", "x": 1, "y": 7, "d": 0 },
+        { "type": "window", "x": 0, "y": 7 }
       ]
     },
     {
@@ -347,7 +350,7 @@
       "wind": { "from": "S", "strength": 2 },
       "map": [
         "#########",
-        "#o..#...#",
+        "#...#...#",
         "#.l.#...#",
         "#...n...#",
         "#ooo#o..#",
@@ -556,7 +559,7 @@
     },
     {
       "id": 31, "chapter": 7, "name": "Upwind Exit",
-      "tip": "Extractors fit any outside wall, even the one facing the wind, and draw a gentle breeze toward them.",
+      "tip": "Unlike a window, an extractor lets air out even through the wall facing the wind.",
       "wind": { "from": "N", "strength": 1 },
       "map": [
         "#########",
@@ -582,16 +585,15 @@
         "#cs.#...#",
         "#.....p.#",
         "#####...#",
-        "#.......#",
         "#########"
       ],
       "fixed": [{ "type": "window", "x": 6, "y": 0 }],
       "inventory": { "window": 1, "extractor": 1 },
-      "solution": [{ "type": "extractor", "x": 2, "y": 0 }, { "type": "window", "x": 6, "y": 5 }]
+      "solution": [{ "type": "extractor", "x": 2, "y": 0 }, { "type": "window", "x": 6, "y": 4 }]
     },
     {
       "id": 33, "chapter": 7, "name": "Candlelit Supper",
-      "tip": "An extractor's pull stops at the first piece in its way.",
+      "tip": "An extractor pulls along its whole line, until a piece gets in the way.",
       "wind": { "from": "N", "strength": 0 },
       "map": [
         "#########",
@@ -608,21 +610,21 @@
       "id": 34, "chapter": 7, "name": "Wash House",
       "wind": { "from": "W", "strength": 2 },
       "map": [
-        "#########",
-        "#...f...#",
-        "#.s.....#",
-        "#.......#",
-        "####.####",
-        "#.......#",
-        "#...l...#",
-        "#########"
+        "#######",
+        "#..f..#",
+        "#.s...#",
+        "#.....#",
+        "###.###",
+        "#.....#",
+        "#..l..#",
+        "#######"
       ],
       "fixed": [{ "type": "window", "x": 0, "y": 2 }],
       "inventory": { "window": 1, "splitter": 1, "extractor": 1 },
       "solution": [
-        { "type": "splitter", "x": 4, "y": 2 },
-        { "type": "extractor", "x": 4, "y": 7 },
-        { "type": "window", "x": 4, "y": 0 }
+        { "type": "splitter", "x": 3, "y": 2 },
+        { "type": "extractor", "x": 3, "y": 7 },
+        { "type": "window", "x": 3, "y": 0 }
       ]
     },
     {
@@ -736,13 +738,13 @@
       "map": [
         "#########",
         "#.......#",
-        "#..s.p..#",
+        "#....s.p#",
         "#.......#",
         "#########"
       ],
       "fixed": [{ "type": "fan", "x": 1, "y": 2, "d": 1 }],
       "inventory": { "filter": 1 },
-      "solution": [{ "type": "filter", "x": 4, "y": 2 }]
+      "solution": [{ "type": "filter", "x": 6, "y": 2 }]
     },
     {
       "id": 42, "chapter": 9, "name": "Two Burners",
@@ -836,7 +838,7 @@
       "solution": [{ "type": "ceilingfan", "x": 4, "y": 3 }]
     },
     {
-      "id": 47, "chapter": 10, "name": "Candle Corner",
+      "id": 47, "chapter": 10, "name": "Sidestep",
       "wind": { "from": "W", "strength": 0 },
       "map": [
         "~~~#####~~~",
@@ -1125,17 +1127,17 @@
         "%%%%###%%%%",
         "%c.%...%..%",
         "%.o%.o.%o.%",
-        "#.n..l..n.#",
+        "#.n..l..nc#",
         "%.o%...%o.%",
-        "%..%.c.%.c%",
-        "%%%%###%%%%"
+        "%..%...%..%",
+        "%%%%%%%%%%%"
       ],
       "fixed": [{ "type": "window", "x": 0, "y": 3 }],
-      "inventory": { "window": 1, "extractor": 1, "filter": 1 },
+      "inventory": { "window": 1, "deflector": 1, "extractor": 1 },
       "solution": [
+        { "type": "deflector", "x": 6, "y": 3, "d": 0 },
         { "type": "extractor", "x": 5, "y": 0 },
-        { "type": "filter", "x": 5, "y": 4 },
-        { "type": "window", "x": 10, "y": 3 }
+        { "type": "window", "x": 6, "y": 0 }
       ]
     },
     {
@@ -1143,7 +1145,7 @@
       "wind": { "from": "W", "strength": 2 },
       "map": [
         "%%%%%%%%%%%",
-        "%..op.....%",
+        "%...p.....%",
         "%p.......p%",
         "%.o.....o.%",
         "#l.......n#",
@@ -1444,15 +1446,15 @@
     },
     {
       "id": 76, "chapter": 16, "name": "Locked Study",
-      "tip": "The old study has been locked for years, but its window is still stuck open.",
+      "tip": "The old study is locked tight, but its window is stuck open: the breeze needs another way out.",
       "wind": { "from": "W", "strength": 2 },
       "map": [
         "%%%%%%%%%%%%%",
         "%o..o#...o..#",
-        "#.n..#oo....#",
+        "#.n..#oo...c#",
         "%o...#..l.o.#",
         "%%%%%%%%.%%%%",
-        "%c......s...%",
+        "%.......s...%",
         "%..o.....o..%",
         "%%%%##%%#%##%"
       ],
@@ -1519,9 +1521,8 @@
         "%.......#.f.%",
         "%..o....#..o%",
         "%%%.%%%%%%%%%",
-        "#s.........o%",
-        "%...o.......%",
-        "%%%%%%%%%%%%%"
+        "#s..o..%~~~~~",
+        "%%%%%%%%~~~~~"
       ],
       "fixed": [],
       "inventory": { "window": 2, "deflector": 2, "vent": 1, "splitter": 1 },
@@ -1544,7 +1545,6 @@
         "%.o..%.%..o.%",
         "%....%s%....%",
         "%c.f.......s#",
-        "%....%.%....%",
         "%%%%%%.%%%%%%",
         "%.....l.....%",
         "%%%%%%#%%%%%%"
@@ -1557,7 +1557,7 @@
         { "type": "ceilingfan", "x": 6, "y": 5 },
         { "type": "curtain", "x": 2, "y": 5 },
         { "type": "window", "x": 12, "y": 5 },
-        { "type": "window", "x": 6, "y": 9 }
+        { "type": "window", "x": 6, "y": 8 }
       ]
     },
     {
@@ -1875,7 +1875,7 @@
         "%%%%%.s.%%%",
         "#.oo.l.oof#",
         "%...%.o.%%%",
-        "#.fs.o.o.l#",
+        "#.fs.....l#",
         "%o..%.c.%%%",
         "%%%%%%#%%%%"
       ],

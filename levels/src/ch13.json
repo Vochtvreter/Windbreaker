@@ -10,19 +10,19 @@
         "%%%%###%%%%",
         "%c.%...%..%",
         "%.o%.o.%o.%",
-        "#.n..l..n.#",
+        "#.n..l..nc#",
         "%.o%...%o.%",
-        "%..%.c.%.c%",
-        "%%%%###%%%%"
+        "%..%...%..%",
+        "%%%%%%%%%%%"
       ],
       "fixed": [
         { "type": "window", "x": 0, "y": 3 }
       ],
-      "inventory": { "extractor": 1, "filter": 1, "window": 1 },
+      "inventory": { "deflector": 1, "extractor": 1, "window": 1 },
       "solution": [
+        { "type": "deflector", "x": 6, "y": 3, "d": 0 },
         { "type": "extractor", "x": 5, "y": 0 },
-        { "type": "filter", "x": 5, "y": 4 },
-        { "type": "window", "x": 10, "y": 3 }
+        { "type": "window", "x": 6, "y": 0 }
       ]
     },
     {
@@ -30,7 +30,7 @@
       "wind": { "from": "W", "strength": 2 },
       "map": [
         "%%%%%%%%%%%",
-        "%..op.....%",
+        "%...p.....%",
         "%p.......p%",
         "%.o.....o.%",
         "#l.......n#",
