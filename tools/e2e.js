@@ -155,6 +155,7 @@ function startServer() {
 
 const results = [];
 const consoleProblems = [];
+const consoleWarnings = new Set();
 const T0 = Date.now();
 
 class Skip extends Error {}
@@ -237,6 +238,7 @@ async function newPage(opts) {
   const label = opts.label || 'page';
   page.on('console', (m) => {
     if (m.type() === 'error') consoleProblems.push(label + ': console.error: ' + m.text() + (m.location() && m.location().url ? ' @ ' + m.location().url : ''));
+    else if (m.type() === 'warning') consoleWarnings.add(m.text());
   });
   page.on('pageerror', (e) => consoleProblems.push(label + ': uncaught: ' + (e.stack || e.message)));
   page.on('requestfailed', (r) => consoleProblems.push(label + ': request failed: ' + r.url() + ' ' + (r.failure() && r.failure().errorText)));
@@ -714,6 +716,27 @@ async function sectionInteract() {
       assert(/window/i.test(await page.textContent('#toast-text')), 'hint text names the tool');
       await shot(page, 'interact-hint-ghost');
     });
+    await step('keyboard only: Enter on a chip, arrows, Enter places, Delete removes', async () => {
+      await page.keyboard.press('Escape');
+      await expectState(page, (s) => !s.hint, 'hint hidden');
+      await page.focus('.chip[data-tool="deflector"]');
+      await page.keyboard.press('Enter');
+      await expectState(page, (s) => s.sel === 'deflector', 'Enter on the chip selects the deflector');
+      await page.waitForFunction(() => document.activeElement && document.activeElement.id === 'board', null, { timeout: 1000 })
+        .catch(() => fail('focus did not move to the board'));
+      const c0 = (await expectState(page, (st) => !!st.cursor, 'keyboard cursor on the board')).cursor;
+      // walk the cursor to 2,3 with the arrow keys
+      const moves = [];
+      for (let i = 0; i < Math.abs(2 - c0.x); i++) moves.push(c0.x > 2 ? 'ArrowLeft' : 'ArrowRight');
+      for (let i = 0; i < Math.abs(3 - c0.y); i++) moves.push(c0.y > 3 ? 'ArrowUp' : 'ArrowDown');
+      for (const k of moves) await page.keyboard.press(k);
+      await expectState(page, (st) => st.cursor && st.cursor.x === 2 && st.cursor.y === 3, 'arrows move the cursor to 2,3 (from ' + c0.x + ',' + c0.y + ')');
+      await page.keyboard.press('Enter');
+      await piecesAre([{ type: 'deflector', x: 2, y: 3, d: 0 }], 'Enter places the deflector at the cursor');
+      await page.keyboard.press('Delete');
+      await piecesAre([], 'Delete removes the piece under the keyboard cursor');
+      await page.keyboard.press('Escape');
+    });
     await step('the board is saved per level and restored after a reload', async () => {
       await page.keyboard.press('Escape');
       await page.click('.chip[data-tool="fan"]');
@@ -887,27 +910,34 @@ async function sectionTouch() {
   });
 }
 
-// Small screens with the real levels: no horizontal scroll, finger-sized chips,
-// and the first level played with touch taps.
+// Phone and tablet screens with the real levels: no horizontal scroll, the
+// house fully in view and clear of the "New" card, finger-sized chips, and
+// levels played with touch taps. Landscape runs in dark mode.
 async function sectionMobile() {
   await section('mobile', async (step) => {
-    for (const [w, h] of [[360, 740], [844, 390]]) {
-      const tag = w + 'x' + h;
-      const page = await newPage({ label: 'mobile ' + tag, w, h, dpr: 2, touch: true, mobile: true });
+    for (const [w, h, dark] of [[360, 740, false], [768, 1024, false], [844, 390, true]]) {
+      const tag = w + 'x' + h + (dark ? ' dark' : '');
+      const file = 'mobile-' + w + 'x' + h;
+      const page = await newPage({ label: 'mobile ' + tag, w, h, dpr: 2, touch: true, mobile: w < 600 || h < 600, dark });
       let data;
       await step(tag + ': level select has no horizontal scroll', async () => {
         await openHome(page, '?unlock');
         data = await levelData(page);
         await noHorizontalScroll(page, tag + ' home');
-        await shot(page, 'mobile-' + tag + '-home');
+        await shot(page, file + '-home');
       });
       if (!data) { await page.context().close(); continue; }
-      // the biggest map, and the level with the most tools in the tray
+      // the biggest map, the level with the most tools, and the biggest tool-intro level
       const area = (l) => l.map.length * l.map[0].length;
-      const big = data.levels.reduce((a, b) => (area(b) > area(a) ? b : a));
+      const biggest = (list) => list.reduce((a, b) => (area(b) > area(a) ? b : a));
+      const big = biggest(data.levels);
       const many = data.levels.reduce((a, b) => (Object.keys(b.inventory).length > Object.keys(a.inventory).length ? b : a));
-      for (const lv of [big, many].filter((l, i, arr) => arr.indexOf(l) === i)) {
-        await step(tag + ': level ' + lv.id + ' (' + lv.map[0].length + 'x' + lv.map.length + ', ' + Object.keys(lv.inventory).length + ' tools) fits', async () => {
+      const intros = data.levels.filter((l) => data.chapters.some((c) => c.tool && c.first === l.id));
+      const intro = intros.length ? biggest(intros) : null;
+      const picks = [big, many, intro].filter((l, i, arr) => l && arr.indexOf(l) === i);
+      for (const lv of picks) {
+        await step(tag + ': level ' + lv.id + ' (' + lv.map[0].length + 'x' + lv.map.length + ', ' + Object.keys(lv.inventory).length + ' tools' +
+          (lv === intro ? ', "New" card' : '') + ') fits', async () => {
           await page.goto(BASE + '?unlock#' + lv.id);
           await expectState(page, (s) => s.screen === 'game' && s.id === lv.id, 'level open');
           await settle(page);
@@ -915,25 +945,35 @@ async function sectionMobile() {
           const r = await page.evaluate((L) => {
             const a = window.__wb.cell(0, 0), b = window.__wb.cell(L.w - 1, L.h - 1);
             const chips = Array.from(document.querySelectorAll('.chip')).map((c) => { const q = c.getBoundingClientRect(); return Math.min(q.width, q.height); });
-            return { left: a.x - a.size / 2, top: a.y - a.size / 2, right: b.x + b.size / 2, bottom: b.y + b.size / 2, T: a.size, chips, iw: innerWidth, ih: innerHeight };
+            const card = document.getElementById('newtool');
+            const cr = card.hidden ? null : card.getBoundingClientRect();
+            return { left: a.x - a.size / 2, top: a.y - a.size / 2, right: b.x + b.size / 2, bottom: b.y + b.size / 2, T: a.size, chips,
+              card: cr && { top: cr.top, bottom: cr.bottom, left: cr.left, right: cr.right }, iw: innerWidth, ih: innerHeight };
           }, { w: lv.map[0].length, h: lv.map.length });
-          assert(r.left >= 0 && r.right <= r.iw, 'house fits the width (' + Math.round(r.left) + '..' + Math.round(r.right) + ' of ' + r.iw + ')');
+          const box = Math.round(r.left) + ',' + Math.round(r.top) + '..' + Math.round(r.right) + ',' + Math.round(r.bottom);
+          assert(r.left >= 0 && r.right <= r.iw && r.top >= 0 && r.bottom <= r.ih, 'house fully in view (' + box + ' in ' + r.iw + 'x' + r.ih + ')');
           assert(r.T >= 16, 'tiles are not tiny (' + r.T + ' px)');
           assert(r.chips.every((c) => c >= 44), 'tray chips at least 44 px (' + r.chips.map(Math.round).join(', ') + ')');
-          await shot(page, 'mobile-' + tag + '-level-' + lv.id);
+          if (lv === intro) {
+            assert(r.card, '"New" card shown on a tool\'s first level');
+            const overlap = r.card.bottom > r.top && r.card.top < r.bottom && r.card.right > r.left && r.card.left < r.right;
+            assert(!overlap, '"New" card (' + Math.round(r.card.top) + '..' + Math.round(r.card.bottom) + ') covers the house (' + box + ')');
+          }
+          await shot(page, file + '-level-' + lv.id);
         });
       }
-      await step(tag + ': play level ' + data.levels[0].id + ' with touch taps', async () => {
-        const lv = data.levels[0];
-        if (!lv.solution || !lv.solution.length) throw new Skip('no reference solution');
-        await page.goto(BASE + '?unlock#' + lv.id);
-        await expectState(page, (s) => s.screen === 'game' && s.id === lv.id, 'level open');
-        await settle(page);
-        await placeSolution(page, lv.solution, 'touch');
-        await page.waitForSelector('#win:not([hidden])', { timeout: 6000 });
-        await noHorizontalScroll(page, tag + ' win card');
-        await shot(page, 'mobile-' + tag + '-win');
-      });
+      for (const lv of [data.levels[0], intro, big].filter((l, i, arr) => l && arr.indexOf(l) === i)) {
+        await step(tag + ': play level ' + lv.id + ' with touch taps', async () => {
+          if (!lv.solution || !lv.solution.length) throw new Skip('no reference solution');
+          await page.goto(BASE + '?unlock#' + lv.id);
+          await expectState(page, (s) => s.screen === 'game' && s.id === lv.id, 'level open');
+          await settle(page);
+          await placeSolution(page, lv.solution, 'touch');
+          await page.waitForSelector('#win:not([hidden])', { timeout: 6000 });
+          await noHorizontalScroll(page, tag + ' win card');
+          await shot(page, file + '-win-' + lv.id);
+        });
+      }
       await page.context().close();
     }
   });
@@ -1009,6 +1049,7 @@ async function sectionFile() {
   }
 
   console.log('\nconsole');
+  consoleWarnings.forEach((w) => console.log('  note console.warn: ' + w));
   if (consoleProblems.length) {
     consoleProblems.forEach((p) => console.log('  FAIL ' + p.split('\n').join('\n       ')));
     results.push({ section: 'console', title: 'no console errors', ok: false, error: new Error(consoleProblems.length + ' problem(s)') });

@@ -1968,6 +1968,7 @@
         undo: G.history.length, redo: G.future.length,
         solved: !!(G.sim && G.sim.solved), won: G.won, celebrating: !!G.winCardTimer,
         hint: G.hint ? norm(G.hint) : null, conflicts: G.conflicts ? G.conflicts.slice() : null,
+        cursor: G.cursor ? { x: G.cursor.x, y: G.cursor.y } : null,
         dragging: !!I.drag, newTool: G.newTool, T: board.T
       };
     }
