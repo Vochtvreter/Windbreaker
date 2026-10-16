@@ -1003,7 +1003,7 @@
   }
   // Why a stove's smoke counts as trapped: where its smoky air is stopped.
   function trapReason(g, sim) {
-    var L = G.L, cx = g.x + 0.5, cy = g.y + 0.5, why = null;
+    var cx = g.x + 0.5, cy = g.y + 0.5, why = null;
     sim.trees.forEach(function (t) {
       if (why || !t.active) return;
       if (!t.segments.some(function (s) { return s.bx === cx && s.by === cy; })) return; // never reaches this stove
