@@ -17,10 +17,12 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
+/* Settings → Text size: Large. Every text size is in rem, so all of it grows. */
+html.is-large-text { font-size: 115%; }
 
 body {
   font-family: var(--font);
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.45;
   color: var(--ink);
   background: var(--bg);
@@ -83,7 +85,7 @@ button {
   background: var(--surface);
   color: var(--ink);
   font-weight: 600;
-  font-size: 15px;
+  font-size: 0.9375rem;
   cursor: pointer;
   transition: background-color .15s, border-color .15s, transform .12s, box-shadow .15s, filter .15s;
   user-select: none;
@@ -110,13 +112,13 @@ button {
 .btn-big {
   min-height: 54px;
   padding: 0 34px;
-  font-size: 17px;
+  font-size: 1.0625rem;
 }
 
 .btn-small {
   min-height: 34px;
   padding: 0 14px;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
 }
 
 .btn-quiet {
@@ -149,7 +151,12 @@ button {
 .icon-btn:disabled { opacity: 0.32; cursor: default; background: transparent; transform: none; }
 .icon-btn-small { min-width: 32px; height: 32px; border-radius: 10px; }
 .icon-btn-small .ico { width: 18px; height: 18px; }
-.btn-label { display: none; font-size: 13.5px; font-weight: 600; }
+/* Undo, Redo, Clear, Hint: always labelled (under the icon on touch screens, beside it on wide ones) */
+.btn-label { font-size: 0.75rem; font-weight: 600; line-height: 1.1; }
+.icon-btn.act { flex-direction: column; gap: 2px; min-width: 48px; height: 52px; padding: 0 3px; }
+.icon-btn.act .ico { width: 21px; height: 21px; }
+.btn-quiet-danger { border-color: transparent; background: transparent; color: var(--bad-text); font-weight: 600; }
+.btn-quiet-danger:hover { background: var(--surface-2); border-color: transparent; }
 
 /* ------------------------------------------------------------------ screens */
 
@@ -213,24 +220,28 @@ button {
 .tagline {
   margin-top: 8px;
   color: var(--ink-soft);
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 #btn-play { margin-top: 26px; }
+.howto { margin-top: 8px; color: var(--accent-text); font-weight: 600; }
+.howto:hover { color: var(--accent-text); }
+.hero-gear { position: absolute; top: -12px; right: -8px; }
 
 /* short screens (landscape phones): a compact hero, so the first chapter shows */
 @media (max-height: 520px) {
   .hero { padding: 6px 0 16px; }
   .hero-wind { display: none; }
-  .hero h1 { font-size: 34px; }
-  .tagline { margin-top: 4px; font-size: 15px; }
+  .hero h1 { font-size: 2.125rem; }
+  .tagline { margin-top: 4px; font-size: 0.9375rem; }
   #btn-play { margin-top: 12px; }
+  .howto { margin-top: 4px; }
 }
 
 .home-progress {
-  margin-top: 12px;
-  color: var(--muted);
-  font-size: 13px;
+  margin-top: 8px;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
   min-height: 1.4em;
 }
 
@@ -269,14 +280,14 @@ button {
 }
 .ch-titles { flex: 1; min-width: 0; }
 .ch-kicker {
-  font-size: 12px;
+  font-size: 0.78125rem;
   color: var(--muted);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   font-weight: 600;
 }
 .ch-title {
-  font-size: 16.5px;
+  font-size: 1.03125rem;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -284,7 +295,7 @@ button {
 }
 .ch-new {
   margin-top: 1px;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   color: var(--ink-soft);
   white-space: nowrap;
   overflow: hidden;
@@ -292,7 +303,7 @@ button {
 }
 .ch-new b { color: var(--accent-text); font-weight: 700; }
 .ch-count {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
   display: inline-flex;
@@ -318,7 +329,7 @@ button {
   background: transparent;
   color: var(--ink-soft);
   font-weight: 600;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
   display: inline-flex;
@@ -346,7 +357,7 @@ button {
   cursor: default;
   width: 34px;
   height: 34px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
   border: none;
   background: var(--surface-2);
@@ -366,7 +377,7 @@ button {
   border-radius: 14px;
   background: var(--ink);
   color: var(--bg);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   box-shadow: var(--shadow-lg);
   pointer-events: none;
@@ -385,11 +396,11 @@ button {
   color: var(--muted);
 }
 .chapter.is-folded .ch-icon { width: 30px; height: 30px; border-radius: 9px; opacity: 0.7; }
-.chapter.is-folded .ch-fold-title { flex: 1; min-width: 0; font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chapter.is-folded .ch-fold-title { flex: 1; min-width: 0; font-size: 0.90625rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chapter.is-folded .ch-fold-title span { font-weight: 500; color: var(--muted); }
-.chapter.is-folded .ch-new { display: block; margin-top: 0; font-size: 12.5px; font-weight: 500; color: var(--muted); }
+.chapter.is-folded .ch-new { display: block; margin-top: 0; font-size: 0.78125rem; font-weight: 500; color: var(--muted); }
 .chapter.is-folded .ch-new b { color: var(--muted); font-weight: 600; }
-.chapter.is-folded .ch-fold-meta { font-size: 12.5px; display: inline-flex; align-items: center; gap: 5px; flex: none; }
+.chapter.is-folded .ch-fold-meta { font-size: 0.78125rem; display: inline-flex; align-items: center; gap: 5px; flex: none; }
 .chapter.is-folded .ico { width: 15px; height: 15px; stroke-width: 2; }
 
 .home-foot {
@@ -441,7 +452,7 @@ button {
   display: flex;
   align-items: baseline;
   gap: 7px;
-  font-size: 16.5px;
+  font-size: 1.03125rem;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -460,9 +471,9 @@ button {
 .wind {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 12px 0 8px;
+  gap: 5px;
+  height: 40px;
+  padding: 0 12px;
   border: none;
   border-radius: 999px;
   background: var(--surface);
@@ -474,24 +485,25 @@ button {
 }
 .wind:hover { box-shadow: inset 0 0 0 1px var(--line-strong); }
 .wind:active { transform: scale(0.96); }
+.wind-label { font-size: 0.8125rem; font-weight: 600; color: var(--ink-soft); }
+/* an arrow made of the stream's lanes: one line for gentle, two strong, three a gale */
 .wind-glyph {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   fill: none;
   stroke: currentColor;
-  stroke-width: 2.3;
+  stroke-width: 2.2;
   stroke-linecap: round;
   stroke-linejoin: round;
   transition: transform .3s ease;
 }
-.wind-glyph path { opacity: 0.2; }
-.wind-glyph path.on { opacity: 1; }
+.wind-glyph .wl { display: none; }
+.wind[data-s="1"] .wl-1, .wind[data-s="2"] .wl-2, .wind[data-s="3"] .wl-3 { display: inline; }
 .wind-word {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-soft);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--ink);
 }
-.wind.is-calm { padding: 0 12px; }
 .wind.is-calm .wind-glyph { display: none; }
 
 .tip-line {
@@ -509,13 +521,13 @@ button {
 .tip {
   min-width: 0;
   text-align: center;
-  color: var(--ink-soft);
-  font-size: 15px;
+  color: var(--ink);
+  font-size: 0.9375rem;
   line-height: 1.4;
 }
 /* on a level that brings something new: its icon, the tip, and an (i) for its card */
 .tip-line.has-guide { cursor: pointer; }
-.tip-line.has-guide .tip { text-align: left; color: var(--ink); }
+.tip-line.has-guide .tip { text-align: left; font-size: 1rem; }
 .tip-icon {
   width: 30px;
   height: 30px;
@@ -581,17 +593,17 @@ button {
   border-radius: 10px;
   background: var(--ink);
   color: var(--bg);
-  font-size: 13px;
+  font-size: 0.875rem;
   font-weight: 500;
-  line-height: 1.35;
+  line-height: 1.38;
   pointer-events: none;
   box-shadow: var(--tooltip-shadow);
   white-space: normal;
   animation: tip-in .14s ease-out;
 }
 .tooltip b { font-weight: 700; white-space: nowrap; }
-.tooltip .tt-dim { opacity: 0.72; }
-.tooltip .tt-act { display: block; margin-top: 2px; font-size: 12px; opacity: 0.62; }
+.tooltip .tt-dim { opacity: 0.78; }
+.tooltip .tt-act { display: block; margin-top: 2px; font-size: 0.78125rem; opacity: 0.7; }
 @keyframes tip-in { from { opacity: 0; transform: translateY(3px); } }
 
 .toast {
@@ -609,23 +621,63 @@ button {
   border-radius: 16px;
   background: var(--surface);
   box-shadow: var(--shadow-lg);
-  font-size: 14px;
+  font-size: 0.9375rem;
+  line-height: 1.38;
   animation: toast-in .2s ease-out;
 }
 .toast > span { flex: 1; min-width: 0; }
+.toast .icon-btn-small { min-width: 40px; height: 40px; }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 6px); } }
 .toast.at-top { top: 12px; bottom: auto; }
+
+/* a tapped piece: what it is, and Turn / Put back (never a silent removal) */
+.pmenu {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  width: max-content;
+  max-width: min(300px, calc(100% - 16px));
+  padding: 6px 6px 6px 12px;
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-lg);
+  font-size: 0.875rem;
+  line-height: 1.35;
+  animation: tip-in .14s ease-out;
+}
+.pmenu-text { flex: 1 1 140px; min-width: 0; }
+.pmenu-text b { font-weight: 700; }
+.pmenu-text .tt-dim { color: var(--ink-soft); }
+.pmenu-btn { min-height: 40px; padding: 0 12px 0 9px; gap: 5px; flex: none; }
+.pmenu-btn .ico { width: 18px; height: 18px; }
 
 .hud {
   grid-area: hud;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 8px;
   padding: 2px 10px 0 16px;
   min-width: 0;
 }
 
+/* the goals bar: what to do, in words, and how everyone is doing */
+.goals-wrap { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.goals-say {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  line-height: 1.25;
+  padding-left: 2px;
+}
+.goals-say.is-almost, .goals-say.is-done { color: var(--accent-text); }
+.goals-say.is-bad { color: var(--bad-text); }
 .goals {
   list-style: none;
   margin: 0;
@@ -640,13 +692,13 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 34px;
-  padding: 0 11px 0 4px;
+  height: 38px;
+  padding: 0 11px 0 5px;
   border: none;
   border-radius: 999px;
   background: var(--surface);
   box-shadow: inset 0 0 0 1px var(--line);
-  font-size: 13.5px;
+  font-size: 0.875rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--ink-soft);
@@ -660,8 +712,14 @@ button {
   box-shadow: none;
   color: var(--accent-text);
 }
-.goal.is-bad { color: var(--bad-text); }
+.goal.is-bad { color: var(--bad-text); box-shadow: inset 0 0 0 1.5px var(--bad); }
 .goal .check { width: 15px; height: 15px; stroke-width: 2.6; }
+/* a new thing in the house: its goal chip says hello once */
+.goal.is-hello { animation: goal-hello 1.2s ease-in-out 2; }
+@keyframes goal-hello { 50% { box-shadow: inset 0 0 0 1px var(--line), 0 0 0 6px var(--accent-soft); transform: scale(1.06); } }
+/* "Stuck? A hint is free": the Hint button glows softly, twice */
+.icon-btn.is-offer { color: var(--accent-text); animation: hint-offer 1.4s ease-in-out 2; }
+@keyframes hint-offer { 50% { background: var(--accent-soft); transform: scale(1.06); } }
 
 .actions {
   display: flex;
@@ -669,6 +727,7 @@ button {
   gap: 2px;
   flex: none;
 }
+.actions .icon-btn:disabled .btn-label { opacity: 0.9; }
 .tray-wrap { grid-area: tray; position: relative; min-width: 0; }
 .tray-wrap.is-won .tray { visibility: hidden; }
 .next-pill {
@@ -679,7 +738,7 @@ button {
   width: max-content;
   height: 48px;
   padding: 0 26px;
-  font-size: 15.5px;
+  font-size: 0.96875rem;
   animation: fade-in .3s ease-out;
 }
 .next-pill .ico { width: 19px; height: 19px; stroke-width: 2.2; }
@@ -687,7 +746,7 @@ button {
 .tray {
   display: flex;
   gap: 8px;
-  padding: 8px 16px max(14px, env(safe-area-inset-bottom));
+  padding: 10px 16px max(14px, env(safe-area-inset-bottom));
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
@@ -730,7 +789,7 @@ button {
   pointer-events: none;
 }
 .chip-name {
-  font-size: 12px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--ink-soft);
   white-space: nowrap;
@@ -747,7 +806,7 @@ button {
   border-radius: 999px;
   background: var(--surface-2);
   color: var(--ink-soft);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   display: inline-flex;
@@ -764,18 +823,28 @@ button {
   transform: translateY(-2px);
 }
 .chip.is-selected .chip-count { background: var(--accent-fill); color: var(--accent-ink); }
+/* the tool this chapter brings: a small "New" label (not a notification dot) */
 .chip.is-new::after {
-  content: "";
+  content: "New";
   position: absolute;
-  top: 8px;
-  left: 8px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent-2);
-  box-shadow: 0 0 0 2px var(--surface);
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent-fill);
+  color: var(--accent-ink);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  box-shadow: 0 0 0 2px var(--bg);
+  pointer-events: none;
 }
 .chip.is-new.is-selected::after { display: none; }
+/* tapping the selected tool again: a small bounce (it stays selected) */
+.chip.is-bounce { animation: chip-bounce .34s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes chip-bounce { 40% { transform: translateY(-5px) scale(1.04); } }
 /* on the selected chip: (i) opens the tool's card */
 .chip-info {
   position: absolute;
@@ -789,7 +858,7 @@ button {
   justify-content: center;
   background: var(--accent-soft);
   color: var(--accent-text);
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   font-weight: 800;
   font-family: Georgia, "Times New Roman", serif;
   font-style: italic;
@@ -891,14 +960,14 @@ button {
 }
 .gcard-titles { flex: 1; min-width: 0; }
 .gcard-kicker {
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--accent-text);
 }
-.gcard-title { font-size: 21px; font-weight: 700; line-height: 1.2; letter-spacing: -0.01em; }
-.gcard-close { align-self: flex-start; }
+.gcard-title { font-size: 1.3125rem; font-weight: 700; line-height: 1.2; letter-spacing: -0.01em; }
+.gcard-close { align-self: flex-start; min-width: 40px; height: 40px; }
 .gcard-main {
   flex: 1 1 auto;
   min-height: 0;
@@ -915,14 +984,14 @@ button {
 /* the board settles in softly when the card folds away */
 .board.is-settling { animation: board-settle .45s ease-out; }
 @keyframes board-settle { from { opacity: 0.35; } }
-.gcard-one { font-size: 16px; line-height: 1.4; color: var(--ink); }
+.gcard-one { font-size: 1rem; line-height: 1.4; color: var(--ink); }
 .gcard-status {
   margin-top: 8px;
   padding: 7px 11px;
   border-radius: 12px;
   background: var(--surface-2);
   color: var(--ink-soft);
-  font-size: 14px;
+  font-size: 0.9375rem;
 }
 .gcard-status b { color: var(--ink); }
 .gcard-status .tt-dim { color: var(--muted); }
@@ -936,7 +1005,7 @@ button {
 .gcard-points li {
   position: relative;
   padding-left: 20px;
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.42;
   color: var(--ink);
 }
@@ -957,8 +1026,8 @@ button {
   margin-top: 12px;
   padding-top: 10px;
   border-top: 1px solid var(--line);
-  color: var(--ink-soft);
-  font-size: 14px;
+  color: var(--ink);
+  font-size: 0.9375rem;
   line-height: 1.4;
 }
 .gcard-controls .ico { width: 20px; height: 20px; margin-top: 1px; color: var(--accent-text); }
@@ -987,7 +1056,7 @@ button {
   margin-top: 8px;
   min-height: 2.8em;
   text-align: center;
-  font-size: 14.5px;
+  font-size: 0.90625rem;
   line-height: 1.4;
   color: var(--ink-soft);
 }
@@ -1000,7 +1069,7 @@ button {
 .gdemo.is-still { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 460px; }
 .gdemo.is-still .gdemo-box { cursor: default; }
 .gdemo-fig { margin: 0; min-width: 0; }
-.gdemo.is-still .gdemo-cap { font-size: 13px; min-height: 0; }
+.gdemo.is-still .gdemo-cap { font-size: 0.8125rem; min-height: 0; }
 
 /* the coach: a soft bubble pinned to a cell of the board */
 .coach {
@@ -1014,7 +1083,7 @@ button {
   border-radius: 14px;
   background: var(--accent-fill);
   color: var(--accent-ink);
-  font-size: 14.5px;
+  font-size: 0.9375rem;
   font-weight: 600;
   line-height: 1.35;
   box-shadow: var(--shadow-lg);
@@ -1040,9 +1109,9 @@ button {
 .coach[data-side="left"] .coach-arrow { right: -5px; }
 
 /* help: the field guide */
-.fg-note { font-size: 14px; }
+.fg-note { font-size: 0.9375rem; }
 .help-body h4 {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   color: var(--ink-soft);
   margin: 12px 0 2px;
@@ -1139,7 +1208,7 @@ button {
 }
 .win-swirl path + path { stroke-width: 2.4; opacity: 0.5; animation-delay: .3s; }
 @keyframes draw-in { to { stroke-dashoffset: 0; } }
-.win-title { font-size: 26px; font-weight: 700; letter-spacing: -0.01em; }
+.win-title { font-size: 1.625rem; font-weight: 700; letter-spacing: -0.01em; }
 .win-sub { margin-top: 4px; color: var(--ink-soft); }
 .win-dots { display: flex; justify-content: center; gap: 7px; margin-top: 12px; }
 .win-dots i {
@@ -1166,7 +1235,7 @@ button {
   border-radius: 16px;
   background: var(--accent-soft);
   text-align: left;
-  font-size: 14.5px;
+  font-size: 0.90625rem;
   line-height: 1.38;
   color: var(--ink);
 }
@@ -1183,13 +1252,13 @@ button {
   border-radius: 14px;
   background: var(--surface-2);
   text-align: left;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--ink-soft);
 }
 .win-teaser canvas { width: 34px; height: 34px; border-radius: 10px; background: var(--bg-2); flex: none; }
 .win-teaser b { color: var(--ink); font-weight: 600; }
 .win-teaser .nw { white-space: nowrap; }
-.win-final { margin-top: 12px; color: var(--ink); font-size: 14.5px; }
+.win-final { margin-top: 12px; color: var(--ink); font-size: 0.90625rem; }
 .win-buttons {
   display: flex;
   gap: 10px;
@@ -1197,8 +1266,8 @@ button {
   margin-top: 18px;
 }
 .win-buttons .btn { flex: 1; max-width: 160px; }
-.confirm-card h2 { font-size: 20px; font-weight: 600; }
-.confirm-card p { margin-top: 8px; color: var(--ink-soft); font-size: 14.5px; }
+.confirm-card h2 { font-size: 1.25rem; font-weight: 600; }
+.confirm-card p { margin-top: 8px; color: var(--ink-soft); font-size: 0.90625rem; }
 
 .help-card {
   width: min(560px, 100%);
@@ -1214,15 +1283,15 @@ button {
   justify-content: space-between;
   padding: 16px 12px 8px 24px;
 }
-.help-head h2 { flex: 1; font-size: 21px; font-weight: 700; }
+.help-head h2 { flex: 1; font-size: 1.3125rem; font-weight: 700; }
 .help-body {
   overflow-y: auto;
   padding: 4px 24px 24px;
-  font-size: 14.5px;
+  font-size: 0.9375rem;
   color: var(--ink);
 }
 .help-body h3 {
-  font-size: 12px;
+  font-size: 0.8125rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1265,25 +1334,129 @@ button {
   flex: none;
 }
 .gloss-name { font-weight: 600; }
-.gloss-desc { color: var(--ink-soft); font-size: 13.5px; line-height: 1.35; }
+.gloss-desc { color: var(--ink-soft); font-size: 0.875rem; line-height: 1.35; }
 .help-body .keys + h3 { margin-top: 18px; }
-.keys { display: grid; grid-template-columns: fit-content(46%) 1fr; gap: 6px 12px; margin: 0; color: var(--ink-soft); font-size: 13.5px; }
+.keys { display: grid; grid-template-columns: fit-content(46%) 1fr; gap: 7px 12px; margin: 0; color: var(--ink-soft); font-size: 0.875rem; }
 .keys dt { font-weight: 600; color: var(--ink); }
 .keys dd { margin: 0; }
 kbd {
   font-family: inherit;
-  font-size: 12px;
+  font-size: 0.75rem;
   padding: 1px 6px;
   border-radius: 6px;
   background: var(--bg-2);
   box-shadow: inset 0 -1px 0 var(--line-strong);
 }
 
+/* settings */
+.settings-card {
+  width: min(440px, 100%);
+  max-height: min(720px, calc(100vh - 40px));
+  max-height: min(720px, calc(100dvh - 40px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.settings-body { overflow-y: auto; padding: 0 20px 14px 24px; }
+.set-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 0;
+  border-top: 1px solid var(--line);
+}
+.set-row:first-child { border-top: none; }
+.set-name { min-width: 0; font-size: 1rem; font-weight: 600; color: var(--ink); }
+.set-note { display: block; margin-top: 1px; font-size: 0.84375rem; font-weight: 400; color: var(--ink-soft); line-height: 1.35; }
+.set-danger { margin-top: 6px; }
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 0 2px 0 8px;
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex: none;
+}
+.switch-track {
+  position: relative;
+  width: 50px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--line-strong);
+  transition: background-color .2s;
+}
+.switch-track i {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  transition: transform .2s;
+}
+.switch[aria-checked="true"] { color: var(--accent-text); }
+.switch[aria-checked="true"] .switch-track { background: var(--accent-fill); }
+.switch[aria-checked="true"] .switch-track i { transform: translateX(20px); }
+.seg {
+  display: inline-flex;
+  flex: none;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--bg-2);
+}
+.seg-btn {
+  min-height: 38px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.seg-btn.seg-big { font-size: 1.0625rem; }
+.seg-btn[aria-checked="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.help-gear { gap: 6px; padding: 0 12px 0 9px; }
+.help-gear .ico { width: 19px; height: 19px; }
+
+/* help: the basics first, the rest folded away */
+.help-goal { list-style: none; margin: 4px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.help-goal li { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; font-size: 0.875rem; line-height: 1.3; color: var(--ink); }
+.help-goal canvas { border-radius: 14px; background: var(--bg-2); display: block; }
+.help-more { border-top: 1px solid var(--line); margin-top: 14px; }
+.help-more > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 48px;
+  list-style: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+.help-more > summary::-webkit-details-marker { display: none; }
+.help-more > summary .ico { width: 18px; height: 18px; color: var(--muted); transition: transform .2s; }
+.help-more[open] > summary .ico { transform: rotate(90deg); }
+.help-more > summary small { flex: 1; font-size: 0.84375rem; font-weight: 500; color: var(--ink-soft); }
+.help-more > :last-child { margin-bottom: 12px; }
+
 /* ------------------------------------------------------------------ responsive */
 
 @media (min-width: 900px) and (min-height: 600px) {
-  .actions .icon-btn { padding: 0 12px 0 10px; }
-  .btn-label { display: inline; }
+  .icon-btn.act { flex-direction: row; gap: 6px; height: 44px; padding: 0 12px 0 10px; }
+  .btn-label { font-size: 0.84375rem; }
   /* the card is a panel beside the board; tray and buttons stay in reach */
   .game.is-guiding {
     grid-template-columns: minmax(0, 1fr) minmax(330px, 390px);
@@ -1295,28 +1468,34 @@ kbd {
   .guide { align-self: start; justify-self: stretch; width: auto; max-height: 100%; margin: 6px 16px 16px 4px; border-radius: 24px; }
 }
 
-@media (max-width: 419px) {
-  .wind:not(.is-calm) .wind-word { display: none; }
-  .wind:not(.is-calm) { padding: 0 9px; }
+/* Settings sit in the top bar where there is room; on phones they are in Help */
+@media (max-width: 599px) {
+  .top-gear { display: none; }
+}
+@media (max-width: 380px) {
+  .wind { padding: 0 9px; gap: 4px; }
 }
 
 @media (max-width: 560px) {
-  .chip-name { display: none; }
-  .chip { padding: 0; min-width: 0; width: 60px; height: 60px; border-radius: 17px; }
-  .chip canvas { width: 36px; height: 36px; }
-  .chip-count { top: 3px; right: 3px; min-width: 19px; height: 19px; font-size: 12px; padding: 0 4px; }
-  /* six or seven tools: shrink the chips (never below 44 px) so all of them fit */
-  .tray.is-many { min-height: 80px; gap: 5px; padding-left: 10px; padding-right: 10px; }
-  .tray.is-many .chip { width: min(52px, calc((100vw - 50px) / 7)); min-width: 44px; height: 52px; border-radius: 15px; }
-  .tray.is-many .chip canvas { width: 30px; height: 30px; }
-  .level-title { font-size: 15.5px; }
+  /* names stay under the icons on phones: a tool is never just a picture */
+  .chip { min-width: 62px; height: 66px; padding: 5px 7px 6px; gap: 2px; border-radius: 17px; }
+  .chip canvas { width: 32px; height: 32px; }
+  .chip-name { font-size: 0.75rem; }
+  .chip-count { top: 3px; right: 3px; min-width: 19px; height: 19px; font-size: 0.71875rem; padding: 0 4px; }
+  /* six or seven tools: smaller chips (never below 48 px); the tray scrolls if they still don't fit */
+  .tray.is-many { gap: 5px; padding-left: 10px; padding-right: 10px; }
+  .tray.is-many .chip { min-width: 48px; height: 60px; padding: 4px 4px 5px; border-radius: 15px; }
+  .tray.is-many .chip canvas { width: 28px; height: 28px; }
+  .tray.is-many .chip-name { font-size: 0.6875rem; }
+  .level-title { font-size: 0.96875rem; }
   .tip-line { padding: 0 12px 4px; }
-  .tip { font-size: 14.5px; }
+  .tip { font-size: 0.9375rem; }
+  .tip-line.has-guide .tip { font-size: 1rem; }
   /* full-bleed garden on phones */
   .stage { padding: 0; }
   .board { border-radius: 0; box-shadow: none; }
   .hud { padding-left: 12px; padding-right: 6px; padding-top: 4px; }
-  .tray { padding-left: 12px; padding-right: 12px; min-height: 88px; }
+  .tray { padding-left: 12px; padding-right: 12px; min-height: 90px; }
   .guide { max-height: min(66vh, 620px); max-height: min(66dvh, 620px); }
   .gdemo { max-width: 250px; }
   .gcard-head { padding-left: 16px; }
@@ -1326,10 +1505,11 @@ kbd {
 @media (max-width: 420px) {
   /* goals become icon + count, so up to six fit on one line */
   .goals { gap: 0 6px; }
-  .goal { background: transparent; box-shadow: none; padding: 0 2px 0 0; gap: 2px; height: 32px; font-size: 13px; }
-  .goal canvas { width: 23px; height: 23px; }
+  .goal { background: transparent; box-shadow: none; padding: 0 4px 0 0; gap: 2px; height: 34px; font-size: 0.84375rem; }
+  .goal canvas { width: 24px; height: 24px; }
   .goal.is-done { background: transparent; }
-  .actions .icon-btn { min-width: 40px; }
+  .goal.is-bad { box-shadow: none; }
+  .icon-btn.act { min-width: 44px; }
 }
 
 /* landscape phones: board on the left, controls in a scrolling column on the right */
@@ -1354,7 +1534,7 @@ kbd {
   }
   .topbar { padding-top: 4px; padding-bottom: 0; }
   .tip-line { order: 0; justify-content: flex-start; padding: 0 4px; margin: 0; }
-  .tip { text-align: left; font-size: 14px; }
+  .tip { text-align: left; font-size: 0.875rem; }
   .tray-wrap { order: 1; flex: none; }
   .hud { order: 2; }
   .stage { padding: 4px 4px 8px 12px; }
@@ -1371,10 +1551,10 @@ kbd {
     mask-image: none !important;
   }
   .tray > :first-child, .tray > :last-child { margin-left: 0; margin-right: 0; }
-  .chip-name { display: none; }
-  .chip, .tray.is-many .chip { width: 50px; height: 50px; padding: 0; min-width: 0; border-radius: 15px; touch-action: none; }
-  .chip canvas, .tray.is-many .chip canvas { width: 32px; height: 32px; }
-  .chip-count { top: 2px; right: 2px; min-width: 19px; height: 19px; font-size: 12px; padding: 0 4px; }
+  .chip, .tray.is-many .chip { min-width: 54px; height: 58px; padding: 4px 5px 5px; gap: 1px; border-radius: 15px; touch-action: none; }
+  .chip canvas, .tray.is-many .chip canvas { width: 28px; height: 28px; }
+  .chip-name, .tray.is-many .chip-name { font-size: 0.6875rem; }
+  .chip-count { top: 2px; right: 2px; min-width: 19px; height: 19px; font-size: 0.6875rem; padding: 0 4px; }
   /* the card takes the whole side column while it is open */
   .game.is-guiding {
     grid-template-columns: minmax(0, 1fr) minmax(280px, 42%);
@@ -1395,11 +1575,11 @@ kbd {
   }
   .gcard-head { padding: 12px 10px 0 14px; }
   .gcard-main { padding: 6px 14px 4px; }
-  .gcard-title { font-size: 18px; }
-  .gcard-one { font-size: 15px; }
+  .gcard-title { font-size: 1.125rem; }
+  .gcard-one { font-size: 0.9375rem; }
   .gcard-buttons { padding: 8px 10px; }
   .gdemo { max-width: 240px; margin-top: 8px; }
-  .coach { max-width: min(220px, calc(100% - 16px)); font-size: 13.5px; }
+  .coach { max-width: min(220px, calc(100% - 16px)); font-size: 0.84375rem; }
   /* toasts float in the top bar, over the level title, never over the house */
   .toast, .toast.at-top {
     position: fixed;
@@ -1412,18 +1592,26 @@ kbd {
   }
   .overlay.sheet { justify-content: flex-end; align-items: flex-end; }
   .win-card { width: min(340px, 100%); padding: 16px 18px 16px; }
-  .win-title { font-size: 22px; }
+  .win-title { font-size: 1.375rem; }
   .win-buttons { margin-top: 12px; }
 }
 
 @keyframes toast-in-top { from { opacity: 0; transform: translateY(-6px); } }
 
+/* less motion: the device asks for it (unless switched off in Settings), or Settings does */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  html:not(.motion-full) *, html:not(.motion-full) *::before, html:not(.motion-full) *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
-  .hw-gust { animation: none !important; stroke-dashoffset: -40; }
-  .win-swirl path { stroke-dashoffset: 0; }
+  html:not(.motion-full) .hw-gust { animation: none !important; stroke-dashoffset: -40; }
+  html:not(.motion-full) .win-swirl path { stroke-dashoffset: 0; }
 }
+html.motion-calm *, html.motion-calm *::before, html.motion-calm *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+html.motion-calm .hw-gust { animation: none !important; stroke-dashoffset: -40; }
+html.motion-calm .win-swirl path { stroke-dashoffset: 0; }
