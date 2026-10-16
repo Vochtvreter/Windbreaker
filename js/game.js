@@ -1097,7 +1097,8 @@
   }
 
   // how: 'go' (Let's try it), 'show' (Show me), 'close' (× or Esc).
-  // keep: another card takes its place (or the level is left).
+  // keep: another card takes its place, or the level is left (this level's
+  // card then opens by itself again next time).
   function closeGuide(opts) {
     opts = opts || {};
     var g = G.guide;
@@ -1108,8 +1109,8 @@
     dom.guide.hidden = true;
     dom.guide.textContent = '';
     dom.game.classList.remove('is-guiding');
+    if (opts.keep) return; // replaced, or the level is left: not read yet
     if (g.id === G.levelGuide) markGuideSeen(g.id);
-    if (opts.keep) return;
     // the board takes the freed space: let it settle in softly
     dom.canvas.classList.remove('is-settling');
     void dom.canvas.offsetWidth;
@@ -2667,24 +2668,7 @@
       if (WB.levelConditions) WB.levelConditions(G.def).forEach(function (c) { inLevel[c] = true; });
     }
     function has(o) { return WB.OBJECTS[o].intro <= n || inLevel[o]; }
-    h.push('<p>Make <b>every object</b> in the house happy at the same time by placing the tools from your tray. Tap or hover anything to see how much air reaches it.</p>');
-    h.push('<ul class="help-rules">');
-    h.push('<li><span class="rule-ico">' + cv('swirl', 'w', 28) + '</span><span><b>Wind</b> blows across the garden. The badge at the top shows which way it blows and how strong it is.</span></li>');
-    h.push('<li><span class="rule-ico">' + cv('ui', 'inlet', 34) + '</span><span>A <b>window facing the wind</b> is an inlet: a bright pane with arrows pointing in. Every other window is an <b>outlet</b> ' + cv('ui', 'outlet', 22, 'inl') + ' that lets air out. Air blown back into a window that faces the wind is pushed back, just like a wall.</span></li>');
-    h.push('<li><span class="rule-ico">' + cv('ui', 'stall', 34) + '</span><span><b>A breeze only flows if it has a way out.</b> An inlet with no outlet stays still: its path is a faint dashed line ending in a red ×.</span></li>');
-    h.push('<li><span class="rule-ico">' + cv('ui', 'lanes-2', 34) + '</span><span><b>Strength</b> is the number of lines in a stream: one is a gentle breeze, two is strong, three is a gale. Where breezes from different sources meet on the same spot, from any direction, they add up (a breeze crossing its own path does not add to itself).</span></li>');
-    if (n >= WB.OBJECTS.stove.intro || inLevel.stove) h.push('<li><span class="rule-ico">' + cv('object', 'stove', 30) + '</span><span><b>Smoke</b> from a stove must be carried outside or through a filter, never blown into a wall.' + (has('laundry') ? ' Smoky air also makes laundry dirty.' : '') + '</span></li>');
-    h.push('<li><span class="rule-ico">' + cv('ui', 'pip-happy', 30) + '</span><span>The dot on each object shows how it feels: ' + cv('ui', 'pip-idle', 18, 'inl') + ' wants air, ' + cv('ui', 'pip-happy', 18, 'inl') + ' happy, ' + cv('ui', 'pip-bad', 18, 'inl') + ' unhappy' +
-      (has('laundry') && (n >= WB.OBJECTS.stove.intro || inLevel.stove) ? ', ' + cv('ui', 'pip-dirty', 18, 'inl') + ' dirty from smoke' : '') + '.</span></li>');
-    if (has('laundry') || has('papers') || has('fern')) {
-      var ms = [];
-      if (has('laundry')) ms.push(cv('ui', 'meter-laundry-1-idle', 34, 'inl') + ' laundry wants two or more, of clean air');
-      if (has('papers')) ms.push(cv('ui', 'meter-papers-0-happy', 34, 'inl') + ' papers take one at most');
-      if (has('fern')) ms.push(cv('ui', 'meter-fern-1-happy', 34, 'inl') + ' a fern wants exactly one');
-      h.push('<li><span class="rule-ico">' + cv('ui', 'meter-laundry-2-happy', 34) + '</span><span>Some things are picky. Their <b>meter</b> fills with the air that reaches them: ' + ms.join(', ') + '. A red dot means too much.</span></li>');
-    }
-    h.push('</ul>');
-
+    h.push('<p>Make <b>every thing</b> in the house happy at the same time, with the tools in your tray. ' + (usingTouch() ? 'Tap' : 'Click or hover') + ' anything on the board to see how much air reaches it.</p>');
     // the field guide: every tool, thing and twist met so far, each opening its card
     var met = GUIDE_ORDER.filter(function (gid) { return metBy(gid, n) || inLevel[gid]; });
     if (met.length) {
@@ -2703,6 +2687,23 @@
         h.push('</ul>');
       });
     }
+    h.push('<h3>How air moves</h3>');
+    h.push('<ul class="help-rules">');
+    h.push('<li><span class="rule-ico">' + cv('swirl', 'w', 28) + '</span><span><b>Wind</b> blows across the garden. The badge at the top shows which way it blows and how strong it is.</span></li>');
+    h.push('<li><span class="rule-ico">' + cv('ui', 'inlet', 34) + '</span><span>A <b>window on the windy side</b> lets the breeze in: a bright pane with arrows pointing in. Every other window <b>lets air out</b> ' + cv('ui', 'outlet', 22, 'inl') + '. Air blown back into a window on the windy side is pushed back, just like a wall.</span></li>');
+    h.push('<li><span class="rule-ico">' + cv('ui', 'stall', 34) + '</span><span><b>A breeze only flows if it has a way out.</b> A window breeze with no way out stays still: its path is a faint dashed line ending in a red ×.</span></li>');
+    h.push('<li><span class="rule-ico">' + cv('ui', 'lanes-2', 34) + '</span><span><b>Strength</b> is the number of lines in a stream: one is a gentle breeze, two is strong, three is a gale. Where breezes from different sources meet on the same spot, from any direction, they add up (a breeze crossing its own path does not add to itself).</span></li>');
+    if (n >= WB.OBJECTS.stove.intro || inLevel.stove) h.push('<li><span class="rule-ico">' + cv('object', 'stove', 30) + '</span><span><b>Smoke</b> from a stove must be carried outside' + (metBy('filter', n) || inLevel.filter ? ' or through a filter' : '') + ', never blown into a wall.' + (has('laundry') ? ' Smoky air also makes laundry dirty.' : '') + '</span></li>');
+    h.push('<li><span class="rule-ico">' + cv('ui', 'pip-happy', 30) + '</span><span>The dot on each object shows how it feels: ' + cv('ui', 'pip-idle', 18, 'inl') + ' wants air, ' + cv('ui', 'pip-happy', 18, 'inl') + ' happy, ' + cv('ui', 'pip-bad', 18, 'inl') + ' unhappy' +
+      (has('laundry') && (n >= WB.OBJECTS.stove.intro || inLevel.stove) ? ', ' + cv('ui', 'pip-dirty', 18, 'inl') + ' dirty from smoke' : '') + '.</span></li>');
+    if (has('laundry') || has('papers') || has('fern')) {
+      var ms = [];
+      if (has('laundry')) ms.push(cv('ui', 'meter-laundry-1-idle', 34, 'inl') + ' laundry wants two or more, of clean air');
+      if (has('papers')) ms.push(cv('ui', 'meter-papers-0-happy', 34, 'inl') + ' papers take one at most');
+      if (has('fern')) ms.push(cv('ui', 'meter-fern-1-happy', 34, 'inl') + ' a fern wants exactly one');
+      h.push('<li><span class="rule-ico">' + cv('ui', 'meter-laundry-2-happy', 34) + '</span><span>Some things are picky. Their <b>meter</b> fills with the air that reaches them: ' + ms.join(', ') + '. A red dot means too much.</span></li>');
+    }
+    h.push('</ul>');
     var touch = usingTouch();
     h.push('<h3>Controls</h3><dl class="keys">');
     var tap = touch ? 'Tap' : 'Click';
