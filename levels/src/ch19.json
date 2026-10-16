@@ -3,58 +3,118 @@
   "title": "Crosswinds",
   "levels": [
     {
-      "name": "Double Duty",
-      "tip": "Where two breezes cross, a single piece works on both of them.",
-      "wind": { "from": "W", "strength": 2 },
+      "name": "Cross Stitch",
+      "tip": "Where streams cross, their breezes add up: plan every path together.",
+      "wind": {
+        "from": "S",
+        "strength": 1
+      },
       "map": [
-        "%%%%%#%#%%%",
-        "%o...s.o..%",
-        "%...#n...o%",
-        "#..l#....f#",
-        "%...#o....%",
-        "%.o.#c..o.%",
-        "%%%%%%%%%%%"
+        "#######",
+        "#...lf#",
+        "#.....#",
+        "##.#.##",
+        "#..o..#",
+        "#.l..c#",
+        "#..o..#",
+        "#######"
       ],
       "fixed": [
-        { "type": "window", "x": 0, "y": 3 }
+        {
+          "type": "window",
+          "x": 2,
+          "y": 7
+        }
       ],
-      "inventory": { "vent": 1, "window": 1, "extractor": 1, "curtain": 2, "deflector": 1 },
+      "inventory": {
+        "window": 1,
+        "fan": 1,
+        "deflector": 2
+      },
       "solution": [
-        { "type": "vent", "x": 4, "y": 3 },
-        { "type": "window", "x": 10, "y": 3 },
-        { "type": "extractor", "x": 5, "y": 0 },
-        { "type": "curtain", "x": 5, "y": 3 }
+        {
+          "type": "deflector",
+          "x": 2,
+          "y": 1,
+          "d": 0
+        },
+        {
+          "type": "window",
+          "x": 6,
+          "y": 1
+        },
+        {
+          "type": "fan",
+          "x": 1,
+          "y": 5,
+          "d": 1
+        },
+        {
+          "type": "deflector",
+          "x": 4,
+          "y": 5,
+          "d": 0
+        }
       ]
     },
     {
-      "name": "Trading Places",
-      "wind": { "from": "W", "strength": 2 },
+      "name": "Tumble Dry",
+      "wind": {
+        "from": "W",
+        "strength": 1
+      },
       "map": [
-        "%%%%%%%%%%%%",
-        "%o..%....o.%",
-        "%.c.%..s...#",
-        "%..o#..f...%",
-        "#...#....f.#",
-        "%...%..l..o%",
-        "%o.....s...%",
-        "%%%%%%%#%%%%"
+        "##########",
+        "#lll.....#",
+        "#........#",
+        "#......f.#",
+        "#....c.ll#",
+        "##########"
       ],
       "fixed": [
-        { "type": "window", "x": 0, "y": 4 },
-        { "type": "fan", "x": 7, "y": 1, "d": 2 }
+        {
+          "type": "window",
+          "x": 0,
+          "y": 1
+        }
       ],
-      "inventory": { "deflector": 1, "window": 2, "vent": 1, "curtain": 1, "splitter": 1 },
+      "inventory": {
+        "window": 1,
+        "deflector": 2,
+        "ceilingfan": 1
+      },
       "solution": [
-        { "type": "vent", "x": 4, "y": 4 },
-        { "type": "deflector", "x": 7, "y": 4, "d": 1 },
-        { "type": "window", "x": 7, "y": 7 },
-        { "type": "window", "x": 11, "y": 4 }
+        {
+          "type": "deflector",
+          "x": 6,
+          "y": 1,
+          "d": 1
+        },
+        {
+          "type": "deflector",
+          "x": 6,
+          "y": 4,
+          "d": 1
+        },
+        {
+          "type": "ceilingfan",
+          "x": 6,
+          "y": 3
+        },
+        {
+          "type": "window",
+          "x": 9,
+          "y": 4
+        }
       ]
     },
     {
       "name": "Broadside",
       "tip": "The splitter is bolted down. If it won't move, the wind will have to.",
-      "wind": { "from": "W", "strength": 1 },
+      "wind": {
+        "from": "W",
+        "strength": 1
+      },
       "map": [
         "%%%%%%%%%%%",
         "%.o.%%%o..%",
@@ -67,20 +127,55 @@
         "%%%%%%%%%%%"
       ],
       "fixed": [
-        { "type": "window", "x": 0, "y": 4 },
-        { "type": "splitter", "x": 5, "y": 4 }
+        {
+          "type": "window",
+          "x": 0,
+          "y": 4
+        },
+        {
+          "type": "splitter",
+          "x": 5,
+          "y": 4
+        }
       ],
-      "inventory": { "deflector": 2, "fan": 1, "window": 1, "curtain": 1 },
+      "inventory": {
+        "deflector": 2,
+        "fan": 1,
+        "window": 1,
+        "curtain": 1
+      },
       "solution": [
-        { "type": "deflector", "x": 2, "y": 4, "d": 1 },
-        { "type": "deflector", "x": 2, "y": 7, "d": 1 },
-        { "type": "fan", "x": 5, "y": 7, "d": 0 },
-        { "type": "window", "x": 10, "y": 4 }
+        {
+          "type": "deflector",
+          "x": 2,
+          "y": 4,
+          "d": 1
+        },
+        {
+          "type": "deflector",
+          "x": 2,
+          "y": 7,
+          "d": 1
+        },
+        {
+          "type": "fan",
+          "x": 5,
+          "y": 7,
+          "d": 0
+        },
+        {
+          "type": "window",
+          "x": 10,
+          "y": 4
+        }
       ]
     },
     {
       "name": "Roof Hatch",
-      "wind": { "from": "N", "strength": 2 },
+      "wind": {
+        "from": "N",
+        "strength": 2
+      },
       "map": [
         "%%%#%%%#%%",
         "%o.l.%..o%",
@@ -93,21 +188,60 @@
         "%%%#%%#%%%"
       ],
       "fixed": [
-        { "type": "window", "x": 3, "y": 0 },
-        { "type": "window", "x": 7, "y": 0 },
-        { "type": "fan", "x": 1, "y": 4, "d": 1 }
+        {
+          "type": "window",
+          "x": 3,
+          "y": 0
+        },
+        {
+          "type": "window",
+          "x": 7,
+          "y": 0
+        },
+        {
+          "type": "fan",
+          "x": 1,
+          "y": 4,
+          "d": 1
+        }
       ],
-      "inventory": { "deflector": 1, "skylight": 1, "curtain": 2, "window": 1, "filter": 1 },
+      "inventory": {
+        "deflector": 1,
+        "skylight": 1,
+        "curtain": 2,
+        "window": 1,
+        "filter": 1
+      },
       "solution": [
-        { "type": "deflector", "x": 3, "y": 4, "d": 1 },
-        { "type": "skylight", "x": 7, "y": 4 },
-        { "type": "curtain", "x": 7, "y": 1 },
-        { "type": "window", "x": 3, "y": 8 }
+        {
+          "type": "deflector",
+          "x": 3,
+          "y": 4,
+          "d": 1
+        },
+        {
+          "type": "skylight",
+          "x": 7,
+          "y": 4
+        },
+        {
+          "type": "curtain",
+          "x": 7,
+          "y": 1
+        },
+        {
+          "type": "window",
+          "x": 3,
+          "y": 8
+        }
       ]
     },
     {
       "name": "Every Which Way",
-      "wind": { "from": "W", "strength": 2 },
+      "wind": {
+        "from": "W",
+        "strength": 2
+      },
       "map": [
         "~~~~%%%%%~~",
         "~~~~#...%~~",
@@ -119,19 +253,67 @@
         "%%%%%%#%%%%"
       ],
       "fixed": [
-        { "type": "window", "x": 4, "y": 1 },
-        { "type": "window", "x": 0, "y": 3 },
-        { "type": "window", "x": 0, "y": 5 },
-        { "type": "fan", "x": 6, "y": 1, "d": 2 }
+        {
+          "type": "window",
+          "x": 4,
+          "y": 1
+        },
+        {
+          "type": "window",
+          "x": 0,
+          "y": 3
+        },
+        {
+          "type": "window",
+          "x": 0,
+          "y": 5
+        },
+        {
+          "type": "fan",
+          "x": 6,
+          "y": 1,
+          "d": 2
+        },
+        {
+          "type": "curtain",
+          "x": 1,
+          "y": 5
+        }
       ],
-      "inventory": { "deflector": 1, "fan": 1, "window": 2, "curtain": 1, "skylight": 1 },
+      "inventory": {
+        "deflector": 1,
+        "fan": 1,
+        "window": 2,
+        "skylight": 1
+      },
       "solution": [
-        { "type": "skylight", "x": 5, "y": 1 },
-        { "type": "deflector", "x": 6, "y": 3, "d": 1 },
-        { "type": "fan", "x": 6, "y": 5, "d": 1 },
-        { "type": "curtain", "x": 1, "y": 5 },
-        { "type": "window", "x": 10, "y": 3 },
-        { "type": "window", "x": 10, "y": 5 }
+        {
+          "type": "skylight",
+          "x": 5,
+          "y": 1
+        },
+        {
+          "type": "deflector",
+          "x": 6,
+          "y": 3,
+          "d": 1
+        },
+        {
+          "type": "fan",
+          "x": 6,
+          "y": 5,
+          "d": 1
+        },
+        {
+          "type": "window",
+          "x": 10,
+          "y": 3
+        },
+        {
+          "type": "window",
+          "x": 10,
+          "y": 5
+        }
       ]
     }
   ]

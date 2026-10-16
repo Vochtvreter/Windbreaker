@@ -112,10 +112,10 @@ describe('constants and tables (§1, §4, §5, §8)', function () {
 
   it('tool table: order, mounts, rotations and intro levels', function () {
     const table = [
-      ['window', 'exterior', 1, 1], ['fan', 'floor', 4, 6], ['deflector', 'floor', 2, 11],
-      ['curtain', 'floor', 1, 16], ['vent', 'interior', 1, 21], ['splitter', 'floor', 1, 26],
-      ['extractor', 'exterior', 1, 31], ['skylight', 'floor', 1, 36], ['filter', 'floor', 1, 41],
-      ['ceilingfan', 'floor', 1, 46]
+      ['window', 'exterior', 1, 1], ['fan', 'floor', 4, 11], ['deflector', 'floor', 2, 21],
+      ['curtain', 'floor', 1, 31], ['vent', 'interior', 1, 41], ['splitter', 'floor', 1, 51],
+      ['extractor', 'exterior', 1, 56], ['skylight', 'floor', 1, 61], ['filter', 'floor', 1, 66],
+      ['ceilingfan', 'floor', 1, 71]
     ];
     assert.deepEqual(WB.TOOL_ORDER, table.map(function (r) { return r[0]; }));
     table.forEach(function (r) {
@@ -129,14 +129,26 @@ describe('constants and tables (§1, §4, §5, §8)', function () {
     });
   });
 
-  it('a new tool every 5 levels; all tools exist from level 46', function () {
-    WB.TOOL_ORDER.forEach(function (id, i) { assert.equal(WB.TOOLS[id].intro, 1 + 5 * i); });
-    assert.ok(WB.TOOL_ORDER.every(function (id) { return WB.TOOLS[id].intro <= 46; }));
+  it('one new thing per chapter: tools and objects each open a chapter of 5; all exist from level 71', function () {
+    assert.equal(WB.LEVELS_PER_CHAPTER, 5);
+    assert.equal(WB.INTRO_ORDER.length, 15);
+    WB.INTRO_ORDER.forEach(function (it, i) {
+      const table = it.kind === 'tool' ? WB.TOOLS : WB.OBJECTS;
+      assert.equal(table[it.id].intro, 1 + 5 * i, it.id);
+      assert.deepEqual(WB.introAt(1 + 5 * i), it);
+      for (let k = 2; k <= 5; k++) assert.equal(WB.introAt(5 * i + k), null, 'practice level ' + (5 * i + k));
+    });
+    assert.equal(WB.introAt(76), null);
+    // every tool and every object except the pinwheel (which comes with the window) is introduced exactly once
+    const ids = WB.INTRO_ORDER.map(function (it) { return it.id; });
+    assert.deepEqual(ids.filter(function (id) { return WB.TOOLS[id]; }), WB.TOOL_ORDER);
+    assert.deepEqual(ids.filter(function (id) { return WB.OBJECTS[id]; }).sort(), WB.OBJECT_ORDER.filter(function (o) { return o !== 'pinwheel'; }).sort());
+    assert.ok(WB.TOOL_ORDER.every(function (id) { return WB.TOOLS[id].intro <= 71; }));
   });
 
   it('object table: chars and intro levels', function () {
-    const table = [['pinwheel', 'p', 1], ['candle', 'c', 3], ['stove', 's', 8],
-      ['laundry', 'l', 13], ['papers', 'n', 18], ['fern', 'f', 23]];
+    const table = [['pinwheel', 'p', 1], ['candle', 'c', 6], ['stove', 's', 16],
+      ['laundry', 'l', 26], ['papers', 'n', 36], ['fern', 'f', 46]];
     assert.deepEqual(WB.OBJECT_ORDER, table.map(function (r) { return r[0]; }));
     table.forEach(function (r) {
       const o = WB.OBJECTS[r[0]];
@@ -1344,18 +1356,33 @@ describe('introErrors (§5, §6.3)', function () {
     });
   });
 
-  it('calm days from level 6, wind 2 from level 13, wind 3 from level 26', function () {
+  it('calm days from level 13, strong wind (2) from level 28, gales (3) from level 53', function () {
     function w(s, n) { return WB.introErrors(def({ wind: { from: 'W', strength: s } }), n); }
-    assert.equal(w(0, 5).length, 1);
-    assert.match(w(0, 5)[0], /calm/);
-    assert.deepEqual(w(0, 6), []);
-    assert.equal(w(2, 12).length, 1);
-    assert.match(w(2, 12)[0], /strength 2/);
-    assert.deepEqual(w(2, 13), []);
-    assert.equal(w(3, 25).length, 1);
-    assert.match(w(3, 25)[0], /strength 3/);
-    assert.deepEqual(w(3, 26), []);
+    assert.equal(w(0, 12).length, 1);
+    assert.match(w(0, 12)[0], /calm/);
+    assert.deepEqual(w(0, 13), []);
+    assert.equal(w(2, 27).length, 1);
+    assert.match(w(2, 27)[0], /wind2/);
+    assert.deepEqual(w(2, 28), []);
+    assert.equal(w(3, 52).length, 1);
+    assert.match(w(3, 52)[0], /wind3/);
+    assert.deepEqual(w(3, 53), []);
     assert.deepEqual(w(1, 1), []);
+  });
+
+  it('map twists: courtyards from 8, hatched walls from 18, tables from 23', function () {
+    const base = { wind: { from: 'W', strength: 1 } };
+    const court = Object.assign({ map: ['~#####', '##...#', '#..p.#', '######'] }, base);
+    const solid = Object.assign({ map: ['%#####', '#...p#', '######'] }, base);
+    const table = Object.assign({ map: ['######', '#.o.p#', '######'] }, base);
+    assert.match(WB.introErrors(court, 7).join(), /courtyard/);
+    assert.deepEqual(WB.introErrors(court, 8), []);
+    assert.match(WB.introErrors(solid, 17).join(), /solid/);
+    assert.deepEqual(WB.introErrors(solid, 18), []);
+    assert.match(WB.introErrors(table, 22).join(), /table/);
+    assert.deepEqual(WB.introErrors(table, 23), []);
+    assert.deepEqual(WB.levelConditions(table), ['table']);
+    assert.deepEqual(WB.levelConditions({ map: ['%~o'], wind: { strength: 0 } }), ['courtyard', 'calm', 'solid', 'table']);
   });
 });
 

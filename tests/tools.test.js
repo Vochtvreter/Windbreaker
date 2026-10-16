@@ -178,8 +178,8 @@ test('lib: chapter loading reports structural problems', () => {
 });
 
 test('lib: resolveLevelArg accepts numbers, chapter files with --index, bare level files', () => {
-  const e = lib.resolveLevelArg(path.join(FIX, 'broken', 'ch02.json'), { index: '2' });
-  assert.equal(e.n, 8);
+  const e = lib.resolveLevelArg(path.join(FIX, 'broken', 'ch03.json'), { index: '2' });
+  assert.equal(e.n, 13);
   assert.equal(e.def.name, 'Already Solved');
   assert.equal(lib.resolveLevelArg('2', { src: path.join(FIX, 'good') }).def.name, 'Two Pinwheels');
   assert.throws(() => lib.resolveLevelArg('9', { src: path.join(FIX, 'good') }), /level 9 not found/);
@@ -296,7 +296,7 @@ test('solve: options (exclude, maxPieces, inventory override, cap, timeout)', ()
 });
 
 test('solve: a level solved without pieces has the empty solution', () => {
-  const def = lib.readJson(path.join(FIX, 'broken', 'ch02.json')).levels[2];
+  const def = lib.readJson(path.join(FIX, 'broken', 'ch03.json')).levels[2];
   const r = solve(def);
   assert.equal(r.status, 'exhaustive');
   assert.equal(r.count, 1);
@@ -362,7 +362,7 @@ test('build: round trip through a temp file (Node and browser)', () => {
 
   const data = require(out);
   const src = lib.readJson(path.join(FIX, 'good', 'ch01.json'));
-  assert.deepEqual(data.chapters, [{ n: 1, title: 'Open Windows', tool: 'window', first: 1, last: 2 }]);
+  assert.deepEqual(data.chapters, [{ n: 1, title: 'Open Windows', intro: { kind: 'tool', id: 'window' }, tool: 'window', first: 1, last: 2 }]);
   assert.equal(data.levels.length, 2);
   src.levels.forEach((def, i) => {
     const L = data.levels[i];
@@ -375,7 +375,8 @@ test('build: round trip through a temp file (Node and browser)', () => {
     assert.deepEqual(L.fixed, def.fixed);
     assert.deepEqual(L.inventory, def.inventory);
     assert.deepEqual(L.solution, def.solution);
-    assert.deepEqual(Object.keys(L), ['id', 'chapter', 'name'].concat(def.tip ? ['tip'] : [], ['wind', 'map', 'fixed', 'inventory', 'solution']));
+    assert.deepEqual(Object.keys(L), ['id', 'key', 'chapter', 'name'].concat(def.tip ? ['tip'] : [], ['wind', 'map', 'fixed', 'inventory', 'solution']));
+    assert.match(L.key, /^[a-z0-9]+(-[a-z0-9]+)*$/);
   });
 
   const sandbox = { self: {} };
@@ -389,7 +390,7 @@ test('build: round trip through a temp file (Node and browser)', () => {
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
-test('build: normalises pieces and inventory, chapter tool is null after chapter 10', () => {
+test('build: normalises pieces and inventory, chapter intro/tool metadata', () => {
   const def = { name: 'x', wind: { from: 'w', strength: 1 }, map: ['###', '#p#', '###'], fixed: [], inventory: { fan: 1, window: 0 },
     solution: [{ type: 'fan', x: 1, y: 1 }, { type: 'window', x: 0, y: 1, d: 0, note: 'dropped' }] };
   const L = builder.normLevel(def, 51, 11);
@@ -401,7 +402,8 @@ test('build: normalises pieces and inventory, chapter tool is null after chapter
   fs.writeFileSync(path.join(dir, 'ch12.json'), JSON.stringify({ chapter: 12, title: 'Late', levels: [lvl] }));
   const res = builder.build({ src: dir, out: path.join(dir, 'out.js') });
   assert.ok(res.ok);
-  assert.deepEqual(res.data.chapters, [{ n: 12, title: 'Late', tool: null, first: 56, last: 56 }]);
+  // chapter 12 introduces the extractor; mastery chapters (16+) have intro/tool null
+  assert.deepEqual(res.data.chapters, [{ n: 12, title: 'Late', intro: { kind: 'tool', id: 'extractor' }, tool: 'extractor', first: 56, last: 56 }]);
   assert.ok(res.warnings.some((w) => /chapter 1 is missing/.test(w)));
   fs.rmSync(dir, { recursive: true, force: true });
 });
@@ -435,16 +437,16 @@ test('check: good chapter passes', () => {
 });
 
 test('check: broken chapter fails with specific messages', () => {
-  const cli = runTool('check-levels.js', ['--file', path.join(FIX, 'broken', 'ch02.json')]);
+  const cli = runTool('check-levels.js', ['--file', path.join(FIX, 'broken', 'ch03.json')]);
   assert.equal(cli.status, 1);
   const out = cli.stdout;
-  assert.match(out, /#6 +FAIL +solvable without fan: window 6,2/);
-  assert.match(out, /#7 +FAIL +reference solution does not solve the level/);
-  assert.match(out, /#8 +FAIL +already solved before anything is placed/);
-  assert.match(out, /#9 +FAIL +tool deflector not introduced until level 11/);
-  assert.match(out, /#10 +FAIL +floor at 6,2 touches outside/);
+  assert.match(out, /#11 +FAIL +solvable without fan: window 6,2/);
+  assert.match(out, /#12 +FAIL +reference solution does not solve the level/);
+  assert.match(out, /#13 +FAIL +already solved before anything is placed/);
+  assert.match(out, /#14 +FAIL +tool deflector not introduced until level 21/);
+  assert.match(out, /#15 +FAIL +floor at 6,2 touches outside/);
   assert.match(out, /FAILED: 5 levels, 5 failures/);
-  const one = runTool('check-levels.js', ['--file', path.join(FIX, 'broken', 'ch02.json'), '--level', '7', '--fast']);
+  const one = runTool('check-levels.js', ['--file', path.join(FIX, 'broken', 'ch03.json'), '--level', '12', '--fast']);
   assert.equal(one.status, 1);
   assert.match(one.stdout, /OK|FAILED: 1 level/);
 });
@@ -453,7 +455,7 @@ test('check: checkLevel warnings and intro rules', () => {
   const good = lib.readJson(path.join(FIX, 'good', 'ch01.json')).levels;
   // Intro level without its tool.
   const noTool = Object.assign({}, good[0], { inventory: { window: 1 } });
-  let rep = checker.checkLevel({ n: 6, def: noTool }, { timeMs: 2000 });
+  let rep = checker.checkLevel({ n: 11, def: noTool }, { timeMs: 2000 });
   assert.ok(rep.errors.includes('intro level for fan but fan is not in the inventory'), rep.errors.join('\n'));
   // Decoys before level 76 and a shorter solution than the reference.
   const decoy = Object.assign({}, good[0], { inventory: { window: 2 } });
@@ -488,9 +490,12 @@ test('check: difficulty heuristic and drop warning', () => {
   assert.equal(reps[0].warnings.length, 0);
   assert.equal(reps[1].warnings.length, 1, 'drop of 10 from 30');
   assert.equal(reps[2].warnings.length, 1, 'drop of 10 from 20');
-  assert.equal(checker.introTool(46), 'ceilingfan');
-  assert.equal(checker.introTool(51), null);
+  assert.equal(checker.introTool(71), 'ceilingfan');
+  assert.equal(checker.introTool(51), 'splitter');
+  assert.equal(checker.introTool(46), null, 'level 46 introduces the fern, an object');
+  assert.deepEqual(checker.introThing(46), { kind: 'object', id: 'fern' });
   assert.equal(checker.introTool(7), null);
+  assert.equal(checker.introThing(76), null);
 });
 
 // ---------------------------------------------------------------------------
@@ -708,7 +713,7 @@ test('check: intro "unsolvable without the new tool" must be an exhaustive proof
     fixed: [{ type: 'window', x: 0, y: 2 }],
     inventory: { window: 2, fan: 1, deflector: 2 }, solution: []
   };
-  rep = checker.checkLevel({ n: 11, def: Object.assign({}, big, { inventory: { window: 3, fan: 2, deflector: 1 } }) }, { timeMs: 30, introTimeMs: 0 });
+  rep = checker.checkLevel({ n: 21, def: Object.assign({}, big, { inventory: { window: 3, fan: 2, deflector: 1 } }) }, { timeMs: 30, introTimeMs: 0 });
   assert.equal(rep.excluded.status, 'timeout');
   assert.ok(rep.errors.some((e) => /could not prove the level unsolvable without deflector/.test(e)), rep.errors.join('\n'));
   assert.ok(!rep.warnings.some((w) => /unknown whether/.test(w)));
@@ -736,4 +741,32 @@ test('check: capped searches give approximate difficulty; minimal reference must
   const L = WB.parseLevel(t3);
   assert.equal(checker.isMinimalSolution(L, L.fixed, t3.solution), true);
   assert.equal(checker.isMinimalSolution(L, L.fixed, t3.solution.concat([{ type: 'deflector', x: 5, y: 1, d: 0 }])), false);
+});
+
+test('check: pacing — one new thing per intro level, nothing new on practice levels, twists alone with a tip', () => {
+  const room = (row) => ({ wind: { from: 'W', strength: 1 }, map: ['#########', row, '#########'], inventory: { window: 1 } });
+  const lv = (n, def) => ({ n, def });
+  const base = [lv(1, Object.assign(room('#...p...#'), { tip: 'hi' }))];
+  for (let n = 2; n <= 5; n++) base.push(lv(n, room('#...p...#')));
+  // 6: candle intro (ok), 7: practice, 8: courtyard twist without tip, 9: practice that sneaks in a fan
+  base.push(lv(6, Object.assign(room('#..cp...#'), { tip: 'candles' })));
+  base.push(lv(7, room('#..cp...#')));
+  base.push(lv(8, { wind: { from: 'W', strength: 1 }, map: ['~########', '##..p...#', '#########'], inventory: { window: 1 } }));
+  base.push(lv(9, Object.assign(room('#..cp...#'), { inventory: { window: 1, fan: 1 } })));
+  // 11: fan intro that also brings the stove and a calm day
+  base.push(lv(11, Object.assign(room('#..sp...#'), { tip: 'fan', inventory: { fan: 1 }, wind: { from: 'W', strength: 0 } })));
+  // 12: calm twist right after the intro (too early) — 13 would be fine
+  base.push(lv(12, Object.assign(room('#...p...#'), { tip: 'calm', inventory: { fan: 1 }, wind: { from: 'W', strength: 0 } })));
+  const p = checker.pacingIssues(base);
+  assert.deepEqual(p.get(1), []);
+  assert.deepEqual(p.get(6), []);
+  assert.deepEqual(p.get(7), []);
+  assert.ok(p.get(8).some((e) => /first courtyard needs a tip/.test(e)), p.get(8).join('\n'));
+  assert.ok(p.get(9).some((e) => /first fan on a practice level/.test(e)), p.get(9).join('\n'));
+  assert.ok(p.get(11).some((e) => /also introduces stove/.test(e)), p.get(11).join('\n'));
+  assert.ok(p.get(11).some((e) => /also introduces a twist: calm day/.test(e)), p.get(11).join('\n'));
+  // the calm day was already seen on 11, so 12 has nothing new
+  assert.deepEqual(p.get(12), []);
+  const noTip = checker.pacingIssues([lv(1, room('#...p...#'))]);
+  assert.ok(noTip.get(1).some((e) => /needs a tip/.test(e)));
 });

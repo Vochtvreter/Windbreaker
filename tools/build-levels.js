@@ -38,8 +38,13 @@ function normInventory(inv) {
 }
 
 /** Level as stored in js/levels.js (fixed key order, normalised pieces). */
+function levelKey(name) {
+  return String(name).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
 function normLevel(def, n, chapter) {
-  const out = { id: n, chapter, name: def.name || '' };
+  // key: stable across reorderings (level names are unique), used to keep saved progress.
+  const out = { id: n, key: levelKey(def.name || ''), chapter, name: def.name || '' };
   if (def.tip) out.tip = def.tip;
   const wind = def.wind || {};
   out.wind = { from: wind.from != null ? String(wind.from).toUpperCase() : 'W', strength: wind.strength | 0 };
@@ -64,7 +69,9 @@ function collect(srcDir) {
     data.chapters.push({
       n: ch.chapter,
       title: ch.title || '',
-      tool: ch.chapter <= WB.TOOL_ORDER.length ? WB.TOOL_ORDER[ch.chapter - 1] : null,
+      // What the chapter introduces on its first level (DESIGN.md §7), or null for mastery chapters.
+      intro: WB.INTRO_ORDER[ch.chapter - 1] || null,
+      tool: WB.INTRO_ORDER[ch.chapter - 1] && WB.INTRO_ORDER[ch.chapter - 1].kind === 'tool' ? WB.INTRO_ORDER[ch.chapter - 1].id : null,
       first,
       last: first + count - 1
     });
@@ -93,7 +100,7 @@ function formatPieces(list, indent) {
 function formatLevel(L) {
   const I = '      ';
   const lines = [];
-  lines.push(I + '"id": ' + L.id + ', "chapter": ' + L.chapter + ', "name": ' + JSON.stringify(L.name) + ',');
+  lines.push(I + '"id": ' + L.id + ', "key": ' + JSON.stringify(L.key) + ', "chapter": ' + L.chapter + ', "name": ' + JSON.stringify(L.name) + ',');
   if (L.tip) lines.push(I + '"tip": ' + JSON.stringify(L.tip) + ',');
   lines.push(I + '"wind": ' + inline(L.wind) + ',');
   lines.push(I + '"map": [\n' + L.map.map((r) => I + '  ' + JSON.stringify(r)).join(',\n') + '\n' + I + '],');

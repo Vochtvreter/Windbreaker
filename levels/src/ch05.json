@@ -1,122 +1,218 @@
 {
   "chapter": 5,
-  "title": "Wall Vents",
+  "title": "Deflectors",
   "levels": [
     {
-      "name": "Through the Wall",
-      "tip": "Walls stop the wind. A wall vent in an inner wall lets air pass straight through.",
-      "wind": { "from": "W", "strength": 1 },
-      "map": [
-        "##########",
-        "#...#....#",
-        "#.p.#.p..#",
-        "#........#",
-        "##########"
-      ],
-      "fixed": [
-        { "type": "window", "x": 0, "y": 2 }
-      ],
-      "inventory": { "window": 1, "vent": 1 },
-      "solution": [
-        { "type": "vent", "x": 4, "y": 2 },
-        { "type": "window", "x": 9, "y": 2 }
-      ]
-    },
-    {
-      "name": "Night Light",
-      "wind": { "from": "E", "strength": 1 },
+      "name": "Round the Corner",
+      "tip": "A deflector turns the breeze by 90 degrees. Tap it to flip between / and \\.",
+      "wind": {
+        "from": "W",
+        "strength": 1
+      },
       "map": [
         "#########",
-        "#.p.#..c#",
         "#.......#",
-        "######.##",
-        "#.......#",
-        "#.......#",
-        "#########"
+        "#####...#",
+        "~~~~#.p.#",
+        "~~~~#...#",
+        "~~~~#####"
       ],
       "fixed": [
-        { "type": "window", "x": 8, "y": 1 },
-        { "type": "window", "x": 8, "y": 4 },
-        { "type": "deflector", "x": 2, "y": 4, "d": 1 }
+        {
+          "type": "window",
+          "x": 0,
+          "y": 1
+        },
+        {
+          "type": "window",
+          "x": 6,
+          "y": 5
+        }
       ],
-      "inventory": { "window": 1, "vent": 1 },
+      "inventory": {
+        "deflector": 1
+      },
       "solution": [
-        { "type": "vent", "x": 2, "y": 3 },
-        { "type": "window", "x": 2, "y": 0 }
+        {
+          "type": "deflector",
+          "x": 6,
+          "y": 1,
+          "d": 1
+        }
       ]
     },
     {
-      "name": "Potted Fern",
-      "tip": "Ferns are delicate: they want exactly one breeze, no more and no less.",
-      "wind": { "from": "S", "strength": 2 },
-      "map": [
-        "#######",
-        "#.....#",
-        "#.f..o#",
-        "#.....#",
-        "####.##",
-        "#.....#",
-        "#.l...#",
-        "#######"
-      ],
-      "fixed": [
-        { "type": "window", "x": 2, "y": 7 }
-      ],
-      "inventory": { "window": 1, "vent": 1, "curtain": 1 },
-      "solution": [
-        { "type": "vent", "x": 2, "y": 4 },
-        { "type": "curtain", "x": 2, "y": 3 },
-        { "type": "window", "x": 2, "y": 0 }
-      ]
-    },
-    {
-      "name": "Side Door",
-      "wind": { "from": "N", "strength": 1 },
+      "name": "Staircase",
+      "tip": "Two deflectors make a step: one turns the breeze down, the next turns it back toward the window.",
+      "wind": {
+        "from": "W",
+        "strength": 1
+      },
       "map": [
         "#########",
-        "#.p.#...#",
-        "#...#...#",
-        "#.###...#",
-        "#...#...#",
-        "#......p#",
-        "#...#...#",
+        "#.......#",
+        "#.......#",
+        "#...p...#",
+        "#.......#",
         "#########"
       ],
       "fixed": [
-        { "type": "window", "x": 2, "y": 0 }
+        {
+          "type": "window",
+          "x": 0,
+          "y": 1
+        },
+        {
+          "type": "window",
+          "x": 8,
+          "y": 4
+        }
       ],
-      "inventory": { "window": 1, "vent": 1, "deflector": 1 },
+      "inventory": {
+        "deflector": 2
+      },
       "solution": [
-        { "type": "vent", "x": 2, "y": 3 },
-        { "type": "deflector", "x": 2, "y": 5, "d": 1 },
-        { "type": "window", "x": 8, "y": 5 }
+        {
+          "type": "deflector",
+          "x": 4,
+          "y": 1,
+          "d": 1
+        },
+        {
+          "type": "deflector",
+          "x": 4,
+          "y": 4,
+          "d": 1
+        }
       ]
     },
     {
-      "name": "Blustery Washday",
-      "wind": { "from": "W", "strength": 2 },
+      "name": "Candle Detour",
+      "tip": "Air passes over a table, but nothing can be placed on it.",
+      "wind": {
+        "from": "E",
+        "strength": 1
+      },
       "map": [
-        "#####~~~~",
-        "#...#~~~~",
-        "#l..#~~~~",
-        "##.##~~~~",
-        "#.f.#####",
-        "#....o..#",
-        "#c.o#l..#",
+        "#########",
+        "#..oco..#",
+        "#......c#",
+        "#p..o...#",
         "#########"
       ],
       "fixed": [
-        { "type": "window", "x": 0, "y": 2 },
-        { "type": "deflector", "x": 2, "y": 2, "d": 1 },
-        { "type": "curtain", "x": 2, "y": 3 },
-        { "type": "window", "x": 0, "y": 6 },
-        { "type": "window", "x": 8, "y": 6 }
+        {
+          "type": "window",
+          "x": 8,
+          "y": 1
+        },
+        {
+          "type": "window",
+          "x": 0,
+          "y": 3
+        }
       ],
-      "inventory": { "vent": 1, "deflector": 1, "fan": 1 },
+      "inventory": {
+        "deflector": 2
+      },
       "solution": [
-        { "type": "vent", "x": 4, "y": 6 },
-        { "type": "deflector", "x": 2, "y": 6, "d": 1 },
-        { "type": "fan", "x": 2, "y": 5, "d": 2 }
+        {
+          "type": "deflector",
+          "x": 6,
+          "y": 1,
+          "d": 0
+        },
+        {
+          "type": "deflector",
+          "x": 6,
+          "y": 3,
+          "d": 0
+        }
+      ]
+    },
+    {
+      "name": "Long Way Out",
+      "tip": "No wind today. Smoke rides along with the fan's breeze, so a deflector can steer it to a window.",
+      "wind": {
+        "from": "W",
+        "strength": 0
+      },
+      "map": [
+        "########",
+        "#.c....#",
+        "#.s....#",
+        "#......#",
+        "########"
+      ],
+      "fixed": [
+        {
+          "type": "window",
+          "x": 2,
+          "y": 0
+        },
+        {
+          "type": "window",
+          "x": 5,
+          "y": 0
+        }
+      ],
+      "inventory": {
+        "fan": 1,
+        "deflector": 1
+      },
+      "solution": [
+        {
+          "type": "fan",
+          "x": 1,
+          "y": 2,
+          "d": 1
+        },
+        {
+          "type": "deflector",
+          "x": 5,
+          "y": 2,
+          "d": 0
+        }
+      ]
+    },
+    {
+      "name": "Elbow Room",
+      "tip": "One fan and one deflector make an L-shaped breeze. Where can its corner go?",
+      "wind": {
+        "from": "W",
+        "strength": 0
+      },
+      "map": [
+        "########",
+        "#.p..c.#",
+        "#......#",
+        "#....p.#",
+        "########"
+      ],
+      "fixed": [
+        {
+          "type": "window",
+          "x": 2,
+          "y": 0
+        }
+      ],
+      "inventory": {
+        "fan": 1,
+        "deflector": 1
+      },
+      "solution": [
+        {
+          "type": "fan",
+          "x": 6,
+          "y": 3,
+          "d": 3
+        },
+        {
+          "type": "deflector",
+          "x": 2,
+          "y": 3,
+          "d": 1
+        }
       ]
     }
   ]

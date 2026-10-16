@@ -4,8 +4,11 @@
   "levels": [
     {
       "name": "First Breeze",
-      "tip": "Wind is blowing from the west. Open a window on the far side so the breeze has somewhere to go.",
-      "wind": { "from": "W", "strength": 1 },
+      "tip": "Wind blows from the west. Open a window on the far side so the breeze flows through and spins the pinwheel.",
+      "wind": {
+        "from": "W",
+        "strength": 1
+      },
       "map": [
         "#########",
         "#.......#",
@@ -13,14 +16,64 @@
         "#.......#",
         "#########"
       ],
-      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
-      "inventory": { "window": 1 },
-      "solution": [{ "type": "window", "x": 8, "y": 2 }]
+      "fixed": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 2
+        }
+      ],
+      "inventory": {
+        "window": 1
+      },
+      "solution": [
+        {
+          "type": "window",
+          "x": 8,
+          "y": 2
+        }
+      ]
+    },
+    {
+      "name": "Easterly",
+      "tip": "Now the wind blows from the east. A window on the side facing the wind lets the breeze in.",
+      "wind": {
+        "from": "E",
+        "strength": 1
+      },
+      "map": [
+        "########",
+        "#......#",
+        "#......#",
+        "#..p...#",
+        "#......#",
+        "########"
+      ],
+      "fixed": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 3
+        }
+      ],
+      "inventory": {
+        "window": 1
+      },
+      "solution": [
+        {
+          "type": "window",
+          "x": 7,
+          "y": 3
+        }
+      ]
     },
     {
       "name": "Wind Shift",
       "tip": "The wind has turned! Open a window facing the wind, and one on the far side to let it out.",
-      "wind": { "from": "S", "strength": 1 },
+      "wind": {
+        "from": "S",
+        "strength": 1
+      },
       "map": [
         "#####",
         "#...#",
@@ -31,57 +84,85 @@
         "#####"
       ],
       "fixed": [],
-      "inventory": { "window": 2 },
-      "solution": [{ "type": "window", "x": 2, "y": 6 }, { "type": "window", "x": 2, "y": 0 }]
+      "inventory": {
+        "window": 2
+      },
+      "solution": [
+        {
+          "type": "window",
+          "x": 2,
+          "y": 6
+        },
+        {
+          "type": "window",
+          "x": 2,
+          "y": 0
+        }
+      ]
     },
     {
-      "name": "Candlelight",
-      "tip": "Candles need still air, and a breeze only flows when it has a way out.",
-      "wind": { "from": "W", "strength": 1 },
+      "name": "Twin Spin",
+      "tip": "Two pinwheels this time! Can a single breeze reach them both?",
+      "wind": {
+        "from": "W",
+        "strength": 1
+      },
       "map": [
-        "#########",
-        "#..p....#",
-        "#.....c.#",
-        "#.......#",
-        "#########"
+        "##########",
+        "#........#",
+        "#........#",
+        "#.p....p.#",
+        "#........#",
+        "##########"
       ],
-      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
-      "inventory": { "window": 2 },
-      "solution": [{ "type": "window", "x": 0, "y": 1 }, { "type": "window", "x": 8, "y": 1 }]
+      "fixed": [],
+      "inventory": {
+        "window": 2
+      },
+      "solution": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 3
+        },
+        {
+          "type": "window",
+          "x": 9,
+          "y": 3
+        }
+      ]
     },
     {
       "name": "Doorway Draft",
-      "wind": { "from": "N", "strength": 1 },
+      "tip": "Inside walls stop the breeze, but it can pass through an open doorway.",
+      "wind": {
+        "from": "N",
+        "strength": 1
+      },
       "map": [
-        "#########",
-        "#.......#",
-        "#.......#",
-        "######.##",
-        "#.......#",
-        "#.....p.#",
-        "#########"
+        "########",
+        "#......#",
+        "#......#",
+        "#####.##",
+        "#......#",
+        "#....p.#",
+        "########"
       ],
       "fixed": [],
-      "inventory": { "window": 2 },
-      "solution": [{ "type": "window", "x": 6, "y": 0 }, { "type": "window", "x": 6, "y": 6 }]
-    },
-    {
-      "name": "Garden Court",
-      "wind": { "from": "E", "strength": 1 },
-      "map": [
-        "############",
-        "#..........#",
-        "#...####...#",
-        "#.p.#~~#.c.#",
-        "#...#~~#.p.#",
-        "#####~~#####"
-      ],
-      "fixed": [{ "type": "window", "x": 0, "y": 3 }],
-      "inventory": { "window": 3 },
+      "inventory": {
+        "window": 2
+      },
       "solution": [
-        { "type": "window", "x": 4, "y": 3 },
-        { "type": "window", "x": 11, "y": 4 },
-        { "type": "window", "x": 7, "y": 4 }
+        {
+          "type": "window",
+          "x": 5,
+          "y": 0
+        },
+        {
+          "type": "window",
+          "x": 5,
+          "y": 6
+        }
       ]
     }
   ]

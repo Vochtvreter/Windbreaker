@@ -1,160 +1,8 @@
 /* Windbreaker — calm, minimalist UI */
 
-:root {
-  --font: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-
-  /* page */
-  --bg: #f4f0e8;
-  --bg-2: #ece6da;
-  --surface: #fffcf6;
-  --surface-2: #f3eee4;
-  --ink: #3a414c;
-  --ink-soft: #646b76;
-  --muted: #686e76;              /* small text: 4.5:1 on bg */
-  --line: rgba(58, 65, 76, 0.12);
-  --line-strong: rgba(58, 65, 76, 0.22);
-  --accent: #379a8f;
-  --accent-text: #24716a;       /* accent-coloured text: 4.8:1+ on bg, surface and accent-soft */
-  --accent-fill: #2b8278;       /* button backgrounds: 4.6:1 with white */
-  --accent-ink: #ffffff;
-  --accent-soft: rgba(55, 154, 143, 0.14);
-  --accent-2: #e8866d;
-  --good: #4daa6c;
-  --bad: #df7366;
-  --bad-text: #b5473c;
-  --danger-fill: #b8504a;
-  --danger-ink: #ffffff;
-  --focus: #379a8f;
-  --shadow: 0 1px 2px rgba(50, 45, 35, 0.06), 0 6px 20px rgba(50, 45, 35, 0.08);
-  --shadow-lg: 0 2px 6px rgba(50, 45, 35, 0.08), 0 18px 48px rgba(50, 45, 35, 0.16);
-
-  /* board (read by js/render.js) */
-  --garden: #dde7d5;
-  --garden-2: #d2dfca;
-  --garden-mark: rgba(110, 140, 100, 0.16);
-  --streak: rgba(255, 255, 255, 0.92);
-  --floor: #f7f2e8;
-  --floor-grid: rgba(91, 100, 114, 0.07);
-  --wall: #66707e;
-  --wall-solid: #575f6c;
-  --wall-hatch: rgba(255, 255, 255, 0.13);
-  --wall-hi: rgba(255, 255, 255, 0.16);
-  --wall-lo: rgba(20, 24, 30, 0.16);
-  --wall-light: #8d96a3;
-  --icon-wall: #66707e;
-  --house-shadow: rgba(48, 62, 44, 0.22);
-  --table: #e7d0ad;
-  --table-edge: #cfae82;
-  --air: #6aaee0;
-  --air-deep: #3f8bc6;
-  --smoke: #9a8f83;
-  --glass: #dcebf5;
-  --glass-in: #8fc6ec;
-  --window-mark: #2f6f9f;
-  --piece-base: #fffdf8;
-  --t-fan: #3a9d92;
-  --t-deflector: #e2a24f;
-  --t-curtain: #e2898b;
-  --t-vent: #c9ced5;
-  --t-splitter: #9686cf;
-  --t-extractor: #4b95c4;
-  --t-skylight: #9fd0ef;
-  --t-filter: #78ad84;
-  --t-ceilingfan: #b48a62;
-  --o-coral: #ef8a72;
-  --o-sun: #f2c14e;
-  --o-teal: #4fb3a6;
-  --o-sky: #6aaee0;
-  --o-cream: #f4e7c8;
-  --o-flame: #f5a03a;
-  --o-leaf: #5aa564;
-  --o-leaf-sad: #b5a456;
-  --o-pot: #d9845e;
-  --o-paper: #ffffff;
-  --o-stove: #ece6db;
-  --o-stove-edge: #8d8478;
-  --pip-idle: #9aa1aa;
-  --hl: rgba(55, 154, 143, 0.16);
-  --hl-edge: rgba(55, 154, 143, 0.6);
-  --hl-wall: rgba(150, 228, 216, 0.3);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #1a1e24;
-    --bg-2: #222830;
-    --surface: #272c34;
-    --surface-2: #2e343d;
-    --ink: #e7e3db;
-    --ink-soft: #b1b6bd;
-    --muted: #9ba2ab;
-    --line: rgba(231, 227, 219, 0.1);
-    --line-strong: rgba(231, 227, 219, 0.2);
-    --accent: #5cc1b4;
-    --accent-text: #5cc1b4;
-    --accent-fill: #5cc1b4;
-    --accent-ink: #0f2220;
-    --accent-soft: rgba(92, 193, 180, 0.16);
-    --accent-2: #f0957c;
-    --good: #66c285;
-    --bad: #ec8577;
-    --bad-text: #ec8577;
-    --danger-fill: #ec8577;
-    --danger-ink: #2a1512;
-    --focus: #5cc1b4;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.25), 0 6px 20px rgba(0, 0, 0, 0.25);
-    --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.3), 0 18px 48px rgba(0, 0, 0, 0.45);
-
-    --garden: #28332b;
-    --garden-2: #222c25;
-    --garden-mark: rgba(150, 190, 140, 0.1);
-    --streak: rgba(205, 228, 236, 0.5);
-    --floor: #424852;
-    --floor-grid: rgba(255, 255, 255, 0.05);
-    --wall: #181c21;
-    --wall-solid: #14171c;
-    --wall-hatch: rgba(255, 255, 255, 0.06);
-    --wall-hi: rgba(255, 255, 255, 0.12);
-    --wall-lo: rgba(0, 0, 0, 0.35);
-    --wall-light: #444c58;
-    --icon-wall: #4d5562;
-    --house-shadow: rgba(0, 0, 0, 0.5);
-    --table: #7d6850;
-    --table-edge: #957b5c;
-    --air: #79bdeb;
-    --air-deep: #a6d6f7;
-    --smoke: #8d867e;
-    --glass: #5b7a90;
-    --glass-in: #8cc4e8;
-    --window-mark: #173a55;
-    --piece-base: #59616d;
-    --t-fan: #54bdb0;
-    --t-deflector: #e9b062;
-    --t-curtain: #e79b9c;
-    --t-vent: #6b7482;
-    --t-splitter: #a99ade;
-    --t-extractor: #66acd8;
-    --t-skylight: #7fb7da;
-    --t-filter: #8cc097;
-    --t-ceilingfan: #c49c74;
-    --o-coral: #f0957c;
-    --o-sun: #f2c45a;
-    --o-teal: #5cc1b4;
-    --o-sky: #79bdeb;
-    --o-cream: #efe2c2;
-    --o-flame: #f7a845;
-    --o-leaf: #6dba77;
-    --o-leaf-sad: #b9a95e;
-    --o-pot: #d38a66;
-    --o-paper: #f4f1ea;
-    --o-stove: #d9d3c8;
-    --o-stove-edge: #8d8478;
-    --pip-idle: #8b929b;
-    --hl: rgba(92, 193, 180, 0.16);
-    --hl-edge: rgba(92, 193, 180, 0.7);
-    --hl-wall: rgba(92, 193, 180, 0.3);
-  }
-}
+/* Colours and other design tokens (var(--bg), var(--wall), ...) are defined in
+   js/theme.js, which writes them as CSS custom properties for light and dark
+   mode; the canvas reads the same table. See GRAPHICS.md. */
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -967,25 +815,19 @@ button {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(40, 44, 40, 0.24);
+  background: var(--scrim);
   -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
   animation: fade-in .25s ease-out;
-}
-@media (prefers-color-scheme: dark) {
-  .overlay { background: rgba(0, 0, 0, 0.45); }
 }
 
 /* the win card is a bottom sheet: the happy house stays in view behind it */
 .overlay.sheet {
   align-items: flex-end;
-  background: rgba(40, 44, 40, 0.08);
+  background: var(--scrim-light);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
   padding: 16px 16px max(16px, env(safe-area-inset-bottom));
-}
-@media (prefers-color-scheme: dark) {
-  .overlay.sheet { background: rgba(0, 0, 0, 0.18); }
 }
 @media (min-width: 900px) {
   .overlay.sheet { justify-content: flex-end; }

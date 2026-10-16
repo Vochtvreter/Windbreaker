@@ -1,106 +1,228 @@
 {
   "chapter": 11,
-  "title": "Drafts",
+  "title": "Splitters",
   "levels": [
     {
-      "name": "Tailwind",
-      "tip": "All ten tools are yours now. Each of these drafts hinges on a few of them working together.",
-      "wind": { "from": "E", "strength": 1 },
-      "map": [
-        "###########",
-        "#.s...#...#",
-        "#.l...#...#",
-        "#c....#...#",
-        "###########"
-      ],
-      "fixed": [{ "type": "window", "x": 10, "y": 3 }],
-      "inventory": { "window": 1, "fan": 1, "vent": 1 },
-      "solution": [
-        { "type": "vent", "x": 6, "y": 3 },
-        { "type": "fan", "x": 2, "y": 3, "d": 0 },
-        { "type": "window", "x": 2, "y": 0 }
-      ]
-    },
-    {
-      "name": "Split Decision",
-      "wind": { "from": "S", "strength": 2 },
-      "map": [
-        "###########",
-        "#...ooo...#",
-        "#c.s...p.c#",
-        "#####.#####",
-        "~~~~#n#~~~~",
-        "~~~~#.#~~~~",
-        "~~~~#l#~~~~",
-        "~~~~###~~~~"
-      ],
-      "fixed": [{ "type": "window", "x": 5, "y": 7 }],
-      "inventory": { "curtain": 2, "splitter": 1, "skylight": 1 },
-      "solution": [
-        { "type": "curtain", "x": 5, "y": 5 },
-        { "type": "splitter", "x": 5, "y": 2 },
-        { "type": "skylight", "x": 2, "y": 2 },
-        { "type": "curtain", "x": 8, "y": 2 }
-      ]
-    },
-    {
-      "name": "Meeting Point",
-      "wind": { "from": "N", "strength": 1 },
-      "map": [
-        "###########",
-        "#.s..#.p..#",
-        "#....#.f..#",
-        "#....#....#",
-        "#....#.n..#",
-        "###########"
-      ],
-      "fixed": [{ "type": "window", "x": 2, "y": 0 }],
-      "inventory": { "window": 1, "deflector": 1, "vent": 1, "skylight": 1 },
-      "solution": [
-        { "type": "window", "x": 7, "y": 0 },
-        { "type": "deflector", "x": 2, "y": 3, "d": 1 },
-        { "type": "vent", "x": 5, "y": 3 },
-        { "type": "skylight", "x": 7, "y": 3 }
-      ]
-    },
-    {
-      "name": "Study Hall",
-      "wind": { "from": "N", "strength": 2 },
-      "map": [
-        "#####~~~~",
-        "#...#~~~~",
-        "#ono#~~~~",
-        "#.s.#####",
-        "#...f.l.#",
-        "#########"
-      ],
-      "fixed": [{ "type": "window", "x": 2, "y": 0 }],
-      "inventory": { "deflector": 1, "curtain": 1, "extractor": 1, "filter": 1 },
-      "solution": [
-        { "type": "curtain", "x": 2, "y": 1 },
-        { "type": "deflector", "x": 2, "y": 4, "d": 1 },
-        { "type": "filter", "x": 5, "y": 4 },
-        { "type": "extractor", "x": 8, "y": 4 }
-      ]
-    },
-    {
-      "name": "Spin Cycle",
-      "wind": { "from": "W", "strength": 1 },
+      "name": "Forked Breeze",
+      "tip": "A splitter sends a stream out to both sides. Air flows as long as one branch can get outside.",
+      "wind": {
+        "from": "W",
+        "strength": 1
+      },
       "map": [
         "#########",
-        "#...c..s#",
-        "######..#",
-        "#.n...l.#",
+        "#...p...#",
         "#.......#",
+        "#...p...#",
         "#########"
       ],
-      "fixed": [{ "type": "window", "x": 0, "y": 3 }],
-      "inventory": { "window": 2, "curtain": 1, "ceilingfan": 1 },
+      "fixed": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 2
+        }
+      ],
+      "inventory": {
+        "splitter": 1,
+        "window": 1
+      },
       "solution": [
-        { "type": "ceilingfan", "x": 6, "y": 1 },
-        { "type": "curtain", "x": 5, "y": 1 },
-        { "type": "window", "x": 8, "y": 1 },
-        { "type": "window", "x": 8, "y": 3 }
+        {
+          "type": "splitter",
+          "x": 4,
+          "y": 2
+        },
+        {
+          "type": "window",
+          "x": 4,
+          "y": 0
+        }
+      ]
+    },
+    {
+      "name": "Smoke and Spin",
+      "wind": {
+        "from": "E",
+        "strength": 1
+      },
+      "map": [
+        "#######",
+        "#.p.#.#",
+        "#...#.#",
+        "#.....#",
+        "##.##.#",
+        "#.s.#.#",
+        "#######"
+      ],
+      "fixed": [
+        {
+          "type": "window",
+          "x": 6,
+          "y": 3
+        }
+      ],
+      "inventory": {
+        "splitter": 1,
+        "window": 1
+      },
+      "solution": [
+        {
+          "type": "splitter",
+          "x": 2,
+          "y": 3
+        },
+        {
+          "type": "window",
+          "x": 2,
+          "y": 6
+        }
+      ]
+    },
+    {
+      "name": "Gentle Halves",
+      "tip": "Gale today: the wind blows in at 3! A splitter halves it, so each side gets 1 (half, rounded down).",
+      "wind": {
+        "from": "N",
+        "strength": 3
+      },
+      "map": [
+        "###########",
+        "#..#.l.#..#",
+        "#..#...#..#",
+        "#.f.....n.#",
+        "#..#...#..#",
+        "#..#.c.#..#",
+        "###########"
+      ],
+      "fixed": [
+        {
+          "type": "window",
+          "x": 5,
+          "y": 0
+        }
+      ],
+      "inventory": {
+        "splitter": 1,
+        "window": 1
+      },
+      "solution": [
+        {
+          "type": "splitter",
+          "x": 5,
+          "y": 3
+        },
+        {
+          "type": "window",
+          "x": 10,
+          "y": 3
+        }
+      ]
+    },
+    {
+      "name": "Bent Branch",
+      "wind": {
+        "from": "W",
+        "strength": 3
+      },
+      "map": [
+        "##########",
+        "#...f....#",
+        "#.l......#",
+        "####.##.##",
+        "#......f.#",
+        "#........#",
+        "##########"
+      ],
+      "fixed": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 2
+        }
+      ],
+      "inventory": {
+        "deflector": 1,
+        "splitter": 1,
+        "window": 1
+      },
+      "solution": [
+        {
+          "type": "splitter",
+          "x": 4,
+          "y": 2
+        },
+        {
+          "type": "deflector",
+          "x": 4,
+          "y": 4,
+          "d": 1
+        },
+        {
+          "type": "window",
+          "x": 9,
+          "y": 4
+        }
+      ]
+    },
+    {
+      "name": "Eddy",
+      "tip": "Where a breeze meets its own path again, it does not add to itself.",
+      "wind": {
+        "from": "N",
+        "strength": 2
+      },
+      "map": [
+        "%%%#%%%%%%",
+        "%o.l..oo.%",
+        "#p...p...%",
+        "%o..####.%",
+        "%..f####f%",
+        "%o..####.%",
+        "%....f...%",
+        "%%%%%%%%%%"
+      ],
+      "fixed": [
+        {
+          "type": "window",
+          "x": 3,
+          "y": 0
+        },
+        {
+          "type": "deflector",
+          "x": 8,
+          "y": 2,
+          "d": 1
+        },
+        {
+          "type": "deflector",
+          "x": 8,
+          "y": 6,
+          "d": 0
+        }
+      ],
+      "inventory": {
+        "window": 1,
+        "splitter": 1,
+        "deflector": 1
+      },
+      "solution": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 2
+        },
+        {
+          "type": "splitter",
+          "x": 3,
+          "y": 2
+        },
+        {
+          "type": "deflector",
+          "x": 3,
+          "y": 6,
+          "d": 1
+        }
       ]
     }
   ]

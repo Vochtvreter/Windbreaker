@@ -64,19 +64,16 @@
       desc: 'Pushes a gentle breeze out in all four directions. Air passes beneath it unchanged.'
     }
   };
-  TOOL_ORDER.forEach(function (id, i) {
-    TOOLS[id].id = id;
-    TOOLS[id].intro = 1 + 5 * i;
-  });
+  TOOL_ORDER.forEach(function (id) { TOOLS[id].id = id; });
 
   var OBJECT_ORDER = ['pinwheel', 'candle', 'stove', 'laundry', 'papers', 'fern'];
   var OBJECTS = {
-    pinwheel: { char: 'p', name: 'Pinwheel', intro: 1, desc: 'Needs a breeze.' },
-    candle: { char: 'c', name: 'Candle', intro: 3, desc: 'Keep it out of any airflow.' },
-    stove: { char: 's', name: 'Stove', intro: 8, desc: 'Its smoke must be blown outside or through a filter, never into a wall.' },
-    laundry: { char: 'l', name: 'Laundry', intro: 13, desc: 'Needs a strong breeze (2 or more) of clean air. Smoky air makes it dirty.' },
-    papers: { char: 'n', name: 'Papers', intro: 18, desc: 'A gentle breeze is fine, but no more than 1.' },
-    fern: { char: 'f', name: 'Fern', intro: 23, desc: 'Wants exactly a gentle breeze (1).' }
+    pinwheel: { char: 'p', name: 'Pinwheel', desc: 'Needs a breeze.' },
+    candle: { char: 'c', name: 'Candle', desc: 'Keep it out of any airflow.' },
+    stove: { char: 's', name: 'Stove', desc: 'Its smoke must be blown outside or through a filter, never into a wall.' },
+    laundry: { char: 'l', name: 'Laundry', desc: 'Needs a strong breeze (2 or more) of clean air. Smoky air makes it dirty.' },
+    papers: { char: 'n', name: 'Papers', desc: 'A gentle breeze is fine, but no more than 1.' },
+    fern: { char: 'f', name: 'Fern', desc: 'Wants exactly a gentle breeze (1).' }
   };
   var OBJECT_BY_CHAR = {};
   OBJECT_ORDER.forEach(function (id) {
@@ -84,11 +81,62 @@
     OBJECT_BY_CHAR[OBJECTS[id].char] = id;
   });
 
+  // ---------------------------------------------------------------------
+  // Progression (DESIGN.md §7): one new thing per chapter. Chapter c (1..15)
+  // introduces INTRO_ORDER[c-1] on its first level, (c-1)*5 + 1; its other
+  // four levels are practice with nothing new. The pinwheel arrives with the
+  // window on level 1. Chapters 16-20 are mastery chapters.
+  var LEVELS_PER_CHAPTER = 5;
+  var INTRO_ORDER = [
+    { kind: 'tool', id: 'window' }, { kind: 'object', id: 'candle' }, { kind: 'tool', id: 'fan' },
+    { kind: 'object', id: 'stove' }, { kind: 'tool', id: 'deflector' }, { kind: 'object', id: 'laundry' },
+    { kind: 'tool', id: 'curtain' }, { kind: 'object', id: 'papers' }, { kind: 'tool', id: 'vent' },
+    { kind: 'object', id: 'fern' }, { kind: 'tool', id: 'splitter' }, { kind: 'tool', id: 'extractor' },
+    { kind: 'tool', id: 'skylight' }, { kind: 'tool', id: 'filter' }, { kind: 'tool', id: 'ceilingfan' }
+  ];
+  OBJECTS.pinwheel.intro = 1;
+  INTRO_ORDER.forEach(function (it, i) {
+    (it.kind === 'tool' ? TOOLS : OBJECTS)[it.id].intro = 1 + LEVELS_PER_CHAPTER * i;
+  });
+  // Smaller twists. Each may appear from level `from` on (the third level of a
+  // chapter); its first appearance must be on the 3rd-5th level of a chapter
+  // (never on or right after an intro level), alone, with a tip.
+  var CONDITION_ORDER = ['courtyard', 'calm', 'solid', 'table', 'wind2', 'wind3'];
+  var CONDITIONS = {
+    courtyard: { name: 'Courtyard', from: 8, desc: 'Walls around a courtyard are outside walls too.' },
+    calm: { name: 'Calm day', from: 13, desc: 'No wind at all today: windows only let air out.' },
+    solid: { name: 'Hatched wall', from: 18, desc: 'Nothing can be fitted into a hatched wall.' },
+    table: { name: 'Table', from: 23, desc: 'Air passes over a table, but nothing can be placed on it.' },
+    wind2: { name: 'Strong wind', from: 28, desc: 'The wind blows in at strength 2.' },
+    wind3: { name: 'Gale', from: 53, desc: 'The wind blows in at strength 3.' }
+  };
+  CONDITION_ORDER.forEach(function (id) { CONDITIONS[id].id = id; });
+
+  // The thing a level introduces ({kind, id}), or null for a practice/mastery level.
+  function introAt(n) {
+    if ((n - 1) % LEVELS_PER_CHAPTER !== 0) return null;
+    return INTRO_ORDER[(n - 1) / LEVELS_PER_CHAPTER] || null;
+  }
+
+  // Condition ids a level uses.
+  function levelConditions(def) {
+    var map = def.map || [], out = [];
+    var has = function (ch) { return map.some(function (r) { return String(r).indexOf(ch) >= 0; }); };
+    if (has('~')) out.push('courtyard');
+    var s = def.wind ? def.wind.strength | 0 : 0;
+    if (s === 0) out.push('calm');
+    if (has('%')) out.push('solid');
+    if (has('o')) out.push('table');
+    if (s === 2) out.push('wind2');
+    if (s === 3) out.push('wind3');
+    return out;
+  }
+
   var MAX_W = 13;
   var MAX_H = 10;
-  var CALM_INTRO = 6;
-  var WIND2_INTRO = 13;
-  var WIND3_INTRO = 26;
+  var CALM_INTRO = CONDITIONS.calm.from;
+  var WIND2_INTRO = CONDITIONS.wind2.from;
+  var WIND3_INTRO = CONDITIONS.wind3.from;
 
   // ---------------------------------------------------------------------
   // Cells
@@ -294,10 +342,9 @@
     L.objects.forEach(function (o) {
       if (OBJECTS[o.type].intro > n) errors.push('object ' + o.type + ' not introduced until level ' + OBJECTS[o.type].intro);
     });
-    var s = L.wind.strength;
-    if (s === 0 && n < CALM_INTRO) errors.push('calm wind not allowed before level ' + CALM_INTRO);
-    if (s === 2 && n < WIND2_INTRO) errors.push('wind strength 2 not allowed before level ' + WIND2_INTRO);
-    if (s === 3 && n < WIND3_INTRO) errors.push('wind strength 3 not allowed before level ' + WIND3_INTRO);
+    levelConditions(def).forEach(function (c) {
+      if (CONDITIONS[c].from > n) errors.push(CONDITIONS[c].name.toLowerCase() + ' (' + c + ') not allowed before level ' + CONDITIONS[c].from);
+    });
     return errors;
   }
 
@@ -822,6 +869,9 @@
     OBJECTS: OBJECTS, OBJECT_ORDER: OBJECT_ORDER, OBJECT_BY_CHAR: OBJECT_BY_CHAR,
     MAX_W: MAX_W, MAX_H: MAX_H,
     CALM_INTRO: CALM_INTRO, WIND2_INTRO: WIND2_INTRO, WIND3_INTRO: WIND3_INTRO,
+    LEVELS_PER_CHAPTER: LEVELS_PER_CHAPTER, INTRO_ORDER: INTRO_ORDER,
+    CONDITIONS: CONDITIONS, CONDITION_ORDER: CONDITION_ORDER,
+    introAt: introAt, levelConditions: levelConditions,
     parseLevel: parseLevel,
     validateLevel: validateLevel,
     introErrors: introErrors,

@@ -11,6 +11,7 @@ npm run check                  # all section-6 checks + stats table for every le
 npm run build                  # levels/src/ch*.json -> js/levels.js
 npm test                       # node --test tests/*.test.js
 npm run e2e                    # node tools/e2e.js: the browser end-to-end test (needs Playwright)
+npm run visual                 # node tools/visual.js --compare: graphics vs a baseline (GRAPHICS.md)
 npm run serve                  # serve the game at http://localhost:8080 (fetches http-server via npx)
 ```
 
@@ -315,6 +316,23 @@ GitHub Pages, so an absolute path would 404. The game is only read through
 Fails (exit 1) on any failed check, console error, uncaught error or failed
 request. Screenshots go to `screenshots/e2e/` (git-ignored).
 
+## visual.js - visual regression check
+
+```
+node tools/visual.js --baseline [--from <rev>]   # keep the reference pictures (--from HEAD: the last commit)
+node tools/visual.js --compare                   # render again and diff, pixel by pixel
+node tools/visual.js --perf                      # board drawing time (ms per frame)
+node tools/visual.js --list | --help
+```
+
+Renders 58 pictures (scenes x light/dark x phone/desktop) at a frozen moment,
+so the same code always gives the same pixels, and compares them with the
+baseline in `screenshots/gfx/` (git-ignored; changed pixels in `diff/`). The
+baseline pins its own copy of the rules and levels, so level edits never show
+up as graphics changes. `gallery.js` holds the three hand-made rooms (ids
+901-903) it adds to the levels; `studio.html` shows them too. Details in
+GRAPHICS.md section 5.
+
 ## Tests
 
 `tests/tools.test.js` (fixtures in `tests/fixtures/`): lib (numbering,
@@ -323,4 +341,7 @@ counts on tiny hand-made levels, brute-force comparison in both pruning modes,
 random levels, options, timeouts), show (glyphs, rendering, CLI), build
 (round trip through a temp file in Node and a browser-like VM, normalisation,
 refusal on errors) and check (good and deliberately broken chapters, warnings,
-difficulty). Run `npm test`.
+difficulty). `tests/graphics.test.js`: the theme tokens and their CSS, the
+stylesheets using only theme tokens, every sprite pose drawn in both modes into
+a checking mock canvas, overrides, manifests and the gallery rooms. Run
+`npm test`.

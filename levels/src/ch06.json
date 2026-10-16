@@ -1,102 +1,238 @@
 {
   "chapter": 6,
-  "title": "Splitters",
+  "title": "Laundry Day",
   "levels": [
     {
-      "name": "Forked Breeze",
-      "tip": "A splitter sends a stream out to both sides. Air flows as long as one branch can get outside.",
-      "wind": { "from": "W", "strength": 1 },
+      "name": "Clothesline",
+      "tip": "Laundry only dries in a breeze of 2 or more, and breezes that cross on it add up.",
+      "wind": {
+        "from": "W",
+        "strength": 1
+      },
       "map": [
         "#########",
-        "#...p...#",
         "#.......#",
-        "#...p...#",
+        "###.##.##",
+        "#.....l.#",
+        "#.......#",
         "#########"
       ],
-      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
-      "inventory": { "splitter": 1, "window": 1 },
+      "fixed": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 1
+        },
+        {
+          "type": "fan",
+          "x": 1,
+          "y": 3,
+          "d": 1
+        }
+      ],
+      "inventory": {
+        "deflector": 1,
+        "window": 1
+      },
       "solution": [
-        { "type": "splitter", "x": 4, "y": 2 },
-        { "type": "window", "x": 4, "y": 0 }
+        {
+          "type": "deflector",
+          "x": 6,
+          "y": 1,
+          "d": 1
+        },
+        {
+          "type": "window",
+          "x": 6,
+          "y": 5
+        }
       ]
     },
     {
-      "name": "Smoke and Spin",
-      "wind": { "from": "E", "strength": 1 },
+      "name": "Pegged Out",
+      "tip": "A fan in the path of the breeze turns it and adds its own push: 1 and 1 make 2.",
+      "wind": {
+        "from": "N",
+        "strength": 1
+      },
       "map": [
         "#######",
-        "#.p.#.#",
-        "#...#.#",
         "#.....#",
-        "##.##.#",
-        "#.s.#.#",
+        "#.....#",
+        "#...l.#",
         "#######"
       ],
-      "fixed": [{ "type": "window", "x": 6, "y": 3 }],
-      "inventory": { "splitter": 1, "window": 1 },
-      "solution": [
-        { "type": "splitter", "x": 2, "y": 3 },
-        { "type": "window", "x": 2, "y": 6 }
-      ]
-    },
-    {
-      "name": "Gentle Halves",
-      "tip": "Each half of a split stream gets half the strength, rounded down, but never less than 1.",
-      "wind": { "from": "N", "strength": 3 },
-      "map": [
-        "###########",
-        "#..#.l.#..#",
-        "#..#...#..#",
-        "#.f.....n.#",
-        "#..#...#..#",
-        "#..#.c.#..#",
-        "###########"
+      "fixed": [
+        {
+          "type": "window",
+          "x": 2,
+          "y": 0
+        }
       ],
-      "fixed": [{ "type": "window", "x": 5, "y": 0 }],
-      "inventory": { "splitter": 1, "window": 1 },
+      "inventory": {
+        "fan": 1,
+        "window": 1
+      },
       "solution": [
-        { "type": "splitter", "x": 5, "y": 3 },
-        { "type": "window", "x": 10, "y": 3 }
+        {
+          "type": "fan",
+          "x": 2,
+          "y": 3,
+          "d": 1
+        },
+        {
+          "type": "window",
+          "x": 6,
+          "y": 3
+        }
       ]
     },
     {
-      "name": "Bent Branch",
-      "wind": { "from": "W", "strength": 3 },
+      "name": "Good Drying Day",
+      "tip": "Strong wind today: it blows in at 2, enough to dry laundry all by itself.",
+      "wind": {
+        "from": "W",
+        "strength": 2
+      },
       "map": [
         "##########",
-        "#...f....#",
-        "#.l......#",
-        "####.##.##",
-        "#......f.#",
+        "#..l..c..#",
+        "#........#",
+        "#....p...#",
         "#........#",
         "##########"
       ],
-      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
-      "inventory": { "deflector": 1, "splitter": 1, "window": 1 },
+      "fixed": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 1
+        }
+      ],
+      "inventory": {
+        "deflector": 1,
+        "window": 1
+      },
       "solution": [
-        { "type": "splitter", "x": 4, "y": 2 },
-        { "type": "deflector", "x": 4, "y": 4, "d": 1 },
-        { "type": "window", "x": 9, "y": 4 }
+        {
+          "type": "deflector",
+          "x": 5,
+          "y": 1,
+          "d": 1
+        },
+        {
+          "type": "window",
+          "x": 5,
+          "y": 5
+        }
       ]
     },
     {
-      "name": "Two to Dry",
-      "wind": { "from": "W", "strength": 3 },
+      "name": "Confluence",
+      "tip": "Every breeze that reaches a fan leaves the way it points, so one fan can gather breezes together.",
+      "wind": {
+        "from": "W",
+        "strength": 1
+      },
       "map": [
-        "~~~###~~~",
-        "####l####",
-        "#.......#",
-        "#loo..oo#",
-        "#.......#",
-        "####l####",
-        "~~~#%#~~~"
+        "######~~~~",
+        "#.p..#~~~~",
+        "#....#~~~~",
+        "###.######",
+        "#.p...l..#",
+        "##########"
       ],
-      "fixed": [{ "type": "window", "x": 0, "y": 3 }],
-      "inventory": { "splitter": 1, "fan": 1, "window": 1 },
+      "fixed": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 1
+        },
+        {
+          "type": "window",
+          "x": 0,
+          "y": 4
+        },
+        {
+          "type": "window",
+          "x": 9,
+          "y": 4
+        }
+      ],
+      "inventory": {
+        "fan": 1,
+        "deflector": 1
+      },
       "solution": [
-        { "type": "splitter", "x": 4, "y": 3 },
-        { "type": "fan", "x": 5, "y": 3, "d": 3 },
-        { "type": "window", "x": 4, "y": 0 }
+        {
+          "type": "deflector",
+          "x": 3,
+          "y": 1,
+          "d": 1
+        },
+        {
+          "type": "fan",
+          "x": 3,
+          "y": 4,
+          "d": 1
+        }
+      ]
+    },
+    {
+      "name": "Crossroads",
+      "tip": "Laundry needs clean air: smoke drifting through it leaves it dirty, however strong the breeze.",
+      "wind": {
+        "from": "N",
+        "strength": 1
+      },
+      "map": [
+        "##########",
+        "#...##.s.#",
+        "#...##...#",
+        "##.####.##",
+        "#........#",
+        "#......l.#",
+        "##########"
+      ],
+      "fixed": [
+        {
+          "type": "window",
+          "x": 2,
+          "y": 0
+        },
+        {
+          "type": "window",
+          "x": 7,
+          "y": 0
+        },
+        {
+          "type": "window",
+          "x": 9,
+          "y": 4
+        },
+        {
+          "type": "window",
+          "x": 7,
+          "y": 6
+        }
+      ],
+      "inventory": {
+        "fan": 1,
+        "deflector": 1
+      },
+      "solution": [
+        {
+          "type": "fan",
+          "x": 2,
+          "y": 4,
+          "d": 1
+        },
+        {
+          "type": "deflector",
+          "x": 7,
+          "y": 4,
+          "d": 1
+        }
       ]
     }
   ]

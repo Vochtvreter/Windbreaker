@@ -2,31 +2,31 @@
 (function (root) {
   var data = {
   "chapters": [
-    { "n": 1, "title": "Open Windows", "tool": "window", "first": 1, "last": 5 },
-    { "n": 2, "title": "Fans", "tool": "fan", "first": 6, "last": 10 },
-    { "n": 3, "title": "Deflectors", "tool": "deflector", "first": 11, "last": 15 },
-    { "n": 4, "title": "Curtains", "tool": "curtain", "first": 16, "last": 20 },
-    { "n": 5, "title": "Wall Vents", "tool": "vent", "first": 21, "last": 25 },
-    { "n": 6, "title": "Splitters", "tool": "splitter", "first": 26, "last": 30 },
-    { "n": 7, "title": "Extractors", "tool": "extractor", "first": 31, "last": 35 },
-    { "n": 8, "title": "Skylights", "tool": "skylight", "first": 36, "last": 40 },
-    { "n": 9, "title": "Filters", "tool": "filter", "first": 41, "last": 45 },
-    { "n": 10, "title": "Ceiling Fans", "tool": "ceilingfan", "first": 46, "last": 50 },
-    { "n": 11, "title": "Drafts", "tool": null, "first": 51, "last": 55 },
-    { "n": 12, "title": "Greenhouse", "tool": null, "first": 56, "last": 60 },
-    { "n": 13, "title": "Library", "tool": null, "first": 61, "last": 65 },
-    { "n": 14, "title": "Kitchen Rush", "tool": null, "first": 66, "last": 70 },
-    { "n": 15, "title": "Laundry Day", "tool": null, "first": 71, "last": 75 },
-    { "n": 16, "title": "Old Manor", "tool": null, "first": 76, "last": 80 },
-    { "n": 17, "title": "Still Air", "tool": null, "first": 81, "last": 85 },
-    { "n": 18, "title": "Storm Season", "tool": null, "first": 86, "last": 90 },
-    { "n": 19, "title": "Crosswinds", "tool": null, "first": 91, "last": 95 },
-    { "n": 20, "title": "Fresh Air", "tool": null, "first": 96, "last": 100 }
+    { "n": 1, "title": "Open Windows", "intro": { "kind": "tool", "id": "window" }, "tool": "window", "first": 1, "last": 5 },
+    { "n": 2, "title": "Candles", "intro": { "kind": "object", "id": "candle" }, "tool": null, "first": 6, "last": 10 },
+    { "n": 3, "title": "Fans", "intro": { "kind": "tool", "id": "fan" }, "tool": "fan", "first": 11, "last": 15 },
+    { "n": 4, "title": "Kitchen Smoke", "intro": { "kind": "object", "id": "stove" }, "tool": null, "first": 16, "last": 20 },
+    { "n": 5, "title": "Deflectors", "intro": { "kind": "tool", "id": "deflector" }, "tool": "deflector", "first": 21, "last": 25 },
+    { "n": 6, "title": "Laundry Day", "intro": { "kind": "object", "id": "laundry" }, "tool": null, "first": 26, "last": 30 },
+    { "n": 7, "title": "Curtains", "intro": { "kind": "tool", "id": "curtain" }, "tool": "curtain", "first": 31, "last": 35 },
+    { "n": 8, "title": "Paperwork", "intro": { "kind": "object", "id": "papers" }, "tool": null, "first": 36, "last": 40 },
+    { "n": 9, "title": "Wall Vents", "intro": { "kind": "tool", "id": "vent" }, "tool": "vent", "first": 41, "last": 45 },
+    { "n": 10, "title": "Ferns", "intro": { "kind": "object", "id": "fern" }, "tool": null, "first": 46, "last": 50 },
+    { "n": 11, "title": "Splitters", "intro": { "kind": "tool", "id": "splitter" }, "tool": "splitter", "first": 51, "last": 55 },
+    { "n": 12, "title": "Extractors", "intro": { "kind": "tool", "id": "extractor" }, "tool": "extractor", "first": 56, "last": 60 },
+    { "n": 13, "title": "Skylights", "intro": { "kind": "tool", "id": "skylight" }, "tool": "skylight", "first": 61, "last": 65 },
+    { "n": 14, "title": "Air Filters", "intro": { "kind": "tool", "id": "filter" }, "tool": "filter", "first": 66, "last": 70 },
+    { "n": 15, "title": "Ceiling Fans", "intro": { "kind": "tool", "id": "ceilingfan" }, "tool": "ceilingfan", "first": 71, "last": 75 },
+    { "n": 16, "title": "Still Air", "intro": null, "tool": null, "first": 76, "last": 80 },
+    { "n": 17, "title": "Kitchen Rush", "intro": null, "tool": null, "first": 81, "last": 85 },
+    { "n": 18, "title": "Storm Season", "intro": null, "tool": null, "first": 86, "last": 90 },
+    { "n": 19, "title": "Crosswinds", "intro": null, "tool": null, "first": 91, "last": 95 },
+    { "n": 20, "title": "Fresh Air", "intro": null, "tool": null, "first": 96, "last": 100 }
   ],
   "levels": [
     {
-      "id": 1, "chapter": 1, "name": "First Breeze",
-      "tip": "Wind is blowing from the west. Open a window on the far side so the breeze has somewhere to go.",
+      "id": 1, "key": "first-breeze", "chapter": 1, "name": "First Breeze",
+      "tip": "Wind blows from the west. Open a window on the far side so the breeze flows through and spins the pinwheel.",
       "wind": { "from": "W", "strength": 1 },
       "map": [
         "#########",
@@ -40,7 +40,23 @@
       "solution": [{ "type": "window", "x": 8, "y": 2 }]
     },
     {
-      "id": 2, "chapter": 1, "name": "Wind Shift",
+      "id": 2, "key": "easterly", "chapter": 1, "name": "Easterly",
+      "tip": "Now the wind blows from the east. A window on the side facing the wind lets the breeze in.",
+      "wind": { "from": "E", "strength": 1 },
+      "map": [
+        "########",
+        "#......#",
+        "#......#",
+        "#..p...#",
+        "#......#",
+        "########"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 3 }],
+      "inventory": { "window": 1 },
+      "solution": [{ "type": "window", "x": 7, "y": 3 }]
+    },
+    {
+      "id": 3, "key": "wind-shift", "chapter": 1, "name": "Wind Shift",
       "tip": "The wind has turned! Open a window facing the wind, and one on the far side to let it out.",
       "wind": { "from": "S", "strength": 1 },
       "map": [
@@ -57,8 +73,41 @@
       "solution": [{ "type": "window", "x": 2, "y": 6 }, { "type": "window", "x": 2, "y": 0 }]
     },
     {
-      "id": 3, "chapter": 1, "name": "Candlelight",
-      "tip": "Candles need still air, and a breeze only flows when it has a way out.",
+      "id": 4, "key": "twin-spin", "chapter": 1, "name": "Twin Spin",
+      "tip": "Two pinwheels this time! Can a single breeze reach them both?",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "##########",
+        "#........#",
+        "#........#",
+        "#.p....p.#",
+        "#........#",
+        "##########"
+      ],
+      "fixed": [],
+      "inventory": { "window": 2 },
+      "solution": [{ "type": "window", "x": 0, "y": 3 }, { "type": "window", "x": 9, "y": 3 }]
+    },
+    {
+      "id": 5, "key": "doorway-draft", "chapter": 1, "name": "Doorway Draft",
+      "tip": "Inside walls stop the breeze, but it can pass through an open doorway.",
+      "wind": { "from": "N", "strength": 1 },
+      "map": [
+        "########",
+        "#......#",
+        "#......#",
+        "#####.##",
+        "#......#",
+        "#....p.#",
+        "########"
+      ],
+      "fixed": [],
+      "inventory": { "window": 2 },
+      "solution": [{ "type": "window", "x": 5, "y": 0 }, { "type": "window", "x": 5, "y": 6 }]
+    },
+    {
+      "id": 6, "key": "candlelight", "chapter": 2, "name": "Candlelight",
+      "tip": "Candles need still air: keep every breeze off the flame. A breeze only flows once it has a way out.",
       "wind": { "from": "W", "strength": 1 },
       "map": [
         "#########",
@@ -67,62 +116,122 @@
         "#.......#",
         "#########"
       ],
-      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
-      "inventory": { "window": 2 },
-      "solution": [{ "type": "window", "x": 0, "y": 1 }, { "type": "window", "x": 8, "y": 1 }]
+      "fixed": [{ "type": "window", "x": 0, "y": 1 }, { "type": "window", "x": 0, "y": 2 }],
+      "inventory": { "window": 1 },
+      "solution": [{ "type": "window", "x": 8, "y": 1 }]
     },
     {
-      "id": 4, "chapter": 1, "name": "Doorway Draft",
-      "wind": { "from": "N", "strength": 1 },
+      "id": 7, "key": "close-call", "chapter": 2, "name": "Close Call",
+      "tip": "A breeze is only one square wide, so a candle right beside it stays lit.",
+      "wind": { "from": "E", "strength": 1 },
       "map": [
         "#########",
+        "#...c...#",
+        "#...p...#",
         "#.......#",
-        "#.......#",
-        "######.##",
-        "#.......#",
-        "#.....p.#",
         "#########"
       ],
       "fixed": [],
       "inventory": { "window": 2 },
-      "solution": [{ "type": "window", "x": 6, "y": 0 }, { "type": "window", "x": 6, "y": 6 }]
+      "solution": [{ "type": "window", "x": 8, "y": 2 }, { "type": "window", "x": 0, "y": 2 }]
     },
     {
-      "id": 5, "chapter": 1, "name": "Garden Court",
+      "id": 8, "key": "garden-court", "chapter": 2, "name": "Garden Court",
+      "tip": "Courtyard walls are outside walls too: a window there that faces the wind lets it in.",
       "wind": { "from": "E", "strength": 1 },
       "map": [
         "############",
         "#..........#",
         "#...####...#",
         "#.p.#~~#.c.#",
-        "#...#~~#.p.#",
         "#####~~#####"
       ],
-      "fixed": [{ "type": "window", "x": 0, "y": 3 }],
-      "inventory": { "window": 3 },
-      "solution": [
-        { "type": "window", "x": 4, "y": 3 },
-        { "type": "window", "x": 11, "y": 4 },
-        { "type": "window", "x": 7, "y": 4 }
-      ]
+      "fixed": [{ "type": "window", "x": 11, "y": 3 }],
+      "inventory": { "window": 2 },
+      "solution": [{ "type": "window", "x": 4, "y": 3 }, { "type": "window", "x": 0, "y": 3 }]
     },
     {
-      "id": 6, "chapter": 2, "name": "Becalmed",
-      "tip": "No wind today. Place the fan, then tap it to turn it until it blows on the pinwheel.",
-      "wind": { "from": "W", "strength": 0 },
+      "id": 9, "key": "horseshoe", "chapter": 2, "name": "Horseshoe",
+      "tip": "A window onto the courtyard can let a breeze out, too.",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "#####~~#####",
+        "#.p.#~~#.c.#",
+        "#...####...#",
+        "#..........#",
+        "#..........#",
+        "############"
+      ],
+      "fixed": [{ "type": "window", "x": 11, "y": 1 }],
+      "inventory": { "window": 2 },
+      "solution": [{ "type": "window", "x": 0, "y": 1 }, { "type": "window", "x": 4, "y": 1 }]
+    },
+    {
+      "id": 10, "key": "between-gardens", "chapter": 2, "name": "Between Gardens",
+      "tip": "Even a little garden walled in on every side is outside, so the wind reaches it.",
+      "wind": { "from": "N", "strength": 1 },
+      "map": [
+        "#######",
+        "#..c..#",
+        "#.###.#",
+        "#.#~#.#",
+        "#.###.#",
+        "#..p..#",
+        "#.###.#",
+        "#.#~#.#",
+        "###~###"
+      ],
+      "fixed": [],
+      "inventory": { "window": 2 },
+      "solution": [{ "type": "window", "x": 3, "y": 4 }, { "type": "window", "x": 3, "y": 6 }]
+    },
+    {
+      "id": 11, "key": "alcove", "chapter": 3, "name": "Alcove",
+      "tip": "A fan blows a gentle breeze the way it faces. Place it, then tap it to turn it toward the pinwheel.",
+      "wind": { "from": "W", "strength": 1 },
       "map": [
         "#######",
         "#.....#",
-        "#..p..#",
         "#.....#",
+        "###p###",
         "#######"
       ],
-      "fixed": [],
+      "fixed": [{ "type": "window", "x": 0, "y": 1 }, { "type": "window", "x": 6, "y": 1 }],
+      "inventory": { "fan": 1 },
+      "solution": [{ "type": "fan", "x": 3, "y": 2, "d": 2 }]
+    },
+    {
+      "id": 12, "key": "mind-the-flame", "chapter": 3, "name": "Mind the Flame",
+      "tip": "A fan's breeze runs on until it meets a wall, so point it away from the candle.",
+      "wind": { "from": "E", "strength": 1 },
+      "map": [
+        "#######",
+        "#.....#",
+        "#.....#",
+        "#.c.p.#",
+        "#######"
+      ],
+      "fixed": [{ "type": "window", "x": 6, "y": 1 }, { "type": "window", "x": 0, "y": 1 }],
+      "inventory": { "fan": 1 },
+      "solution": [{ "type": "fan", "x": 3, "y": 3, "d": 1 }]
+    },
+    {
+      "id": 13, "key": "becalmed", "chapter": 3, "name": "Becalmed",
+      "tip": "No wind today, so windows only let air out. Your fan has to make the breeze.",
+      "wind": { "from": "W", "strength": 0 },
+      "map": [
+        "#########",
+        "#.......#",
+        "#.p...p.#",
+        "#.......#",
+        "#########"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 2 }, { "type": "window", "x": 8, "y": 2 }],
       "inventory": { "fan": 1 },
       "solution": [{ "type": "fan", "x": 1, "y": 2, "d": 1 }]
     },
     {
-      "id": 7, "chapter": 2, "name": "Turning Point",
+      "id": 14, "key": "turning-point", "chapter": 3, "name": "Turning Point",
       "tip": "A fan pushes on any air that reaches it, even the wind, so it can steer a breeze round a corner.",
       "wind": { "from": "W", "strength": 1 },
       "map": [
@@ -137,22 +246,8 @@
       "solution": [{ "type": "fan", "x": 5, "y": 2, "d": 0 }]
     },
     {
-      "id": 8, "chapter": 2, "name": "Smoke Signals",
-      "tip": "Blow the stove's smoke out of a window, never into a wall; hatched walls take no windows.",
-      "wind": { "from": "W", "strength": 0 },
-      "map": [
-        "########%",
-        "#.......%",
-        "#.s.....%",
-        "#.....p.%",
-        "########%"
-      ],
-      "fixed": [{ "type": "fan", "x": 1, "y": 2, "d": 1 }],
-      "inventory": { "window": 1, "fan": 1 },
-      "solution": [{ "type": "fan", "x": 6, "y": 2, "d": 2 }, { "type": "window", "x": 6, "y": 4 }]
-    },
-    {
-      "id": 9, "chapter": 2, "name": "Into the Wind",
+      "id": 15, "key": "into-the-wind", "chapter": 3, "name": "Into the Wind",
+      "tip": "Remember: the wind only blows through the house when it has a way out.",
       "wind": { "from": "N", "strength": 1 },
       "map": [
         "#######",
@@ -169,7 +264,54 @@
       "solution": [{ "type": "fan", "x": 3, "y": 4, "d": 0 }]
     },
     {
-      "id": 10, "chapter": 2, "name": "Sunday Roast",
+      "id": 16, "key": "burnt-toast", "chapter": 4, "name": "Burnt Toast",
+      "tip": "Air that passes the stove carries its smoke. Open a window so the smoke blows outside, not into a wall.",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "########",
+        "#......#",
+        "#..s...#",
+        "#......#",
+        "########"
+      ],
+      "fixed": [{ "type": "fan", "x": 1, "y": 2, "d": 1 }],
+      "inventory": { "window": 1 },
+      "solution": [{ "type": "window", "x": 7, "y": 2 }]
+    },
+    {
+      "id": 17, "key": "airing-out", "chapter": 4, "name": "Airing Out",
+      "tip": "The wind can carry smoke too: let it in on one side and out on the far side.",
+      "wind": { "from": "N", "strength": 1 },
+      "map": [
+        "#########",
+        "#...#...#",
+        "#...#.s.#",
+        "#.......#",
+        "#.......#",
+        "#########"
+      ],
+      "fixed": [],
+      "inventory": { "window": 2 },
+      "solution": [{ "type": "window", "x": 6, "y": 0 }, { "type": "window", "x": 6, "y": 5 }]
+    },
+    {
+      "id": 18, "key": "smoke-signals", "chapter": 4, "name": "Smoke Signals",
+      "tip": "Nothing can be fitted into a hatched wall, so this smoke will have to leave another way.",
+      "wind": { "from": "W", "strength": 0 },
+      "map": [
+        "########%",
+        "#.......%",
+        "#.s.....%",
+        "#.....p.%",
+        "########%"
+      ],
+      "fixed": [{ "type": "fan", "x": 1, "y": 2, "d": 1 }],
+      "inventory": { "window": 1, "fan": 1 },
+      "solution": [{ "type": "fan", "x": 6, "y": 2, "d": 2 }, { "type": "window", "x": 6, "y": 4 }]
+    },
+    {
+      "id": 19, "key": "sunday-roast", "chapter": 4, "name": "Sunday Roast",
+      "tip": "Mind the candle: a breeze straight through the house would blow it out.",
       "wind": { "from": "W", "strength": 1 },
       "map": [
         "#########",
@@ -183,7 +325,21 @@
       "solution": [{ "type": "fan", "x": 6, "y": 1, "d": 2 }, { "type": "window", "x": 6, "y": 4 }]
     },
     {
-      "id": 11, "chapter": 3, "name": "Round the Corner",
+      "id": 20, "key": "two-pans", "chapter": 4, "name": "Two Pans",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "########",
+        "#......#",
+        "#.s....#",
+        "#....s.#",
+        "########"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
+      "inventory": { "window": 1, "fan": 1 },
+      "solution": [{ "type": "fan", "x": 5, "y": 2, "d": 2 }, { "type": "window", "x": 5, "y": 4 }]
+    },
+    {
+      "id": 21, "key": "round-the-corner", "chapter": 5, "name": "Round the Corner",
       "tip": "A deflector turns the breeze by 90 degrees. Tap it to flip between / and \\.",
       "wind": { "from": "W", "strength": 1 },
       "map": [
@@ -199,13 +355,30 @@
       "solution": [{ "type": "deflector", "x": 6, "y": 1, "d": 1 }]
     },
     {
-      "id": 12, "chapter": 3, "name": "Candle Detour",
+      "id": 22, "key": "staircase", "chapter": 5, "name": "Staircase",
+      "tip": "Two deflectors make a step: one turns the breeze down, the next turns it back toward the window.",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "#########",
+        "#.......#",
+        "#.......#",
+        "#...p...#",
+        "#.......#",
+        "#########"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 1 }, { "type": "window", "x": 8, "y": 4 }],
+      "inventory": { "deflector": 2 },
+      "solution": [{ "type": "deflector", "x": 4, "y": 1, "d": 1 }, { "type": "deflector", "x": 4, "y": 4, "d": 1 }]
+    },
+    {
+      "id": 23, "key": "candle-detour", "chapter": 5, "name": "Candle Detour",
+      "tip": "Air passes over a table, but nothing can be placed on it.",
       "wind": { "from": "E", "strength": 1 },
       "map": [
         "#########",
         "#..oco..#",
         "#......c#",
-        "#p......#",
+        "#p..o...#",
         "#########"
       ],
       "fixed": [{ "type": "window", "x": 8, "y": 1 }, { "type": "window", "x": 0, "y": 3 }],
@@ -213,7 +386,37 @@
       "solution": [{ "type": "deflector", "x": 6, "y": 1, "d": 0 }, { "type": "deflector", "x": 6, "y": 3, "d": 0 }]
     },
     {
-      "id": 13, "chapter": 3, "name": "Clothesline",
+      "id": 24, "key": "long-way-out", "chapter": 5, "name": "Long Way Out",
+      "tip": "No wind today. Smoke rides along with the fan's breeze, so a deflector can steer it to a window.",
+      "wind": { "from": "W", "strength": 0 },
+      "map": [
+        "########",
+        "#.c....#",
+        "#.s....#",
+        "#......#",
+        "########"
+      ],
+      "fixed": [{ "type": "window", "x": 2, "y": 0 }, { "type": "window", "x": 5, "y": 0 }],
+      "inventory": { "fan": 1, "deflector": 1 },
+      "solution": [{ "type": "fan", "x": 1, "y": 2, "d": 1 }, { "type": "deflector", "x": 5, "y": 2, "d": 0 }]
+    },
+    {
+      "id": 25, "key": "elbow-room", "chapter": 5, "name": "Elbow Room",
+      "tip": "One fan and one deflector make an L-shaped breeze. Where can its corner go?",
+      "wind": { "from": "W", "strength": 0 },
+      "map": [
+        "########",
+        "#.p..c.#",
+        "#......#",
+        "#....p.#",
+        "########"
+      ],
+      "fixed": [{ "type": "window", "x": 2, "y": 0 }],
+      "inventory": { "fan": 1, "deflector": 1 },
+      "solution": [{ "type": "fan", "x": 6, "y": 3, "d": 3 }, { "type": "deflector", "x": 2, "y": 3, "d": 1 }]
+    },
+    {
+      "id": 26, "key": "clothesline", "chapter": 6, "name": "Clothesline",
       "tip": "Laundry only dries in a breeze of 2 or more, and breezes that cross on it add up.",
       "wind": { "from": "W", "strength": 1 },
       "map": [
@@ -229,7 +432,39 @@
       "solution": [{ "type": "deflector", "x": 6, "y": 1, "d": 1 }, { "type": "window", "x": 6, "y": 5 }]
     },
     {
-      "id": 14, "chapter": 3, "name": "Confluence",
+      "id": 27, "key": "pegged-out", "chapter": 6, "name": "Pegged Out",
+      "tip": "A fan in the path of the breeze turns it and adds its own push: 1 and 1 make 2.",
+      "wind": { "from": "N", "strength": 1 },
+      "map": [
+        "#######",
+        "#.....#",
+        "#.....#",
+        "#...l.#",
+        "#######"
+      ],
+      "fixed": [{ "type": "window", "x": 2, "y": 0 }],
+      "inventory": { "window": 1, "fan": 1 },
+      "solution": [{ "type": "fan", "x": 2, "y": 3, "d": 1 }, { "type": "window", "x": 6, "y": 3 }]
+    },
+    {
+      "id": 28, "key": "good-drying-day", "chapter": 6, "name": "Good Drying Day",
+      "tip": "Strong wind today: it blows in at 2, enough to dry laundry all by itself.",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "##########",
+        "#..l..c..#",
+        "#........#",
+        "#....p...#",
+        "#........#",
+        "##########"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 1 }],
+      "inventory": { "window": 1, "deflector": 1 },
+      "solution": [{ "type": "deflector", "x": 5, "y": 1, "d": 1 }, { "type": "window", "x": 5, "y": 5 }]
+    },
+    {
+      "id": 29, "key": "confluence", "chapter": 6, "name": "Confluence",
+      "tip": "Every breeze that reaches a fan leaves the way it points, so one fan can gather breezes together.",
       "wind": { "from": "W", "strength": 1 },
       "map": [
         "######~~~~",
@@ -237,7 +472,6 @@
         "#....#~~~~",
         "###.######",
         "#.p...l..#",
-        "#........#",
         "##########"
       ],
       "fixed": [
@@ -249,13 +483,13 @@
       "solution": [{ "type": "deflector", "x": 3, "y": 1, "d": 1 }, { "type": "fan", "x": 3, "y": 4, "d": 1 }]
     },
     {
-      "id": 15, "chapter": 3, "name": "Crossroads",
+      "id": 30, "key": "crossroads", "chapter": 6, "name": "Crossroads",
       "tip": "Laundry needs clean air: smoke drifting through it leaves it dirty, however strong the breeze.",
       "wind": { "from": "N", "strength": 1 },
       "map": [
         "##########",
-        "#c...#.s.#",
-        "#....#...#",
+        "#...##.s.#",
+        "#...##...#",
         "##.####.##",
         "#........#",
         "#......l.#",
@@ -271,7 +505,7 @@
       "solution": [{ "type": "fan", "x": 2, "y": 4, "d": 1 }, { "type": "deflector", "x": 7, "y": 4, "d": 1 }]
     },
     {
-      "id": 16, "chapter": 4, "name": "Shielded Flame",
+      "id": 31, "key": "shielded-flame", "chapter": 7, "name": "Shielded Flame",
       "tip": "A curtain takes 1 off any breeze passing through it, so a gentle breeze stops right there.",
       "wind": { "from": "W", "strength": 0 },
       "map": [
@@ -286,8 +520,47 @@
       "solution": [{ "type": "curtain", "x": 5, "y": 2 }]
     },
     {
-      "id": 17, "chapter": 4, "name": "Strong Enough",
-      "tip": "Strong wind today: count the lines in a stream to see how strong it is.",
+      "id": 32, "key": "candle-guard", "chapter": 7, "name": "Candle Guard",
+      "tip": "A curtain stops the wind too, and the wind only blows when it has a way out.",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "#########",
+        "#....c..#",
+        "#.......#",
+        "#..p....#",
+        "#.......#",
+        "#.......#",
+        "#########"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 3 }, { "type": "fan", "x": 5, "y": 5, "d": 0 }],
+      "inventory": { "window": 1, "curtain": 1 },
+      "solution": [{ "type": "window", "x": 8, "y": 3 }, { "type": "curtain", "x": 5, "y": 2 }]
+    },
+    {
+      "id": 33, "key": "clean-linen", "chapter": 7, "name": "Clean Linen",
+      "tip": "Strong wind blows in at 2, enough to dry laundry; just never let a curtain stop smoky air.",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "########",
+        "#......#",
+        "#......#",
+        "#..s...#",
+        "#......#",
+        "#..l...#",
+        "########"
+      ],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 5 },
+        { "type": "window", "x": 7, "y": 3 },
+        { "type": "fan", "x": 3, "y": 1, "d": 2 },
+        { "type": "fan", "x": 1, "y": 3, "d": 1 }
+      ],
+      "inventory": { "window": 1, "curtain": 1 },
+      "solution": [{ "type": "window", "x": 7, "y": 5 }, { "type": "curtain", "x": 3, "y": 2 }]
+    },
+    {
+      "id": 34, "key": "strong-enough", "chapter": 7, "name": "Strong Enough",
+      "tip": "Count the lines: a curtain softens a strong wind of 2 to 1, but stops a gentle breeze.",
       "wind": { "from": "W", "strength": 2 },
       "map": [
         "#########",
@@ -302,27 +575,8 @@
       "solution": [{ "type": "window", "x": 8, "y": 2 }, { "type": "curtain", "x": 6, "y": 2 }]
     },
     {
-      "id": 18, "chapter": 4, "name": "Loose Papers",
-      "tip": "Papers scatter in strong wind: they can take a gentle breeze of 1 at most.",
-      "wind": { "from": "N", "strength": 2 },
-      "map": [
-        "#####~~~~",
-        "#...#~~~~",
-        "#...#####",
-        "#....n.p#",
-        "#.......#",
-        "#########"
-      ],
-      "fixed": [{ "type": "window", "x": 2, "y": 0 }],
-      "inventory": { "window": 1, "deflector": 1, "curtain": 1 },
-      "solution": [
-        { "type": "curtain", "x": 2, "y": 1 },
-        { "type": "deflector", "x": 2, "y": 3, "d": 1 },
-        { "type": "window", "x": 8, "y": 3 }
-      ]
-    },
-    {
-      "id": 19, "chapter": 4, "name": "Draught Stopper",
+      "id": 35, "key": "draught-stopper", "chapter": 7, "name": "Draught Stopper",
+      "tip": "A candle can be guarded from behind: a wind with no way out does not blow at all.",
       "wind": { "from": "E", "strength": 1 },
       "map": [
         "######",
@@ -349,7 +603,78 @@
       ]
     },
     {
-      "id": 20, "chapter": 4, "name": "Second Wind",
+      "id": 36, "key": "loose-papers", "chapter": 8, "name": "Loose Papers",
+      "tip": "Papers scatter in strong wind: they can take a gentle breeze of 1 at most.",
+      "wind": { "from": "N", "strength": 2 },
+      "map": [
+        "#####~~~~",
+        "#...#~~~~",
+        "#...#####",
+        "#....n.p#",
+        "#.......#",
+        "#########"
+      ],
+      "fixed": [{ "type": "window", "x": 2, "y": 0 }, { "type": "deflector", "x": 2, "y": 3, "d": 1 }],
+      "inventory": { "window": 1, "curtain": 1 },
+      "solution": [{ "type": "curtain", "x": 2, "y": 1 }, { "type": "window", "x": 8, "y": 3 }]
+    },
+    {
+      "id": 37, "key": "linen-first", "chapter": 8, "name": "Linen First",
+      "tip": "Laundry wants the strong wind, papers a gentle one: soften it after the laundry, before the papers.",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "########",
+        "#...l..#",
+        "#......#",
+        "#.....n#",
+        "########"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 1 }, { "type": "window", "x": 6, "y": 4 }],
+      "inventory": { "deflector": 1, "curtain": 1 },
+      "solution": [{ "type": "deflector", "x": 6, "y": 1, "d": 1 }, { "type": "curtain", "x": 5, "y": 1 }]
+    },
+    {
+      "id": 38, "key": "writing-desk", "chapter": 8, "name": "Writing Desk",
+      "tip": "Breezes that cross on papers add up: 1 and 1 make 2, which is too much for them.",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "%%%%%%%%%",
+        "#....p..#",
+        "#..p.n..#",
+        "#.......#",
+        "#.......#",
+        "#########"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 2 }, { "type": "fan", "x": 5, "y": 4, "d": 0 }],
+      "inventory": { "window": 1, "deflector": 1 },
+      "solution": [{ "type": "deflector", "x": 4, "y": 2, "d": 1 }, { "type": "window", "x": 4, "y": 5 }]
+    },
+    {
+      "id": 39, "key": "separate-ways", "chapter": 8, "name": "Separate Ways",
+      "tip": "Each window lets in its own strong wind: soften only the one that blows over the papers.",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "##########",
+        "#..l.....#",
+        "#####..p.#",
+        "#..n.....#",
+        "##########"
+      ],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 1 },
+        { "type": "window", "x": 0, "y": 3 },
+        { "type": "fan", "x": 7, "y": 1, "d": 1 }
+      ],
+      "inventory": { "window": 1, "deflector": 1, "curtain": 1 },
+      "solution": [
+        { "type": "window", "x": 9, "y": 1 },
+        { "type": "deflector", "x": 7, "y": 3, "d": 0 },
+        { "type": "curtain", "x": 2, "y": 3 }
+      ]
+    },
+    {
+      "id": 40, "key": "second-wind", "chapter": 8, "name": "Second Wind",
+      "tip": "Remember: a fan adds its own push to any breeze that passes through it.",
       "wind": { "from": "S", "strength": 2 },
       "map": [
         "#########",
@@ -368,14 +693,14 @@
       ]
     },
     {
-      "id": 21, "chapter": 5, "name": "Through the Wall",
-      "tip": "Walls stop the wind. A wall vent in an inner wall lets air pass straight through.",
+      "id": 41, "key": "through-the-wall", "chapter": 9, "name": "Through the Wall",
+      "tip": "Inside walls stop the breeze. A wall vent fits into one and lets air pass straight through it.",
       "wind": { "from": "W", "strength": 1 },
       "map": [
         "##########",
         "#...#....#",
         "#.p.#.p..#",
-        "#........#",
+        "#...#....#",
         "##########"
       ],
       "fixed": [{ "type": "window", "x": 0, "y": 2 }],
@@ -383,7 +708,7 @@
       "solution": [{ "type": "vent", "x": 4, "y": 2 }, { "type": "window", "x": 9, "y": 2 }]
     },
     {
-      "id": 22, "chapter": 5, "name": "Night Light",
+      "id": 42, "key": "night-light", "chapter": 9, "name": "Night Light",
       "wind": { "from": "E", "strength": 1 },
       "map": [
         "#########",
@@ -403,29 +728,7 @@
       "solution": [{ "type": "vent", "x": 2, "y": 3 }, { "type": "window", "x": 2, "y": 0 }]
     },
     {
-      "id": 23, "chapter": 5, "name": "Potted Fern",
-      "tip": "Ferns are delicate: they want exactly one breeze, no more and no less.",
-      "wind": { "from": "S", "strength": 2 },
-      "map": [
-        "#######",
-        "#.....#",
-        "#.f..o#",
-        "#.....#",
-        "####.##",
-        "#.....#",
-        "#.l...#",
-        "#######"
-      ],
-      "fixed": [{ "type": "window", "x": 2, "y": 7 }],
-      "inventory": { "window": 1, "curtain": 1, "vent": 1 },
-      "solution": [
-        { "type": "vent", "x": 2, "y": 4 },
-        { "type": "curtain", "x": 2, "y": 3 },
-        { "type": "window", "x": 2, "y": 0 }
-      ]
-    },
-    {
-      "id": 24, "chapter": 5, "name": "Side Door",
+      "id": 43, "key": "side-door", "chapter": 9, "name": "Side Door",
       "wind": { "from": "N", "strength": 1 },
       "map": [
         "#########",
@@ -446,7 +749,126 @@
       ]
     },
     {
-      "id": 25, "chapter": 5, "name": "Blustery Washday",
+      "id": 44, "key": "back-to-back", "chapter": 9, "name": "Back to Back",
+      "tip": "Bread in the oven, the copper on the boil, stew on the range, and each back room has just one door.",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "%#########%",
+        "%..#..#oo.#",
+        "%s.#.s#...#",
+        "%.#%#.%...#",
+        "#........s#",
+        "%..ooo....#",
+        "%..ooo....#",
+        "%#########%"
+      ],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 4 },
+        { "type": "deflector", "x": 1, "y": 4, "d": 0 },
+        { "type": "deflector", "x": 1, "y": 1, "d": 0 }
+      ],
+      "inventory": { "window": 1, "deflector": 2, "vent": 1 },
+      "solution": [
+        { "type": "vent", "x": 3, "y": 1 },
+        { "type": "deflector", "x": 5, "y": 1, "d": 1 },
+        { "type": "deflector", "x": 5, "y": 4, "d": 1 },
+        { "type": "window", "x": 10, "y": 4 }
+      ]
+    },
+    {
+      "id": 45, "key": "tailwind", "chapter": 9, "name": "Tailwind",
+      "tip": "Laundry wants a breeze of 2. Remember: a fan adds its own breeze to any air it catches.",
+      "wind": { "from": "E", "strength": 1 },
+      "map": [
+        "###########",
+        "#.s...#...#",
+        "#.l...#...#",
+        "#c....#...#",
+        "###########"
+      ],
+      "fixed": [{ "type": "window", "x": 10, "y": 3 }],
+      "inventory": { "window": 1, "fan": 1, "vent": 1 },
+      "solution": [
+        { "type": "vent", "x": 6, "y": 3 },
+        { "type": "fan", "x": 2, "y": 3, "d": 0 },
+        { "type": "window", "x": 2, "y": 0 }
+      ]
+    },
+    {
+      "id": 46, "key": "first-frond", "chapter": 10, "name": "First Frond",
+      "tip": "A fern wants exactly a gentle breeze (1): no more, no less. Soften the strong wind before it gets there.",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "#########",
+        "#.......#",
+        "#.l...f.#",
+        "#.......#",
+        "#########"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
+      "inventory": { "window": 1, "curtain": 1 },
+      "solution": [{ "type": "curtain", "x": 4, "y": 2 }, { "type": "window", "x": 8, "y": 2 }]
+    },
+    {
+      "id": 47, "key": "potted-fern", "chapter": 10, "name": "Potted Fern",
+      "tip": "The laundry wants 2 or more, the fern exactly 1, and both stand in the same draught.",
+      "wind": { "from": "S", "strength": 2 },
+      "map": [
+        "#######",
+        "#.....#",
+        "#.f..o#",
+        "#.....#",
+        "####.##",
+        "#.....#",
+        "#.l...#",
+        "#######"
+      ],
+      "fixed": [{ "type": "window", "x": 2, "y": 7 }],
+      "inventory": { "window": 1, "curtain": 1, "vent": 1 },
+      "solution": [
+        { "type": "vent", "x": 2, "y": 4 },
+        { "type": "curtain", "x": 2, "y": 3 },
+        { "type": "window", "x": 2, "y": 0 }
+      ]
+    },
+    {
+      "id": 48, "key": "fern-aisle", "chapter": 10, "name": "Fern Aisle",
+      "tip": "A curtain softens each stream through it by 1, so a fan's gentle breeze stops right there.",
+      "wind": { "from": "E", "strength": 2 },
+      "map": [
+        "##########",
+        "%.....p..#",
+        "#.l#.ooo.#",
+        "#..#.ooo.#",
+        "#.f#.....#",
+        "##########"
+      ],
+      "fixed": [{ "type": "window", "x": 9, "y": 1 }, { "type": "window", "x": 2, "y": 5 }],
+      "inventory": { "fan": 1, "curtain": 1 },
+      "solution": [{ "type": "fan", "x": 2, "y": 1, "d": 2 }, { "type": "curtain", "x": 2, "y": 3 }]
+    },
+    {
+      "id": 49, "key": "delicates", "chapter": 10, "name": "Delicates",
+      "tip": "Washing day! Papers and ferns want a soft touch, but the wash still needs a breeze of 2 or more.",
+      "wind": { "from": "E", "strength": 2 },
+      "map": [
+        "~~~#####",
+        "~~~#.n.#",
+        "~~~#f..#",
+        "####...#",
+        "#lll...#",
+        "########"
+      ],
+      "fixed": [{ "type": "window", "x": 7, "y": 1 }, { "type": "fan", "x": 4, "y": 4, "d": 3 }],
+      "inventory": { "window": 1, "deflector": 1, "curtain": 1 },
+      "solution": [
+        { "type": "curtain", "x": 6, "y": 1 },
+        { "type": "deflector", "x": 4, "y": 1, "d": 0 },
+        { "type": "window", "x": 0, "y": 4 }
+      ]
+    },
+    {
+      "id": 50, "key": "blustery-washday", "chapter": 10, "name": "Blustery Washday",
       "wind": { "from": "W", "strength": 2 },
       "map": [
         "#####~~~~",
@@ -473,7 +895,7 @@
       ]
     },
     {
-      "id": 26, "chapter": 6, "name": "Forked Breeze",
+      "id": 51, "key": "forked-breeze", "chapter": 11, "name": "Forked Breeze",
       "tip": "A splitter sends a stream out to both sides. Air flows as long as one branch can get outside.",
       "wind": { "from": "W", "strength": 1 },
       "map": [
@@ -488,7 +910,7 @@
       "solution": [{ "type": "splitter", "x": 4, "y": 2 }, { "type": "window", "x": 4, "y": 0 }]
     },
     {
-      "id": 27, "chapter": 6, "name": "Smoke and Spin",
+      "id": 52, "key": "smoke-and-spin", "chapter": 11, "name": "Smoke and Spin",
       "wind": { "from": "E", "strength": 1 },
       "map": [
         "#######",
@@ -504,8 +926,8 @@
       "solution": [{ "type": "splitter", "x": 2, "y": 3 }, { "type": "window", "x": 2, "y": 6 }]
     },
     {
-      "id": 28, "chapter": 6, "name": "Gentle Halves",
-      "tip": "Each half of a split stream gets half the strength, rounded down, but never less than 1.",
+      "id": 53, "key": "gentle-halves", "chapter": 11, "name": "Gentle Halves",
+      "tip": "Gale today: the wind blows in at 3! A splitter halves it, so each side gets 1 (half, rounded down).",
       "wind": { "from": "N", "strength": 3 },
       "map": [
         "###########",
@@ -521,7 +943,7 @@
       "solution": [{ "type": "splitter", "x": 5, "y": 3 }, { "type": "window", "x": 10, "y": 3 }]
     },
     {
-      "id": 29, "chapter": 6, "name": "Bent Branch",
+      "id": 54, "key": "bent-branch", "chapter": 11, "name": "Bent Branch",
       "wind": { "from": "W", "strength": 3 },
       "map": [
         "##########",
@@ -541,485 +963,7 @@
       ]
     },
     {
-      "id": 30, "chapter": 6, "name": "Two to Dry",
-      "wind": { "from": "W", "strength": 3 },
-      "map": [
-        "~~~###~~~",
-        "####l####",
-        "#.......#",
-        "#loo..oo#",
-        "#.......#",
-        "####l####",
-        "~~~#%#~~~"
-      ],
-      "fixed": [{ "type": "window", "x": 0, "y": 3 }],
-      "inventory": { "window": 1, "fan": 1, "splitter": 1 },
-      "solution": [
-        { "type": "splitter", "x": 4, "y": 3 },
-        { "type": "fan", "x": 5, "y": 3, "d": 3 },
-        { "type": "window", "x": 4, "y": 0 }
-      ]
-    },
-    {
-      "id": 31, "chapter": 7, "name": "Upwind Exit",
-      "tip": "Unlike a window, an extractor lets air out even through the wall facing the wind.",
-      "wind": { "from": "N", "strength": 1 },
-      "map": [
-        "#########",
-        "#...#...#",
-        "#.p.#...#",
-        "#....p..#",
-        "#########"
-      ],
-      "fixed": [
-        { "type": "window", "x": 2, "y": 0 },
-        { "type": "deflector", "x": 2, "y": 3, "d": 1 },
-        { "type": "deflector", "x": 6, "y": 3, "d": 0 }
-      ],
-      "inventory": { "extractor": 1 },
-      "solution": [{ "type": "extractor", "x": 6, "y": 0 }]
-    },
-    {
-      "id": 32, "chapter": 7, "name": "Range Hood",
-      "tip": "An extractor's gentle pull carries smoke along its line and out of the house.",
-      "wind": { "from": "N", "strength": 1 },
-      "map": [
-        "#########",
-        "#cs.#...#",
-        "#.....p.#",
-        "#####...#",
-        "#########"
-      ],
-      "fixed": [{ "type": "window", "x": 6, "y": 0 }],
-      "inventory": { "window": 1, "extractor": 1 },
-      "solution": [{ "type": "extractor", "x": 2, "y": 0 }, { "type": "window", "x": 6, "y": 4 }]
-    },
-    {
-      "id": 33, "chapter": 7, "name": "Candlelit Supper",
-      "tip": "An extractor pulls along its whole line, until a piece gets in the way.",
-      "wind": { "from": "N", "strength": 0 },
-      "map": [
-        "#########",
-        "##.p#.o.#",
-        "#s....c.#",
-        "##..#.o.#",
-        "#########"
-      ],
-      "fixed": [],
-      "inventory": { "fan": 1, "extractor": 1 },
-      "solution": [{ "type": "extractor", "x": 0, "y": 2 }, { "type": "fan", "x": 3, "y": 2, "d": 0 }]
-    },
-    {
-      "id": 34, "chapter": 7, "name": "Wash House",
-      "wind": { "from": "W", "strength": 2 },
-      "map": [
-        "#######",
-        "#..f..#",
-        "#.....#",
-        "#.....#",
-        "###.###",
-        "#.....#",
-        "#s.l..#",
-        "#%%%%%#"
-      ],
-      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
-      "inventory": { "window": 1, "splitter": 1, "extractor": 1 },
-      "solution": [
-        { "type": "splitter", "x": 3, "y": 2 },
-        { "type": "extractor", "x": 0, "y": 6 },
-        { "type": "window", "x": 3, "y": 0 }
-      ]
-    },
-    {
-      "id": 35, "chapter": 7, "name": "Headwind Kitchen",
-      "wind": { "from": "E", "strength": 1 },
-      "map": [
-        "#########",
-        "#o.#....#",
-        "#.....l.#",
-        "##.###.##",
-        "#oco...s#",
-        "#########"
-      ],
-      "fixed": [{ "type": "window", "x": 8, "y": 1 }],
-      "inventory": { "fan": 1, "deflector": 1, "extractor": 1 },
-      "solution": [
-        { "type": "fan", "x": 6, "y": 1, "d": 2 },
-        { "type": "deflector", "x": 6, "y": 4, "d": 1 },
-        { "type": "extractor", "x": 8, "y": 4 }
-      ]
-    },
-    {
-      "id": 36, "chapter": 8, "name": "Through the Roof",
-      "tip": "A skylight lets air out through the roof, so a breeze can flow even where no window will open.",
-      "wind": { "from": "W", "strength": 1 },
-      "map": [
-        "#####%%%%",
-        "#...#...%",
-        "#.p...p.%",
-        "#...#...%",
-        "#####%%%%"
-      ],
-      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
-      "inventory": { "skylight": 1 },
-      "solution": [{ "type": "skylight", "x": 7, "y": 2 }]
-    },
-    {
-      "id": 37, "chapter": 8, "name": "Table for Two",
-      "wind": { "from": "W", "strength": 1 },
-      "map": [
-        "#########",
-        "#.p..c..#",
-        "#.ooooo.#",
-        "#.p.c...#",
-        "#########"
-      ],
-      "fixed": [
-        { "type": "window", "x": 0, "y": 1 },
-        { "type": "window", "x": 8, "y": 1 },
-        { "type": "fan", "x": 1, "y": 3, "d": 1 }
-      ],
-      "inventory": { "curtain": 1, "skylight": 1 },
-      "solution": [{ "type": "skylight", "x": 3, "y": 1 }, { "type": "curtain", "x": 3, "y": 3 }]
-    },
-    {
-      "id": 38, "chapter": 8, "name": "Smoke Hole",
-      "wind": { "from": "E", "strength": 1 },
-      "map": [
-        "%%%%%#####",
-        "%c.....p.#",
-        "%..s.#...#",
-        "%....#...#",
-        "%%%%%#####"
-      ],
-      "fixed": [{ "type": "window", "x": 9, "y": 1 }],
-      "inventory": { "fan": 1, "skylight": 1 },
-      "solution": [{ "type": "fan", "x": 3, "y": 1, "d": 2 }, { "type": "skylight", "x": 3, "y": 3 }]
-    },
-    {
-      "id": 39, "chapter": 8, "name": "Dead End",
-      "wind": { "from": "N", "strength": 1 },
-      "map": [
-        "##########",
-        "#.....#..#",
-        "#.....#.o#",
-        "#c.p...s.#",
-        "##########"
-      ],
-      "fixed": [{ "type": "window", "x": 4, "y": 0 }],
-      "inventory": { "curtain": 1, "splitter": 1, "skylight": 1 },
-      "solution": [
-        { "type": "splitter", "x": 4, "y": 3 },
-        { "type": "curtain", "x": 2, "y": 3 },
-        { "type": "skylight", "x": 8, "y": 3 }
-      ]
-    },
-    {
-      "id": 40, "chapter": 8, "name": "Laundry Chute",
-      "wind": { "from": "W", "strength": 2 },
-      "map": [
-        "#########",
-        "#....c..#",
-        "#######.#",
-        "#...l...#",
-        "#.s...c.#",
-        "#.......#",
-        "#########"
-      ],
-      "fixed": [{ "type": "window", "x": 0, "y": 1 }, { "type": "fan", "x": 1, "y": 4, "d": 1 }],
-      "inventory": { "deflector": 1, "vent": 1, "skylight": 1 },
-      "solution": [
-        { "type": "deflector", "x": 4, "y": 1, "d": 1 },
-        { "type": "vent", "x": 4, "y": 2 },
-        { "type": "skylight", "x": 4, "y": 4 }
-      ]
-    },
-    {
-      "id": 41, "chapter": 9, "name": "Clean Air",
-      "tip": "Smoky air must never hit a wall. An air filter cleans the smoke out of any air passing through it.",
-      "wind": { "from": "W", "strength": 0 },
-      "map": [
-        "#########",
-        "#.......#",
-        "#....s.p#",
-        "#.......#",
-        "#########"
-      ],
-      "fixed": [{ "type": "fan", "x": 1, "y": 2, "d": 1 }],
-      "inventory": { "filter": 1 },
-      "solution": [{ "type": "filter", "x": 6, "y": 2 }]
-    },
-    {
-      "id": 42, "chapter": 9, "name": "Two Burners",
-      "wind": { "from": "W", "strength": 0 },
-      "map": [
-        "#########",
-        "#...c...#",
-        "#.s.....#",
-        "####.####",
-        "#.......#",
-        "#.....s.#",
-        "#########"
-      ],
-      "fixed": [{ "type": "fan", "x": 1, "y": 2, "d": 1 }, { "type": "fan", "x": 7, "y": 5, "d": 3 }],
-      "inventory": { "deflector": 1, "filter": 1 },
-      "solution": [{ "type": "deflector", "x": 4, "y": 2, "d": 1 }, { "type": "filter", "x": 4, "y": 5 }]
-    },
-    {
-      "id": 43, "chapter": 9, "name": "Galley Kitchen",
-      "wind": { "from": "W", "strength": 1 },
-      "map": [
-        "#########",
-        "#...#...#",
-        "#...#.s.#",
-        "#..s....#",
-        "#...#...#",
-        "#...#.s.#",
-        "#########"
-      ],
-      "fixed": [{ "type": "window", "x": 0, "y": 3 }],
-      "inventory": { "window": 1, "splitter": 1, "filter": 1 },
-      "solution": [
-        { "type": "splitter", "x": 6, "y": 3 },
-        { "type": "window", "x": 6, "y": 6 },
-        { "type": "filter", "x": 6, "y": 1 }
-      ]
-    },
-    {
-      "id": 44, "chapter": 9, "name": "Supper Smoke",
-      "wind": { "from": "N", "strength": 2 },
-      "map": [
-        "#########",
-        "#.l.#...#",
-        "#...#.o.#",
-        "#..s..c.#",
-        "#.n.#.o.#",
-        "#########"
-      ],
-      "fixed": [{ "type": "window", "x": 2, "y": 0 }],
-      "inventory": { "window": 1, "curtain": 1, "splitter": 1, "filter": 1 },
-      "solution": [
-        { "type": "splitter", "x": 2, "y": 3 },
-        { "type": "window", "x": 0, "y": 3 },
-        { "type": "filter", "x": 4, "y": 3 },
-        { "type": "curtain", "x": 5, "y": 3 }
-      ]
-    },
-    {
-      "id": 45, "chapter": 9, "name": "Hood and Hearth",
-      "wind": { "from": "W", "strength": 0 },
-      "map": [
-        "#########",
-        "#...#p..#",
-        "#c.....s#",
-        "#...#...#",
-        "#.s.....#",
-        "#########"
-      ],
-      "fixed": [{ "type": "extractor", "x": 8, "y": 2 }],
-      "inventory": { "fan": 1, "deflector": 1, "filter": 1 },
-      "solution": [
-        { "type": "fan", "x": 1, "y": 4, "d": 1 },
-        { "type": "deflector", "x": 5, "y": 4, "d": 0 },
-        { "type": "filter", "x": 5, "y": 2 }
-      ]
-    },
-    {
-      "id": 46, "chapter": 10, "name": "Overhead",
-      "tip": "A ceiling fan stirs a gentle breeze in all four directions at once, no window needed.",
-      "wind": { "from": "W", "strength": 0 },
-      "map": [
-        "#########",
-        "#...p...#",
-        "#.......#",
-        "#p.....p#",
-        "#...o...#",
-        "#########"
-      ],
-      "fixed": [],
-      "inventory": { "ceilingfan": 1 },
-      "solution": [{ "type": "ceilingfan", "x": 4, "y": 3 }]
-    },
-    {
-      "id": 47, "chapter": 10, "name": "Sidestep",
-      "wind": { "from": "W", "strength": 0 },
-      "map": [
-        "~~~#####~~~",
-        "####.p.####",
-        "#.........#",
-        "#........p#",
-        "#.p.......#",
-        "#...oco...#",
-        "###########"
-      ],
-      "fixed": [],
-      "inventory": { "deflector": 1, "ceilingfan": 1 },
-      "solution": [{ "type": "ceilingfan", "x": 5, "y": 3 }, { "type": "deflector", "x": 5, "y": 4, "d": 0 }]
-    },
-    {
-      "id": 48, "chapter": 10, "name": "Backdraft",
-      "tip": "A window facing the wind pushes air back, just like a wall.",
-      "wind": { "from": "W", "strength": 1 },
-      "map": [
-        "###########",
-        "#.o.p...o.#",
-        "#.........#",
-        "####.######",
-        "#l.s......#",
-        "#.........#",
-        "###########"
-      ],
-      "fixed": [{ "type": "window", "x": 0, "y": 4 }],
-      "inventory": { "window": 1, "filter": 1, "ceilingfan": 1 },
-      "solution": [
-        { "type": "ceilingfan", "x": 4, "y": 4 },
-        { "type": "window", "x": 10, "y": 4 },
-        { "type": "filter", "x": 2, "y": 4 }
-      ]
-    },
-    {
-      "id": 49, "chapter": 10, "name": "Drying Room",
-      "wind": { "from": "W", "strength": 0 },
-      "map": [
-        "###########",
-        "#....#....#",
-        "#.l..#....#",
-        "#....#....#",
-        "#...n...l.#",
-        "#....#....#",
-        "###########"
-      ],
-      "fixed": [],
-      "inventory": { "vent": 1, "ceilingfan": 2 },
-      "solution": [
-        { "type": "ceilingfan", "x": 2, "y": 4 },
-        { "type": "ceilingfan", "x": 8, "y": 2 },
-        { "type": "vent", "x": 5, "y": 2 }
-      ]
-    },
-    {
-      "id": 50, "chapter": 10, "name": "Gale House",
-      "wind": { "from": "N", "strength": 3 },
-      "map": [
-        "%%%%%######",
-        "%...#.#...#",
-        "%...#.#...#",
-        "%.s.l...f.#",
-        "%...#n#...#",
-        "%%%%%######"
-      ],
-      "fixed": [{ "type": "window", "x": 5, "y": 0 }],
-      "inventory": { "window": 1, "splitter": 1, "filter": 1, "ceilingfan": 1 },
-      "solution": [
-        { "type": "splitter", "x": 5, "y": 3 },
-        { "type": "ceilingfan", "x": 3, "y": 3 },
-        { "type": "window", "x": 10, "y": 3 },
-        { "type": "filter", "x": 1, "y": 3 }
-      ]
-    },
-    {
-      "id": 51, "chapter": 11, "name": "Tailwind",
-      "tip": "All ten tools are yours now. Each of these drafts hinges on a few of them working together.",
-      "wind": { "from": "E", "strength": 1 },
-      "map": [
-        "###########",
-        "#.s...#...#",
-        "#.l...#...#",
-        "#c....#...#",
-        "###########"
-      ],
-      "fixed": [{ "type": "window", "x": 10, "y": 3 }],
-      "inventory": { "window": 1, "fan": 1, "vent": 1 },
-      "solution": [
-        { "type": "vent", "x": 6, "y": 3 },
-        { "type": "fan", "x": 2, "y": 3, "d": 0 },
-        { "type": "window", "x": 2, "y": 0 }
-      ]
-    },
-    {
-      "id": 52, "chapter": 11, "name": "Split Decision",
-      "wind": { "from": "S", "strength": 2 },
-      "map": [
-        "###########",
-        "#...ooo...#",
-        "#c.s...p.c#",
-        "#####.#####",
-        "~~~~#n#~~~~",
-        "~~~~#.#~~~~",
-        "~~~~#l#~~~~",
-        "~~~~###~~~~"
-      ],
-      "fixed": [{ "type": "window", "x": 5, "y": 7 }],
-      "inventory": { "curtain": 2, "splitter": 1, "skylight": 1 },
-      "solution": [
-        { "type": "curtain", "x": 5, "y": 5 },
-        { "type": "splitter", "x": 5, "y": 2 },
-        { "type": "skylight", "x": 2, "y": 2 },
-        { "type": "curtain", "x": 8, "y": 2 }
-      ]
-    },
-    {
-      "id": 53, "chapter": 11, "name": "Meeting Point",
-      "wind": { "from": "N", "strength": 1 },
-      "map": [
-        "###########",
-        "#.s..#.p..#",
-        "#....#.f..#",
-        "#....#....#",
-        "#....#.n..#",
-        "###########"
-      ],
-      "fixed": [{ "type": "window", "x": 2, "y": 0 }],
-      "inventory": { "window": 1, "deflector": 1, "vent": 1, "skylight": 1 },
-      "solution": [
-        { "type": "window", "x": 7, "y": 0 },
-        { "type": "deflector", "x": 2, "y": 3, "d": 1 },
-        { "type": "vent", "x": 5, "y": 3 },
-        { "type": "skylight", "x": 7, "y": 3 }
-      ]
-    },
-    {
-      "id": 54, "chapter": 11, "name": "Study Hall",
-      "wind": { "from": "N", "strength": 2 },
-      "map": [
-        "#####~~~~",
-        "#...#~~~~",
-        "#ono#~~~~",
-        "#.s.#####",
-        "#...f.l.#",
-        "#########"
-      ],
-      "fixed": [{ "type": "window", "x": 2, "y": 0 }],
-      "inventory": { "deflector": 1, "curtain": 1, "extractor": 1, "filter": 1 },
-      "solution": [
-        { "type": "curtain", "x": 2, "y": 1 },
-        { "type": "deflector", "x": 2, "y": 4, "d": 1 },
-        { "type": "filter", "x": 5, "y": 4 },
-        { "type": "extractor", "x": 8, "y": 4 }
-      ]
-    },
-    {
-      "id": 55, "chapter": 11, "name": "Spin Cycle",
-      "wind": { "from": "W", "strength": 1 },
-      "map": [
-        "#########",
-        "#...c..s#",
-        "######..#",
-        "#.n...l.#",
-        "#.......#",
-        "#########"
-      ],
-      "fixed": [{ "type": "window", "x": 0, "y": 3 }],
-      "inventory": { "window": 2, "curtain": 1, "ceilingfan": 1 },
-      "solution": [
-        { "type": "ceilingfan", "x": 6, "y": 1 },
-        { "type": "curtain", "x": 5, "y": 1 },
-        { "type": "window", "x": 8, "y": 1 },
-        { "type": "window", "x": 8, "y": 3 }
-      ]
-    },
-    {
-      "id": 56, "chapter": 12, "name": "Eddy",
+      "id": 55, "key": "eddy", "chapter": 11, "name": "Eddy",
       "tip": "Where a breeze meets its own path again, it does not add to itself.",
       "wind": { "from": "N", "strength": 2 },
       "map": [
@@ -1045,92 +989,77 @@
       ]
     },
     {
-      "id": 57, "chapter": 12, "name": "Fern Aisle",
-      "wind": { "from": "E", "strength": 2 },
+      "id": 56, "key": "upwind-exit", "chapter": 12, "name": "Upwind Exit",
+      "tip": "An extractor lets air out of any outside wall, even the windy one, and gently pulls air toward itself.",
+      "wind": { "from": "N", "strength": 1 },
       "map": [
-        "##########",
-        "%.....p..#",
-        "#.l#.ooo.#",
-        "#..#.ooo.#",
-        "#.f#.....#",
-        "##########"
-      ],
-      "fixed": [{ "type": "window", "x": 9, "y": 1 }],
-      "inventory": { "window": 1, "fan": 1, "curtain": 1 },
-      "solution": [
-        { "type": "fan", "x": 2, "y": 1, "d": 2 },
-        { "type": "curtain", "x": 2, "y": 3 },
-        { "type": "window", "x": 2, "y": 5 }
-      ]
-    },
-    {
-      "id": 58, "chapter": 12, "name": "Potting Shed",
-      "wind": { "from": "W", "strength": 3 },
-      "map": [
-        "%%%%%%%%%%%",
-        "#..#oofoo.#",
-        "#..#......#",
-        "#.p......c#",
-        "#..#......#",
-        "#..#oo..l.#",
-        "###########"
-      ],
-      "fixed": [{ "type": "window", "x": 0, "y": 3 }],
-      "inventory": { "window": 1, "fan": 1, "splitter": 1 },
-      "solution": [
-        { "type": "splitter", "x": 6, "y": 3 },
-        { "type": "fan", "x": 6, "y": 5, "d": 1 },
-        { "type": "window", "x": 10, "y": 5 }
-      ]
-    },
-    {
-      "id": 59, "chapter": 12, "name": "Quiet Wing",
-      "tip": "A window whose wind finds no way out adds nothing, but a fan's own breeze always blows.",
-      "wind": { "from": "N", "strength": 3 },
-      "map": [
-        "%%#%%%#%%%",
-        "#...#...o%",
-        "#.f.#.l.o%",
-        "#...#...o%",
-        "#.o.#....%",
-        "#..oc...p#",
-        "#####%%%%%"
+        "#########",
+        "#...#...#",
+        "#.p.#...#",
+        "#....p..#",
+        "#########"
       ],
       "fixed": [
         { "type": "window", "x": 2, "y": 0 },
-        { "type": "window", "x": 6, "y": 0 },
-        { "type": "deflector", "x": 2, "y": 5, "d": 1 }
+        { "type": "deflector", "x": 2, "y": 3, "d": 1 },
+        { "type": "deflector", "x": 6, "y": 3, "d": 0 }
       ],
-      "inventory": { "window": 1, "fan": 2 },
-      "solution": [
-        { "type": "fan", "x": 6, "y": 5, "d": 1 },
-        { "type": "window", "x": 9, "y": 5 },
-        { "type": "fan", "x": 2, "y": 3, "d": 0 }
-      ]
+      "inventory": { "extractor": 1 },
+      "solution": [{ "type": "extractor", "x": 6, "y": 0 }]
     },
     {
-      "id": 60, "chapter": 12, "name": "Glasshouse Storm",
-      "wind": { "from": "S", "strength": 3 },
+      "id": 57, "key": "range-hood", "chapter": 12, "name": "Range Hood",
+      "tip": "An extractor's gentle pull carries smoke along its line and out of the house.",
+      "wind": { "from": "N", "strength": 1 },
       "map": [
-        "###########",
-        "#o.o#f....#",
-        "#...#.ooo.#",
-        "#...l.....#",
-        "#.p.#.ooo.#",
-        "#o.o#f....#",
-        "%%#%%%%%%%%"
+        "#########",
+        "#cs.#...#",
+        "#.....p.#",
+        "#####...#",
+        "#########"
       ],
-      "fixed": [{ "type": "window", "x": 2, "y": 6 }],
-      "inventory": { "window": 1, "fan": 1, "curtain": 1, "splitter": 1 },
+      "fixed": [{ "type": "window", "x": 6, "y": 0 }],
+      "inventory": { "window": 1, "extractor": 1 },
+      "solution": [{ "type": "extractor", "x": 2, "y": 0 }, { "type": "window", "x": 6, "y": 4 }]
+    },
+    {
+      "id": 58, "key": "candlelit-supper", "chapter": 12, "name": "Candlelit Supper",
+      "tip": "An extractor pulls along its whole line, until a piece gets in the way.",
+      "wind": { "from": "N", "strength": 0 },
+      "map": [
+        "#########",
+        "##.p#.o.#",
+        "#s....c.#",
+        "##..#.o.#",
+        "#########"
+      ],
+      "fixed": [],
+      "inventory": { "fan": 1, "extractor": 1 },
+      "solution": [{ "type": "extractor", "x": 0, "y": 2 }, { "type": "fan", "x": 3, "y": 2, "d": 0 }]
+    },
+    {
+      "id": 59, "key": "wash-house", "chapter": 12, "name": "Wash House",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "#######",
+        "#..f..#",
+        "#.....#",
+        "#.....#",
+        "###.###",
+        "#.....#",
+        "#s.l..#",
+        "#%%%%%#"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
+      "inventory": { "window": 1, "splitter": 1, "extractor": 1 },
       "solution": [
-        { "type": "fan", "x": 2, "y": 3, "d": 1 },
-        { "type": "curtain", "x": 3, "y": 3 },
-        { "type": "splitter", "x": 5, "y": 3 },
-        { "type": "window", "x": 5, "y": 0 }
+        { "type": "splitter", "x": 3, "y": 2 },
+        { "type": "extractor", "x": 0, "y": 6 },
+        { "type": "window", "x": 3, "y": 0 }
       ]
     },
     {
-      "id": 61, "chapter": 13, "name": "Wet Cloak",
+      "id": 60, "key": "wet-cloak", "chapter": 12, "name": "Wet Cloak",
       "tip": "Shh, this is a library: candles want still air, and papers a gentle breeze at most.",
       "wind": { "from": "W", "strength": 1 },
       "map": [
@@ -1151,7 +1080,235 @@
       ]
     },
     {
-      "id": 62, "chapter": 13, "name": "Velvet Curtain",
+      "id": 61, "key": "through-the-roof", "chapter": 13, "name": "Through the Roof",
+      "tip": "A skylight lets air out through the roof, so a breeze can flow even where no window will open.",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "#####%%%%",
+        "#...#...%",
+        "#.p...p.%",
+        "#...#...%",
+        "#####%%%%"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
+      "inventory": { "skylight": 1 },
+      "solution": [{ "type": "skylight", "x": 7, "y": 2 }]
+    },
+    {
+      "id": 62, "key": "table-for-two", "chapter": 13, "name": "Table for Two",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "#########",
+        "#.p..c..#",
+        "#.ooooo.#",
+        "#.p.c...#",
+        "#########"
+      ],
+      "fixed": [
+        { "type": "window", "x": 0, "y": 1 },
+        { "type": "window", "x": 8, "y": 1 },
+        { "type": "fan", "x": 1, "y": 3, "d": 1 }
+      ],
+      "inventory": { "curtain": 1, "skylight": 1 },
+      "solution": [{ "type": "skylight", "x": 3, "y": 1 }, { "type": "curtain", "x": 3, "y": 3 }]
+    },
+    {
+      "id": 63, "key": "smoke-hole", "chapter": 13, "name": "Smoke Hole",
+      "wind": { "from": "E", "strength": 1 },
+      "map": [
+        "%%%%%#####",
+        "%c.....p.#",
+        "%..s.#...#",
+        "%....#...#",
+        "%%%%%#####"
+      ],
+      "fixed": [{ "type": "window", "x": 9, "y": 1 }],
+      "inventory": { "fan": 1, "skylight": 1 },
+      "solution": [{ "type": "fan", "x": 3, "y": 1, "d": 2 }, { "type": "skylight", "x": 3, "y": 3 }]
+    },
+    {
+      "id": 64, "key": "dead-end", "chapter": 13, "name": "Dead End",
+      "wind": { "from": "N", "strength": 1 },
+      "map": [
+        "##########",
+        "#.....#..#",
+        "#.....#.o#",
+        "#c.p...s.#",
+        "##########"
+      ],
+      "fixed": [{ "type": "window", "x": 4, "y": 0 }],
+      "inventory": { "curtain": 1, "splitter": 1, "skylight": 1 },
+      "solution": [
+        { "type": "splitter", "x": 4, "y": 3 },
+        { "type": "curtain", "x": 2, "y": 3 },
+        { "type": "skylight", "x": 8, "y": 3 }
+      ]
+    },
+    {
+      "id": 65, "key": "laundry-chute", "chapter": 13, "name": "Laundry Chute",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "#########",
+        "#....c..#",
+        "#######.#",
+        "#...l...#",
+        "#.s...c.#",
+        "#.......#",
+        "#########"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 1 }, { "type": "fan", "x": 1, "y": 4, "d": 1 }],
+      "inventory": { "deflector": 1, "vent": 1, "skylight": 1 },
+      "solution": [
+        { "type": "deflector", "x": 4, "y": 1, "d": 1 },
+        { "type": "vent", "x": 4, "y": 2 },
+        { "type": "skylight", "x": 4, "y": 4 }
+      ]
+    },
+    {
+      "id": 66, "key": "clean-air", "chapter": 14, "name": "Clean Air",
+      "tip": "Smoky air must never hit a wall. An air filter cleans the smoke out of any air passing through it.",
+      "wind": { "from": "W", "strength": 0 },
+      "map": [
+        "#########",
+        "#.......#",
+        "#....s.p#",
+        "#.......#",
+        "#########"
+      ],
+      "fixed": [{ "type": "fan", "x": 1, "y": 2, "d": 1 }],
+      "inventory": { "filter": 1 },
+      "solution": [{ "type": "filter", "x": 6, "y": 2 }]
+    },
+    {
+      "id": 67, "key": "two-burners", "chapter": 14, "name": "Two Burners",
+      "wind": { "from": "W", "strength": 0 },
+      "map": [
+        "#########",
+        "#...c...#",
+        "#.s.....#",
+        "####.####",
+        "#.......#",
+        "#.....s.#",
+        "#########"
+      ],
+      "fixed": [{ "type": "fan", "x": 1, "y": 2, "d": 1 }, { "type": "fan", "x": 7, "y": 5, "d": 3 }],
+      "inventory": { "deflector": 1, "filter": 1 },
+      "solution": [{ "type": "deflector", "x": 4, "y": 2, "d": 1 }, { "type": "filter", "x": 4, "y": 5 }]
+    },
+    {
+      "id": 68, "key": "galley-kitchen", "chapter": 14, "name": "Galley Kitchen",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "#########",
+        "#...#...#",
+        "#...#.s.#",
+        "#..s....#",
+        "#...#...#",
+        "#...#.s.#",
+        "#########"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 3 }],
+      "inventory": { "window": 1, "splitter": 1, "filter": 1 },
+      "solution": [
+        { "type": "splitter", "x": 6, "y": 3 },
+        { "type": "window", "x": 6, "y": 6 },
+        { "type": "filter", "x": 6, "y": 1 }
+      ]
+    },
+    {
+      "id": 69, "key": "supper-smoke", "chapter": 14, "name": "Supper Smoke",
+      "wind": { "from": "N", "strength": 2 },
+      "map": [
+        "#########",
+        "#.l.#...#",
+        "#...#.o.#",
+        "#..s..c.#",
+        "#.n.#.o.#",
+        "#########"
+      ],
+      "fixed": [{ "type": "window", "x": 2, "y": 0 }],
+      "inventory": { "window": 1, "curtain": 1, "splitter": 1, "filter": 1 },
+      "solution": [
+        { "type": "splitter", "x": 2, "y": 3 },
+        { "type": "window", "x": 0, "y": 3 },
+        { "type": "filter", "x": 4, "y": 3 },
+        { "type": "curtain", "x": 5, "y": 3 }
+      ]
+    },
+    {
+      "id": 70, "key": "hood-and-hearth", "chapter": 14, "name": "Hood and Hearth",
+      "wind": { "from": "W", "strength": 0 },
+      "map": [
+        "#########",
+        "#...#p..#",
+        "#c.....s#",
+        "#...#...#",
+        "#.s.....#",
+        "#########"
+      ],
+      "fixed": [{ "type": "extractor", "x": 8, "y": 2 }],
+      "inventory": { "fan": 1, "deflector": 1, "filter": 1 },
+      "solution": [
+        { "type": "fan", "x": 1, "y": 4, "d": 1 },
+        { "type": "deflector", "x": 5, "y": 4, "d": 0 },
+        { "type": "filter", "x": 5, "y": 2 }
+      ]
+    },
+    {
+      "id": 71, "key": "overhead", "chapter": 15, "name": "Overhead",
+      "tip": "A ceiling fan stirs a gentle breeze in all four directions at once, no window needed.",
+      "wind": { "from": "W", "strength": 0 },
+      "map": [
+        "#########",
+        "#...p...#",
+        "#.......#",
+        "#p.....p#",
+        "#.......#",
+        "#########"
+      ],
+      "fixed": [],
+      "inventory": { "ceilingfan": 1 },
+      "solution": [{ "type": "ceilingfan", "x": 4, "y": 3 }]
+    },
+    {
+      "id": 72, "key": "sidestep", "chapter": 15, "name": "Sidestep",
+      "wind": { "from": "W", "strength": 0 },
+      "map": [
+        "~~~#####~~~",
+        "####.p.####",
+        "#.........#",
+        "#........p#",
+        "#.p.......#",
+        "#...oco...#",
+        "###########"
+      ],
+      "fixed": [],
+      "inventory": { "deflector": 1, "ceilingfan": 1 },
+      "solution": [{ "type": "ceilingfan", "x": 5, "y": 3 }, { "type": "deflector", "x": 5, "y": 4, "d": 0 }]
+    },
+    {
+      "id": 73, "key": "backdraft", "chapter": 15, "name": "Backdraft",
+      "tip": "A window facing the wind pushes air back, just like a wall.",
+      "wind": { "from": "W", "strength": 1 },
+      "map": [
+        "###########",
+        "#.o.p...o.#",
+        "#.........#",
+        "####.######",
+        "#l.s......#",
+        "#.........#",
+        "###########"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 4 }],
+      "inventory": { "window": 1, "filter": 1, "ceilingfan": 1 },
+      "solution": [
+        { "type": "ceilingfan", "x": 4, "y": 4 },
+        { "type": "window", "x": 10, "y": 4 },
+        { "type": "filter", "x": 2, "y": 4 }
+      ]
+    },
+    {
+      "id": 74, "key": "velvet-curtain", "chapter": 15, "name": "Velvet Curtain",
       "wind": { "from": "W", "strength": 2 },
       "map": [
         "%%%%%%%%%%%",
@@ -1171,97 +1328,50 @@
       ]
     },
     {
-      "id": 63, "chapter": 13, "name": "Reading Nook",
-      "wind": { "from": "W", "strength": 2 },
+      "id": 75, "key": "gale-house", "chapter": 15, "name": "Gale House",
+      "wind": { "from": "N", "strength": 3 },
       "map": [
-        "%%%%%%%%%~",
-        "%p.n..c.#~",
-        "%%######%%",
-        "#.o......#",
-        "#..oc..o.#",
-        "##########"
+        "%%%%%######",
+        "%...#.#...#",
+        "%...#.#...#",
+        "%.s.l...f.#",
+        "%...#n#...#",
+        "%%%%%######"
       ],
-      "fixed": [{ "type": "window", "x": 0, "y": 3 }],
-      "inventory": { "window": 1, "deflector": 1, "vent": 1, "splitter": 1 },
+      "fixed": [{ "type": "window", "x": 5, "y": 0 }],
+      "inventory": { "window": 1, "splitter": 1, "filter": 1, "ceilingfan": 1 },
       "solution": [
         { "type": "splitter", "x": 5, "y": 3 },
-        { "type": "vent", "x": 5, "y": 2 },
-        { "type": "deflector", "x": 5, "y": 1, "d": 1 },
-        { "type": "window", "x": 5, "y": 5 }
+        { "type": "ceilingfan", "x": 3, "y": 3 },
+        { "type": "window", "x": 10, "y": 3 },
+        { "type": "filter", "x": 1, "y": 3 }
       ]
     },
     {
-      "id": 64, "chapter": 13, "name": "The Stacks",
-      "wind": { "from": "W", "strength": 1 },
+      "id": 76, "key": "round-trip", "chapter": 16, "name": "Round Trip",
+      "tip": "Not a breath of wind today: every breeze in these houses is one you make yourself.",
+      "wind": { "from": "W", "strength": 0 },
       "map": [
-        "%%%%%%%%%%%",
-        "#.p..o...c%",
-        "%%%.%%.%%%%",
-        "#..p.o...c%",
-        "%%%%%%.%.%%",
-        "#..p.o...c%",
-        "%%%%%%%%%%%"
+        "%%%%%%%%%",
+        "%co.s.l.%",
+        "%oo%....%",
+        "%%%%...l%",
+        "~~~%%%%.%",
+        "~~~%.ooc%",
+        "~~~%.oo.%",
+        "~~~%%%%%%"
       ],
-      "fixed": [
-        { "type": "window", "x": 0, "y": 1 },
-        { "type": "window", "x": 0, "y": 3 },
-        { "type": "window", "x": 0, "y": 5 }
-      ],
-      "inventory": { "deflector": 2, "skylight": 1 },
+      "fixed": [],
+      "inventory": { "fan": 2, "deflector": 1, "filter": 1 },
       "solution": [
-        { "type": "deflector", "x": 6, "y": 1, "d": 1 },
-        { "type": "deflector", "x": 6, "y": 5, "d": 0 },
-        { "type": "skylight", "x": 6, "y": 3 }
-      ]
-    },
-    {
-      "id": 65, "chapter": 13, "name": "Fireside",
-      "wind": { "from": "W", "strength": 1 },
-      "map": [
-        "%%%%%%%%%%%",
-        "%p.no#o...%",
-        "%.o..#.so.%",
-        "%%%%%%%.%%%",
-        "#c.o.o..pn#",
-        "%.o...o.o.%",
-        "%%%%%%%%%%%"
-      ],
-      "fixed": [{ "type": "window", "x": 0, "y": 4 }, { "type": "extractor", "x": 10, "y": 4 }],
-      "inventory": { "fan": 1, "deflector": 1, "vent": 1, "filter": 1 },
-      "solution": [
-        { "type": "fan", "x": 7, "y": 4, "d": 0 },
+        { "type": "fan", "x": 3, "y": 1, "d": 1 },
         { "type": "deflector", "x": 7, "y": 1, "d": 1 },
-        { "type": "vent", "x": 5, "y": 1 },
-        { "type": "filter", "x": 2, "y": 1 }
+        { "type": "fan", "x": 7, "y": 4, "d": 0 },
+        { "type": "filter", "x": 5, "y": 1 }
       ]
     },
     {
-      "id": 66, "chapter": 14, "name": "Back to Back",
-      "tip": "Bread in the oven, the copper on the boil, stew on the range, and each back room has just one door.",
-      "wind": { "from": "W", "strength": 1 },
-      "map": [
-        "%#########%",
-        "%..#..#oo.#",
-        "%s.#.s#...#",
-        "%.#%#.%...#",
-        "#........s#",
-        "%..ooo....#",
-        "%..ooo....#",
-        "%#########%"
-      ],
-      "fixed": [{ "type": "window", "x": 0, "y": 4 }],
-      "inventory": { "window": 1, "deflector": 4, "vent": 1 },
-      "solution": [
-        { "type": "deflector", "x": 1, "y": 4, "d": 0 },
-        { "type": "deflector", "x": 1, "y": 1, "d": 0 },
-        { "type": "vent", "x": 3, "y": 1 },
-        { "type": "deflector", "x": 5, "y": 1, "d": 1 },
-        { "type": "deflector", "x": 5, "y": 4, "d": 1 },
-        { "type": "window", "x": 10, "y": 4 }
-      ]
-    },
-    {
-      "id": 67, "chapter": 14, "name": "Hot Plates",
+      "id": 77, "key": "hot-plates", "chapter": 16, "name": "Hot Plates",
       "wind": { "from": "W", "strength": 0 },
       "map": [
         "###########",
@@ -1284,29 +1394,69 @@
       ]
     },
     {
-      "id": 68, "chapter": 14, "name": "Round Trip",
-      "wind": { "from": "W", "strength": 0 },
+      "id": 78, "key": "under-the-eaves", "chapter": 16, "name": "Under the Eaves",
+      "tip": "A gentle breeze splits into two gentle breezes, so stack two on one line and both sides get 2.",
+      "wind": { "from": "N", "strength": 0 },
       "map": [
-        "%%%%%%%%%",
-        "%co.s.l.%",
-        "%oo%....%",
-        "%%%%...l%",
-        "~~~%%%%.%",
-        "~~~%.ooc%",
-        "~~~%.oo.%",
-        "~~~%%%%%%"
+        "%%%%%%%%%%%",
+        "%l.......l%",
+        "%%%%%.%%%%%",
+        "~~~%.o....%",
+        "~~~%c..s..#",
+        "~~~%%%%%%%%"
       ],
       "fixed": [],
-      "inventory": { "fan": 2, "deflector": 1, "filter": 1 },
+      "inventory": { "window": 1, "fan": 1, "curtain": 1, "splitter": 1, "ceilingfan": 1 },
       "solution": [
-        { "type": "fan", "x": 3, "y": 1, "d": 1 },
-        { "type": "deflector", "x": 7, "y": 1, "d": 1 },
-        { "type": "fan", "x": 7, "y": 4, "d": 0 },
-        { "type": "filter", "x": 5, "y": 1 }
+        { "type": "ceilingfan", "x": 6, "y": 4 },
+        { "type": "fan", "x": 5, "y": 4, "d": 0 },
+        { "type": "splitter", "x": 5, "y": 1 },
+        { "type": "window", "x": 10, "y": 4 }
       ]
     },
     {
-      "id": 69, "chapter": 14, "name": "Tea Towels",
+      "id": 79, "key": "single-flue", "chapter": 16, "name": "Single Flue",
+      "wind": { "from": "N", "strength": 0 },
+      "map": [
+        "%%%%#%%%%",
+        "%.s...s.%",
+        "%o.....o%",
+        "%p.oco.p%",
+        "%%%%%%%%%"
+      ],
+      "fixed": [],
+      "inventory": { "fan": 1, "deflector": 1, "extractor": 1, "ceilingfan": 2 },
+      "solution": [
+        { "type": "extractor", "x": 4, "y": 0 },
+        { "type": "fan", "x": 4, "y": 1, "d": 0 },
+        { "type": "ceilingfan", "x": 1, "y": 1 },
+        { "type": "ceilingfan", "x": 7, "y": 1 }
+      ]
+    },
+    {
+      "id": 80, "key": "still-house", "chapter": 16, "name": "Still House",
+      "wind": { "from": "N", "strength": 0 },
+      "map": [
+        "%%%%%%%%%%%",
+        "%...n#..l.%",
+        "%.s..#.c..%",
+        "%....#....%",
+        "%....#s..f%",
+        "%.......p.%",
+        "%%%%%%%%%%%"
+      ],
+      "fixed": [{ "type": "vent", "x": 5, "y": 1 }],
+      "inventory": { "curtain": 1, "vent": 1, "filter": 1, "ceilingfan": 2 },
+      "solution": [
+        { "type": "ceilingfan", "x": 2, "y": 1 },
+        { "type": "ceilingfan", "x": 8, "y": 4 },
+        { "type": "filter", "x": 2, "y": 4 },
+        { "type": "vent", "x": 5, "y": 4 }
+      ]
+    },
+    {
+      "id": 81, "key": "tea-towels", "chapter": 17, "name": "Tea Towels",
+      "tip": "Busy kitchens: get every stove's smoke out of the house without dirtying the wash.",
       "wind": { "from": "N", "strength": 1 },
       "map": [
         "###########",
@@ -1327,181 +1477,7 @@
       ]
     },
     {
-      "id": 70, "chapter": 14, "name": "Dinner Rush",
-      "wind": { "from": "W", "strength": 3 },
-      "map": [
-        "###########",
-        "#n.s....f.#",
-        "#.........#",
-        "#.#########",
-        "#.l.soooo.#",
-        "#....oooo.#",
-        "###########"
-      ],
-      "fixed": [{ "type": "window", "x": 0, "y": 1 }, { "type": "window", "x": 0, "y": 4 }],
-      "inventory": { "deflector": 1, "vent": 1, "splitter": 1, "skylight": 1, "filter": 1 },
-      "solution": [
-        { "type": "deflector", "x": 9, "y": 1, "d": 1 },
-        { "type": "vent", "x": 9, "y": 3 },
-        { "type": "splitter", "x": 9, "y": 4 },
-        { "type": "skylight", "x": 9, "y": 5 },
-        { "type": "filter", "x": 2, "y": 1 }
-      ]
-    },
-    {
-      "id": 71, "chapter": 15, "name": "Delicates",
-      "tip": "Washing day! Papers and ferns want a soft touch, but the wash still needs a breeze of 2 or more.",
-      "wind": { "from": "E", "strength": 2 },
-      "map": [
-        "~~~#####",
-        "~~~#.n.#",
-        "~~~#f..#",
-        "####...#",
-        "#lll...#",
-        "########"
-      ],
-      "fixed": [{ "type": "window", "x": 7, "y": 1 }],
-      "inventory": { "window": 1, "fan": 1, "deflector": 1, "curtain": 1 },
-      "solution": [
-        { "type": "curtain", "x": 6, "y": 1 },
-        { "type": "deflector", "x": 4, "y": 1, "d": 0 },
-        { "type": "fan", "x": 4, "y": 4, "d": 3 },
-        { "type": "window", "x": 0, "y": 4 }
-      ]
-    },
-    {
-      "id": 72, "chapter": 15, "name": "Airing Cupboard",
-      "wind": { "from": "N", "strength": 1 },
-      "map": [
-        "#########",
-        "#.l.#.l.#",
-        "#.l.#.l.#",
-        "#...#...#",
-        "#......l#",
-        "#########"
-      ],
-      "fixed": [{ "type": "window", "x": 2, "y": 0 }, { "type": "window", "x": 6, "y": 0 }],
-      "inventory": { "window": 2, "deflector": 1, "ceilingfan": 1 },
-      "solution": [
-        { "type": "deflector", "x": 2, "y": 4, "d": 1 },
-        { "type": "ceilingfan", "x": 6, "y": 4 },
-        { "type": "window", "x": 6, "y": 5 },
-        { "type": "window", "x": 8, "y": 4 }
-      ]
-    },
-    {
-      "id": 73, "chapter": 15, "name": "Cross Stitch",
-      "wind": { "from": "S", "strength": 1 },
-      "map": [
-        "#######",
-        "#...lf#",
-        "#.....#",
-        "##.#.##",
-        "#..o..#",
-        "#.l..c#",
-        "#..o..#",
-        "#######"
-      ],
-      "fixed": [{ "type": "window", "x": 2, "y": 7 }],
-      "inventory": { "window": 1, "fan": 1, "deflector": 2 },
-      "solution": [
-        { "type": "deflector", "x": 2, "y": 1, "d": 0 },
-        { "type": "window", "x": 6, "y": 1 },
-        { "type": "fan", "x": 1, "y": 5, "d": 1 },
-        { "type": "deflector", "x": 4, "y": 5, "d": 0 }
-      ]
-    },
-    {
-      "id": 74, "chapter": 15, "name": "Three Sheets",
-      "wind": { "from": "E", "strength": 3 },
-      "map": [
-        "~#######~",
-        "~#ll.ll#~",
-        "~#.....#~",
-        "~###n###~",
-        "~~~#..#~~",
-        "~###.###~",
-        "##.....##",
-        "#.ll....#",
-        "#########"
-      ],
-      "fixed": [{ "type": "window", "x": 6, "y": 4 }, { "type": "splitter", "x": 4, "y": 4 }],
-      "inventory": { "fan": 1, "deflector": 1, "splitter": 1, "extractor": 1 },
-      "solution": [
-        { "type": "fan", "x": 4, "y": 2, "d": 0 },
-        { "type": "splitter", "x": 4, "y": 1 },
-        { "type": "deflector", "x": 4, "y": 7, "d": 0 },
-        { "type": "extractor", "x": 0, "y": 7 }
-      ]
-    },
-    {
-      "id": 75, "chapter": 15, "name": "Tumble Dry",
-      "wind": { "from": "W", "strength": 1 },
-      "map": [
-        "##########",
-        "#lll.....#",
-        "#........#",
-        "#......f.#",
-        "#....c.ll#",
-        "##########"
-      ],
-      "fixed": [{ "type": "window", "x": 0, "y": 1 }],
-      "inventory": { "window": 1, "deflector": 2, "ceilingfan": 1 },
-      "solution": [
-        { "type": "deflector", "x": 6, "y": 1, "d": 1 },
-        { "type": "deflector", "x": 6, "y": 4, "d": 1 },
-        { "type": "ceilingfan", "x": 6, "y": 3 },
-        { "type": "window", "x": 9, "y": 4 }
-      ]
-    },
-    {
-      "id": 76, "chapter": 16, "name": "Locked Study",
-      "tip": "The old study is locked tight, but its window is stuck open: the breeze needs another way out.",
-      "wind": { "from": "W", "strength": 2 },
-      "map": [
-        "%%%%%%%%%%%%",
-        "%o..o%o....%",
-        "#ls..#.....%",
-        "%....%....o%",
-        "%%%#%%%%.%%%",
-        "%....c.....#",
-        "%%%%%%%%%%%%"
-      ],
-      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
-      "inventory": { "window": 1, "deflector": 2, "curtain": 1, "vent": 1 },
-      "solution": [
-        { "type": "vent", "x": 5, "y": 2 },
-        { "type": "deflector", "x": 8, "y": 2, "d": 1 },
-        { "type": "deflector", "x": 8, "y": 5, "d": 1 },
-        { "type": "window", "x": 11, "y": 5 }
-      ]
-    },
-    {
-      "id": 77, "chapter": 16, "name": "Inner Court",
-      "wind": { "from": "W", "strength": 2 },
-      "map": [
-        "%%%%%%%%%%%%%",
-        "%.....o.....#",
-        "%%.###%###.##",
-        "%...#~~~#..c%",
-        "%...#~~~#.l.%",
-        "%%.###%###.##",
-        "%...o.s.n...#",
-        "%%%%%%%%%%%%%"
-      ],
-      "fixed": [],
-      "inventory": { "window": 3, "deflector": 3, "curtain": 1 },
-      "solution": [
-        { "type": "window", "x": 8, "y": 3 },
-        { "type": "deflector", "x": 10, "y": 3, "d": 1 },
-        { "type": "deflector", "x": 10, "y": 6, "d": 0 },
-        { "type": "curtain", "x": 9, "y": 6 },
-        { "type": "deflector", "x": 5, "y": 6, "d": 1 },
-        { "type": "window", "x": 5, "y": 5 }
-      ]
-    },
-    {
-      "id": 78, "chapter": 16, "name": "Chimney Corner",
+      "id": 82, "key": "chimney-corner", "chapter": 17, "name": "Chimney Corner",
       "wind": { "from": "E", "strength": 1 },
       "map": [
         "%%%%%%%%%%%%%",
@@ -1522,7 +1498,29 @@
       ]
     },
     {
-      "id": 79, "chapter": 16, "name": "Servants' Pantry",
+      "id": 83, "key": "trading-places", "chapter": 17, "name": "Trading Places",
+      "wind": { "from": "W", "strength": 2 },
+      "map": [
+        "%%%%%%%%%%%%",
+        "%o..%....o.%",
+        "%.c.%..s...#",
+        "%..o#..f...%",
+        "#...#....f.#",
+        "%...%..l..o%",
+        "%o.....s...%",
+        "%%%%%%%#%%%%"
+      ],
+      "fixed": [{ "type": "window", "x": 0, "y": 4 }, { "type": "fan", "x": 7, "y": 1, "d": 2 }],
+      "inventory": { "window": 2, "deflector": 1, "curtain": 1, "vent": 1, "splitter": 1 },
+      "solution": [
+        { "type": "vent", "x": 4, "y": 4 },
+        { "type": "deflector", "x": 7, "y": 4, "d": 1 },
+        { "type": "window", "x": 7, "y": 7 },
+        { "type": "window", "x": 11, "y": 4 }
+      ]
+    },
+    {
+      "id": 84, "key": "servants-pantry", "chapter": 17, "name": "Servants' Pantry",
       "wind": { "from": "N", "strength": 2 },
       "map": [
         "%%%%###%%%%%%",
@@ -1545,7 +1543,7 @@
       ]
     },
     {
-      "id": 80, "chapter": 16, "name": "Chandelier",
+      "id": 85, "key": "chandelier", "chapter": 17, "name": "Chandelier",
       "wind": { "from": "N", "strength": 1 },
       "map": [
         "%%%%~~~~~%%%%",
@@ -1571,151 +1569,53 @@
       ]
     },
     {
-      "id": 81, "chapter": 17, "name": "Crossed Lines",
-      "tip": "On a still day, an extractor pulls a gentle breeze along its whole line, right from the far wall.",
-      "wind": { "from": "N", "strength": 0 },
-      "map": [
-        "%%%#%%%#%",
-        "%.......%",
-        "#s.ln...%",
-        "%......p%",
-        "%..c...c%",
-        "%%%%%%%%%"
-      ],
-      "fixed": [],
-      "inventory": { "fan": 1, "extractor": 3 },
-      "solution": [
-        { "type": "extractor", "x": 3, "y": 0 },
-        { "type": "extractor", "x": 0, "y": 2 },
-        { "type": "fan", "x": 3, "y": 3, "d": 1 }
-      ]
-    },
-    {
-      "id": 82, "chapter": 17, "name": "Scullery",
-      "wind": { "from": "N", "strength": 0 },
-      "map": [
-        "%%%%%%%#%%%",
-        "%..c.%....%",
-        "%....#l..s#",
-        "%s..c%..c.#",
-        "%.........%",
-        "%#%%%%%%%%%"
-      ],
-      "fixed": [],
-      "inventory": { "vent": 1, "extractor": 1, "skylight": 1, "ceilingfan": 1 },
-      "solution": [
-        { "type": "ceilingfan", "x": 1, "y": 2 },
-        { "type": "skylight", "x": 1, "y": 4 },
-        { "type": "vent", "x": 5, "y": 2 },
-        { "type": "extractor", "x": 10, "y": 2 }
-      ]
-    },
-    {
-      "id": 83, "chapter": 17, "name": "Under the Eaves",
-      "tip": "A gentle breeze splits into two gentle breezes, so stack two on one line and both sides get 2.",
-      "wind": { "from": "N", "strength": 0 },
-      "map": [
-        "%%%%%%%%%%%",
-        "%l.......l%",
-        "%%%%%.%%%%%",
-        "~~~%.o....%",
-        "~~~%c..s..#",
-        "~~~%%%%%%%%"
-      ],
-      "fixed": [],
-      "inventory": { "window": 1, "fan": 1, "curtain": 1, "splitter": 1, "ceilingfan": 1 },
-      "solution": [
-        { "type": "ceilingfan", "x": 6, "y": 4 },
-        { "type": "fan", "x": 5, "y": 4, "d": 0 },
-        { "type": "splitter", "x": 5, "y": 1 },
-        { "type": "window", "x": 10, "y": 4 }
-      ]
-    },
-    {
-      "id": 84, "chapter": 17, "name": "Single Flue",
-      "wind": { "from": "N", "strength": 0 },
-      "map": [
-        "%%%%#%%%%",
-        "%.s...s.%",
-        "%o.....o%",
-        "%p.oco.p%",
-        "%%%%%%%%%"
-      ],
-      "fixed": [],
-      "inventory": { "fan": 1, "deflector": 1, "extractor": 1, "ceilingfan": 2 },
-      "solution": [
-        { "type": "extractor", "x": 4, "y": 0 },
-        { "type": "fan", "x": 4, "y": 1, "d": 0 },
-        { "type": "ceilingfan", "x": 1, "y": 1 },
-        { "type": "ceilingfan", "x": 7, "y": 1 }
-      ]
-    },
-    {
-      "id": 85, "chapter": 17, "name": "Still House",
-      "wind": { "from": "N", "strength": 0 },
-      "map": [
-        "%%%%%%%%%%%",
-        "%...n#..l.%",
-        "%.s..#.c..%",
-        "%....#....%",
-        "%....#s..f%",
-        "%.......p.%",
-        "%%%%%%%%%%%"
-      ],
-      "fixed": [{ "type": "vent", "x": 5, "y": 1 }],
-      "inventory": { "curtain": 1, "vent": 1, "filter": 1, "ceilingfan": 2 },
-      "solution": [
-        { "type": "ceilingfan", "x": 2, "y": 1 },
-        { "type": "ceilingfan", "x": 8, "y": 4 },
-        { "type": "filter", "x": 2, "y": 4 },
-        { "type": "vent", "x": 5, "y": 4 }
-      ]
-    },
-    {
-      "id": 86, "chapter": 18, "name": "Gale Warning",
-      "tip": "Storm season: a gale of 3 rattles every room it reaches.",
+      "id": 86, "key": "dinner-rush", "chapter": 18, "name": "Dinner Rush",
+      "tip": "Storm season: gales of 3 blow through these houses. Halve them, soften them or steer them away.",
       "wind": { "from": "W", "strength": 3 },
       "map": [
         "###########",
-        "#oo.f..oo.#",
+        "#n.s....f.#",
         "#.........#",
-        "####.###.##",
-        "#...l....o#",
-        "#.........#",
+        "#.#########",
+        "#.l.soooo.#",
+        "#....oooo.#",
         "###########"
       ],
-      "fixed": [{ "type": "window", "x": 0, "y": 2 }, { "type": "window", "x": 4, "y": 0 }],
-      "inventory": { "deflector": 4, "curtain": 1 },
+      "fixed": [{ "type": "window", "x": 0, "y": 1 }, { "type": "window", "x": 0, "y": 4 }],
+      "inventory": { "deflector": 1, "vent": 1, "splitter": 1, "skylight": 1, "filter": 1 },
       "solution": [
-        { "type": "deflector", "x": 8, "y": 2, "d": 1 },
-        { "type": "deflector", "x": 8, "y": 5, "d": 0 },
-        { "type": "deflector", "x": 4, "y": 5, "d": 1 },
-        { "type": "curtain", "x": 4, "y": 2 }
+        { "type": "deflector", "x": 9, "y": 1, "d": 1 },
+        { "type": "vent", "x": 9, "y": 3 },
+        { "type": "splitter", "x": 9, "y": 4 },
+        { "type": "skylight", "x": 9, "y": 5 },
+        { "type": "filter", "x": 2, "y": 1 }
       ]
     },
     {
-      "id": 87, "chapter": 18, "name": "Stormy Hearth",
+      "id": 87, "key": "three-sheets", "chapter": 18, "name": "Three Sheets",
       "wind": { "from": "E", "strength": 3 },
       "map": [
-        "#########",
-        "#c..#.oo#",
-        "#.......#",
-        "#.sl....#",
-        "#.......%",
-        "#f..#o..%",
-        "%%%######"
+        "~#######~",
+        "~#ll.ll#~",
+        "~#.....#~",
+        "~###n###~",
+        "~~~#..#~~",
+        "~###.###~",
+        "##.....##",
+        "#.ll....#",
+        "#########"
       ],
-      "fixed": [],
-      "inventory": { "window": 2, "curtain": 1, "splitter": 1, "skylight": 1, "filter": 1 },
+      "fixed": [{ "type": "window", "x": 6, "y": 4 }, { "type": "splitter", "x": 4, "y": 4 }],
+      "inventory": { "fan": 1, "deflector": 1, "splitter": 1, "extractor": 1 },
       "solution": [
-        { "type": "window", "x": 8, "y": 3 },
-        { "type": "splitter", "x": 1, "y": 3 },
-        { "type": "skylight", "x": 1, "y": 2 },
-        { "type": "filter", "x": 1, "y": 4 }
+        { "type": "fan", "x": 4, "y": 2, "d": 0 },
+        { "type": "splitter", "x": 4, "y": 1 },
+        { "type": "deflector", "x": 4, "y": 7, "d": 0 },
+        { "type": "extractor", "x": 0, "y": 7 }
       ]
     },
     {
-      "id": 88, "chapter": 18, "name": "Storm Shutters",
+      "id": 88, "key": "storm-shutters", "chapter": 18, "name": "Storm Shutters",
       "wind": { "from": "W", "strength": 3 },
       "map": [
         "#############",
@@ -1736,7 +1636,7 @@
       ]
     },
     {
-      "id": 89, "chapter": 18, "name": "Clothes Horse",
+      "id": 89, "key": "clothes-horse", "chapter": 18, "name": "Clothes Horse",
       "wind": { "from": "W", "strength": 3 },
       "map": [
         "#####%#####",
@@ -1759,7 +1659,7 @@
       ]
     },
     {
-      "id": 90, "chapter": 18, "name": "Squall Line",
+      "id": 90, "key": "squall-line", "chapter": 18, "name": "Squall Line",
       "wind": { "from": "N", "strength": 3 },
       "map": [
         "%%%#%%#%%#%%%",
@@ -1784,51 +1684,50 @@
       ]
     },
     {
-      "id": 91, "chapter": 19, "name": "Double Duty",
-      "tip": "Where two breezes cross, a single piece works on both of them.",
-      "wind": { "from": "W", "strength": 2 },
+      "id": 91, "key": "cross-stitch", "chapter": 19, "name": "Cross Stitch",
+      "tip": "Where streams cross, their breezes add up: plan every path together.",
+      "wind": { "from": "S", "strength": 1 },
       "map": [
-        "%%%%%#%#%%%",
-        "%o...s.o..%",
-        "%...#n...o%",
-        "#..l#....f#",
-        "%...#o....%",
-        "%.o.#c..o.%",
-        "%%%%%%%%%%%"
+        "#######",
+        "#...lf#",
+        "#.....#",
+        "##.#.##",
+        "#..o..#",
+        "#.l..c#",
+        "#..o..#",
+        "#######"
       ],
-      "fixed": [{ "type": "window", "x": 0, "y": 3 }],
-      "inventory": { "window": 1, "deflector": 1, "curtain": 2, "vent": 1, "extractor": 1 },
+      "fixed": [{ "type": "window", "x": 2, "y": 7 }],
+      "inventory": { "window": 1, "fan": 1, "deflector": 2 },
       "solution": [
-        { "type": "vent", "x": 4, "y": 3 },
-        { "type": "window", "x": 10, "y": 3 },
-        { "type": "extractor", "x": 5, "y": 0 },
-        { "type": "curtain", "x": 5, "y": 3 }
+        { "type": "deflector", "x": 2, "y": 1, "d": 0 },
+        { "type": "window", "x": 6, "y": 1 },
+        { "type": "fan", "x": 1, "y": 5, "d": 1 },
+        { "type": "deflector", "x": 4, "y": 5, "d": 0 }
       ]
     },
     {
-      "id": 92, "chapter": 19, "name": "Trading Places",
-      "wind": { "from": "W", "strength": 2 },
+      "id": 92, "key": "tumble-dry", "chapter": 19, "name": "Tumble Dry",
+      "wind": { "from": "W", "strength": 1 },
       "map": [
-        "%%%%%%%%%%%%",
-        "%o..%....o.%",
-        "%.c.%..s...#",
-        "%..o#..f...%",
-        "#...#....f.#",
-        "%...%..l..o%",
-        "%o.....s...%",
-        "%%%%%%%#%%%%"
+        "##########",
+        "#lll.....#",
+        "#........#",
+        "#......f.#",
+        "#....c.ll#",
+        "##########"
       ],
-      "fixed": [{ "type": "window", "x": 0, "y": 4 }, { "type": "fan", "x": 7, "y": 1, "d": 2 }],
-      "inventory": { "window": 2, "deflector": 1, "curtain": 1, "vent": 1, "splitter": 1 },
+      "fixed": [{ "type": "window", "x": 0, "y": 1 }],
+      "inventory": { "window": 1, "deflector": 2, "ceilingfan": 1 },
       "solution": [
-        { "type": "vent", "x": 4, "y": 4 },
-        { "type": "deflector", "x": 7, "y": 4, "d": 1 },
-        { "type": "window", "x": 7, "y": 7 },
-        { "type": "window", "x": 11, "y": 4 }
+        { "type": "deflector", "x": 6, "y": 1, "d": 1 },
+        { "type": "deflector", "x": 6, "y": 4, "d": 1 },
+        { "type": "ceilingfan", "x": 6, "y": 3 },
+        { "type": "window", "x": 9, "y": 4 }
       ]
     },
     {
-      "id": 93, "chapter": 19, "name": "Broadside",
+      "id": 93, "key": "broadside", "chapter": 19, "name": "Broadside",
       "tip": "The splitter is bolted down. If it won't move, the wind will have to.",
       "wind": { "from": "W", "strength": 1 },
       "map": [
@@ -1852,7 +1751,7 @@
       ]
     },
     {
-      "id": 94, "chapter": 19, "name": "Roof Hatch",
+      "id": 94, "key": "roof-hatch", "chapter": 19, "name": "Roof Hatch",
       "wind": { "from": "N", "strength": 2 },
       "map": [
         "%%%#%%%#%%",
@@ -1879,7 +1778,7 @@
       ]
     },
     {
-      "id": 95, "chapter": 19, "name": "Every Which Way",
+      "id": 95, "key": "every-which-way", "chapter": 19, "name": "Every Which Way",
       "wind": { "from": "W", "strength": 2 },
       "map": [
         "~~~~%%%%%~~",
@@ -1895,20 +1794,20 @@
         { "type": "window", "x": 4, "y": 1 },
         { "type": "window", "x": 0, "y": 3 },
         { "type": "window", "x": 0, "y": 5 },
-        { "type": "fan", "x": 6, "y": 1, "d": 2 }
+        { "type": "fan", "x": 6, "y": 1, "d": 2 },
+        { "type": "curtain", "x": 1, "y": 5 }
       ],
-      "inventory": { "window": 2, "fan": 1, "deflector": 1, "curtain": 1, "skylight": 1 },
+      "inventory": { "window": 2, "fan": 1, "deflector": 1, "skylight": 1 },
       "solution": [
         { "type": "skylight", "x": 5, "y": 1 },
         { "type": "deflector", "x": 6, "y": 3, "d": 1 },
         { "type": "fan", "x": 6, "y": 5, "d": 1 },
-        { "type": "curtain", "x": 1, "y": 5 },
         { "type": "window", "x": 10, "y": 3 },
         { "type": "window", "x": 10, "y": 5 }
       ]
     },
     {
-      "id": 96, "chapter": 20, "name": "Full Circle",
+      "id": 96, "key": "full-circle", "chapter": 20, "name": "Full Circle",
       "tip": "Fresh air at last: these final houses need every trick you know.",
       "wind": { "from": "E", "strength": 2 },
       "map": [
@@ -1935,7 +1834,7 @@
       ]
     },
     {
-      "id": 97, "chapter": 20, "name": "Linen Passage",
+      "id": 97, "key": "linen-passage", "chapter": 20, "name": "Linen Passage",
       "wind": { "from": "W", "strength": 2 },
       "map": [
         "%####%%%%%%%%",
@@ -1958,7 +1857,7 @@
       ]
     },
     {
-      "id": 98, "chapter": 20, "name": "Pushback",
+      "id": 98, "key": "pushback", "chapter": 20, "name": "Pushback",
       "wind": { "from": "W", "strength": 3 },
       "map": [
         "#############",
@@ -1981,7 +1880,7 @@
       ]
     },
     {
-      "id": 99, "chapter": 20, "name": "Long Draw",
+      "id": 99, "key": "long-draw", "chapter": 20, "name": "Long Draw",
       "wind": { "from": "N", "strength": 3 },
       "map": [
         "%%#%%%%%%%%%%",
@@ -2005,7 +1904,7 @@
       ]
     },
     {
-      "id": 100, "chapter": 20, "name": "Spring Cleaning",
+      "id": 100, "key": "spring-cleaning", "chapter": 20, "name": "Spring Cleaning",
       "tip": "Spring cleaning day: open up the whole house so every room gets just the air it needs.",
       "wind": { "from": "W", "strength": 3 },
       "map": [

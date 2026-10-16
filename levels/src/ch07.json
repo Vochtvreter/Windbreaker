@@ -1,101 +1,253 @@
 {
   "chapter": 7,
-  "title": "Extractors",
+  "title": "Curtains",
   "levels": [
     {
-      "name": "Upwind Exit",
-      "tip": "Unlike a window, an extractor lets air out even through the wall facing the wind.",
-      "wind": { "from": "N", "strength": 1 },
+      "name": "Shielded Flame",
+      "tip": "A curtain takes 1 off any breeze passing through it, so a gentle breeze stops right there.",
+      "wind": {
+        "from": "W",
+        "strength": 0
+      },
+      "map": [
+        "##########",
+        "#....#...#",
+        "#.p....c.#",
+        "#....#...#",
+        "##########"
+      ],
+      "fixed": [
+        {
+          "type": "fan",
+          "x": 1,
+          "y": 2,
+          "d": 1
+        }
+      ],
+      "inventory": {
+        "curtain": 1
+      },
+      "solution": [
+        {
+          "type": "curtain",
+          "x": 5,
+          "y": 2
+        }
+      ]
+    },
+    {
+      "name": "Candle Guard",
+      "tip": "A curtain stops the wind too, and the wind only blows when it has a way out.",
+      "wind": {
+        "from": "W",
+        "strength": 1
+      },
       "map": [
         "#########",
-        "#...#...#",
-        "#.p.#...#",
-        "#....p..#",
+        "#....c..#",
+        "#.......#",
+        "#..p....#",
+        "#.......#",
+        "#.......#",
         "#########"
       ],
       "fixed": [
-        { "type": "window", "x": 2, "y": 0 },
-        { "type": "deflector", "x": 2, "y": 3, "d": 1 },
-        { "type": "deflector", "x": 6, "y": 3, "d": 0 }
+        {
+          "type": "window",
+          "x": 0,
+          "y": 3
+        },
+        {
+          "type": "fan",
+          "x": 5,
+          "y": 5,
+          "d": 0
+        }
       ],
-      "inventory": { "extractor": 1 },
-      "solution": [{ "type": "extractor", "x": 6, "y": 0 }]
+      "inventory": {
+        "window": 1,
+        "curtain": 1
+      },
+      "solution": [
+        {
+          "type": "window",
+          "x": 8,
+          "y": 3
+        },
+        {
+          "type": "curtain",
+          "x": 5,
+          "y": 2
+        }
+      ]
     },
     {
-      "name": "Range Hood",
-      "tip": "An extractor's gentle pull carries smoke along its line and out of the house.",
-      "wind": { "from": "N", "strength": 1 },
+      "name": "Clean Linen",
+      "tip": "Strong wind blows in at 2, enough to dry laundry; just never let a curtain stop smoky air.",
+      "wind": {
+        "from": "W",
+        "strength": 2
+      },
+      "map": [
+        "########",
+        "#......#",
+        "#......#",
+        "#..s...#",
+        "#......#",
+        "#..l...#",
+        "########"
+      ],
+      "fixed": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 5
+        },
+        {
+          "type": "window",
+          "x": 7,
+          "y": 3
+        },
+        {
+          "type": "fan",
+          "x": 3,
+          "y": 1,
+          "d": 2
+        },
+        {
+          "type": "fan",
+          "x": 1,
+          "y": 3,
+          "d": 1
+        }
+      ],
+      "inventory": {
+        "window": 1,
+        "curtain": 1
+      },
+      "solution": [
+        {
+          "type": "window",
+          "x": 7,
+          "y": 5
+        },
+        {
+          "type": "curtain",
+          "x": 3,
+          "y": 2
+        }
+      ]
+    },
+    {
+      "name": "Strong Enough",
+      "tip": "Count the lines: a curtain softens a strong wind of 2 to 1, but stops a gentle breeze.",
+      "wind": {
+        "from": "W",
+        "strength": 2
+      },
       "map": [
         "#########",
-        "#cs.#...#",
-        "#.....p.#",
-        "#####...#",
+        "#..#..c.#",
+        "#......p#",
+        "#..#..p.#",
+        "#..#....#",
         "#########"
       ],
-      "fixed": [{ "type": "window", "x": 6, "y": 0 }],
-      "inventory": { "window": 1, "extractor": 1 },
+      "fixed": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 2
+        },
+        {
+          "type": "fan",
+          "x": 6,
+          "y": 4,
+          "d": 0
+        }
+      ],
+      "inventory": {
+        "window": 1,
+        "curtain": 1
+      },
       "solution": [
-        { "type": "extractor", "x": 2, "y": 0 },
-        { "type": "window", "x": 6, "y": 4 }
+        {
+          "type": "window",
+          "x": 8,
+          "y": 2
+        },
+        {
+          "type": "curtain",
+          "x": 6,
+          "y": 2
+        }
       ]
     },
     {
-      "name": "Candlelit Supper",
-      "tip": "An extractor pulls along its whole line, until a piece gets in the way.",
-      "wind": { "from": "N", "strength": 0 },
+      "name": "Draught Stopper",
+      "wind": {
+        "from": "E",
+        "strength": 1
+      },
       "map": [
-        "#########",
-        "##.p#.o.#",
-        "#s....c.#",
-        "##..#.o.#",
-        "#########"
+        "######",
+        "#....#",
+        "#...c#",
+        "#....#",
+        "#.####",
+        "#...p#",
+        "#l...#",
+        "#....#",
+        "#%%%%#"
       ],
-      "fixed": [],
-      "inventory": { "fan": 1, "extractor": 1 },
-      "solution": [
-        { "type": "extractor", "x": 0, "y": 2 },
-        { "type": "fan", "x": 3, "y": 2, "d": 0 }
-      ]
-    },
-    {
-      "name": "Wash House",
-      "wind": { "from": "W", "strength": 2 },
-      "map": [
-        "#######",
-        "#..f..#",
-        "#.....#",
-        "#.....#",
-        "###.###",
-        "#.....#",
-        "#s.l..#",
-        "#%%%%%#"
+      "fixed": [
+        {
+          "type": "window",
+          "x": 5,
+          "y": 2
+        },
+        {
+          "type": "window",
+          "x": 5,
+          "y": 5
+        },
+        {
+          "type": "deflector",
+          "x": 1,
+          "y": 2,
+          "d": 0
+        },
+        {
+          "type": "fan",
+          "x": 1,
+          "y": 5,
+          "d": 2
+        }
       ],
-      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
-      "inventory": { "window": 1, "splitter": 1, "extractor": 1 },
+      "inventory": {
+        "window": 1,
+        "curtain": 1,
+        "deflector": 1
+      },
       "solution": [
-        { "type": "splitter", "x": 3, "y": 2 },
-        { "type": "extractor", "x": 0, "y": 6 },
-        { "type": "window", "x": 3, "y": 0 }
-      ]
-    },
-    {
-      "name": "Headwind Kitchen",
-      "wind": { "from": "E", "strength": 1 },
-      "map": [
-        "#########",
-        "#o.#....#",
-        "#.....l.#",
-        "##.###.##",
-        "#oco...s#",
-        "#########"
+        {
+          "type": "curtain",
+          "x": 3,
+          "y": 2
+        },
+        {
+          "type": "deflector",
+          "x": 1,
+          "y": 7,
+          "d": 0
+        },
+        {
+          "type": "window",
+          "x": 0,
+          "y": 7
+        }
       ],
-      "fixed": [{ "type": "window", "x": 8, "y": 1 }],
-      "inventory": { "fan": 1, "deflector": 1, "extractor": 1 },
-      "solution": [
-        { "type": "fan", "x": 6, "y": 1, "d": 2 },
-        { "type": "deflector", "x": 6, "y": 4, "d": 1 },
-        { "type": "extractor", "x": 8, "y": 4 }
-      ]
+      "tip": "A candle can be guarded from behind: a wind with no way out does not blow at all."
     }
   ]
 }

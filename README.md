@@ -69,6 +69,10 @@ All paths are relative, so it works from any sub-path.
 * `js/version.js` — the version shown on the level-select screen, bumped with
   every release.
 * `js/render.js`, `js/game.js`, `css/style.css`, `index.html` — the game.
+* `GRAPHICS.md` — how the game looks and how to change it: the theme
+  (`js/theme.js`, every colour for light and dark, shared by CSS and canvas),
+  the sprite registry (`js/sprites.js`), art overrides (`art/art.js`), the art
+  studio (`studio.html`) and the visual regression check (`tools/visual.js`).
 * `levels/src/chNN.json` — level sources, one file per chapter of 5 levels.
 * `js/levels.js` — generated from the sources with `npm run build`.
 * `tools/` — level checker, solver, ASCII viewer and end-to-end test
@@ -82,6 +86,7 @@ npm test             # engine + tooling unit tests
 npm run check        # validate every level and verify it is solvable
 npm run build        # regenerate js/levels.js from levels/src
 npm run e2e          # play every level through the real UI (needs Playwright + Chromium)
+npm run visual       # compare the graphics with a baseline, pixel by pixel (see GRAPHICS.md)
 ```
 
 The game, the unit tests and the level tools need nothing installed (Node's

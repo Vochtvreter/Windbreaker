@@ -1,83 +1,252 @@
 {
   "chapter": 9,
-  "title": "Filters",
+  "title": "Wall Vents",
   "levels": [
     {
-      "name": "Clean Air",
-      "tip": "Smoky air must never hit a wall. An air filter cleans the smoke out of any air passing through it.",
-      "wind": {"from": "W", "strength": 0},
+      "name": "Through the Wall",
+      "tip": "Inside walls stop the breeze. A wall vent fits into one and lets air pass straight through it.",
+      "wind": {
+        "from": "W",
+        "strength": 1
+      },
+      "map": [
+        "##########",
+        "#...#....#",
+        "#.p.#.p..#",
+        "#...#....#",
+        "##########"
+      ],
+      "fixed": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 2
+        }
+      ],
+      "inventory": {
+        "window": 1,
+        "vent": 1
+      },
+      "solution": [
+        {
+          "type": "vent",
+          "x": 4,
+          "y": 2
+        },
+        {
+          "type": "window",
+          "x": 9,
+          "y": 2
+        }
+      ]
+    },
+    {
+      "name": "Night Light",
+      "wind": {
+        "from": "E",
+        "strength": 1
+      },
       "map": [
         "#########",
+        "#.p.#..c#",
         "#.......#",
-        "#....s.p#",
+        "######.##",
+        "#.......#",
         "#.......#",
         "#########"
       ],
-      "fixed": [{"type": "fan", "x": 1, "y": 2, "d": 1}],
-      "inventory": {"filter": 1},
-      "solution": [{"type": "filter", "x": 6, "y": 2}]
-    },
-    {
-      "name": "Two Burners",
-      "wind": {"from": "W", "strength": 0},
-      "map": [
-        "#########",
-        "#...c...#",
-        "#.s.....#",
-        "####.####",
-        "#.......#",
-        "#.....s.#",
-        "#########"
+      "fixed": [
+        {
+          "type": "window",
+          "x": 8,
+          "y": 1
+        },
+        {
+          "type": "window",
+          "x": 8,
+          "y": 4
+        },
+        {
+          "type": "deflector",
+          "x": 2,
+          "y": 4,
+          "d": 1
+        }
       ],
-      "fixed": [{"type": "fan", "x": 1, "y": 2, "d": 1}, {"type": "fan", "x": 7, "y": 5, "d": 3}],
-      "inventory": {"filter": 1, "deflector": 1},
-      "solution": [{"type": "deflector", "x": 4, "y": 2, "d": 1}, {"type": "filter", "x": 4, "y": 5}]
+      "inventory": {
+        "window": 1,
+        "vent": 1
+      },
+      "solution": [
+        {
+          "type": "vent",
+          "x": 2,
+          "y": 3
+        },
+        {
+          "type": "window",
+          "x": 2,
+          "y": 0
+        }
+      ]
     },
     {
-      "name": "Galley Kitchen",
-      "wind": {"from": "W", "strength": 1},
+      "name": "Side Door",
+      "wind": {
+        "from": "N",
+        "strength": 1
+      },
       "map": [
         "#########",
+        "#.p.#...#",
         "#...#...#",
-        "#...#.s.#",
-        "#..s....#",
+        "#.###...#",
         "#...#...#",
-        "#...#.s.#",
+        "#......p#",
+        "#...#...#",
         "#########"
       ],
-      "fixed": [{"type": "window", "x": 0, "y": 3}],
-      "inventory": {"splitter": 1, "filter": 1, "window": 1},
-      "solution": [{"type": "splitter", "x": 6, "y": 3}, {"type": "window", "x": 6, "y": 6}, {"type": "filter", "x": 6, "y": 1}]
+      "fixed": [
+        {
+          "type": "window",
+          "x": 2,
+          "y": 0
+        }
+      ],
+      "inventory": {
+        "window": 1,
+        "vent": 1,
+        "deflector": 1
+      },
+      "solution": [
+        {
+          "type": "vent",
+          "x": 2,
+          "y": 3
+        },
+        {
+          "type": "deflector",
+          "x": 2,
+          "y": 5,
+          "d": 1
+        },
+        {
+          "type": "window",
+          "x": 8,
+          "y": 5
+        }
+      ]
     },
     {
-      "name": "Supper Smoke",
-      "wind": {"from": "N", "strength": 2},
+      "name": "Back to Back",
+      "tip": "Bread in the oven, the copper on the boil, stew on the range, and each back room has just one door.",
+      "wind": {
+        "from": "W",
+        "strength": 1
+      },
       "map": [
-        "#########",
-        "#.l.#...#",
-        "#...#.o.#",
-        "#..s..c.#",
-        "#.n.#.o.#",
-        "#########"
+        "%#########%",
+        "%..#..#oo.#",
+        "%s.#.s#...#",
+        "%.#%#.%...#",
+        "#........s#",
+        "%..ooo....#",
+        "%..ooo....#",
+        "%#########%"
       ],
-      "fixed": [{"type": "window", "x": 2, "y": 0}],
-      "inventory": {"window": 1, "splitter": 1, "filter": 1, "curtain": 1},
-      "solution": [{"type": "splitter", "x": 2, "y": 3}, {"type": "window", "x": 0, "y": 3}, {"type": "filter", "x": 4, "y": 3}, {"type": "curtain", "x": 5, "y": 3}]
+      "fixed": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 4
+        },
+        {
+          "type": "deflector",
+          "x": 1,
+          "y": 4,
+          "d": 0
+        },
+        {
+          "type": "deflector",
+          "x": 1,
+          "y": 1,
+          "d": 0
+        }
+      ],
+      "inventory": {
+        "deflector": 2,
+        "vent": 1,
+        "window": 1
+      },
+      "solution": [
+        {
+          "type": "vent",
+          "x": 3,
+          "y": 1
+        },
+        {
+          "type": "deflector",
+          "x": 5,
+          "y": 1,
+          "d": 1
+        },
+        {
+          "type": "deflector",
+          "x": 5,
+          "y": 4,
+          "d": 1
+        },
+        {
+          "type": "window",
+          "x": 10,
+          "y": 4
+        }
+      ]
     },
     {
-      "name": "Hood and Hearth",
-      "wind": {"from": "W", "strength": 0},
+      "name": "Tailwind",
+      "tip": "Laundry wants a breeze of 2. Remember: a fan adds its own breeze to any air it catches.",
+      "wind": {
+        "from": "E",
+        "strength": 1
+      },
       "map": [
-        "#########",
-        "#...#p..#",
-        "#c.....s#",
-        "#...#...#",
-        "#.s.....#",
-        "#########"
+        "###########",
+        "#.s...#...#",
+        "#.l...#...#",
+        "#c....#...#",
+        "###########"
       ],
-      "fixed": [{"type": "extractor", "x": 8, "y": 2}],
-      "inventory": {"fan": 1, "deflector": 1, "filter": 1},
-      "solution": [{"type": "fan", "x": 1, "y": 4, "d": 1}, {"type": "deflector", "x": 5, "y": 4, "d": 0}, {"type": "filter", "x": 5, "y": 2}]
+      "fixed": [
+        {
+          "type": "window",
+          "x": 10,
+          "y": 3
+        }
+      ],
+      "inventory": {
+        "window": 1,
+        "fan": 1,
+        "vent": 1
+      },
+      "solution": [
+        {
+          "type": "vent",
+          "x": 6,
+          "y": 3
+        },
+        {
+          "type": "fan",
+          "x": 2,
+          "y": 3,
+          "d": 0
+        },
+        {
+          "type": "window",
+          "x": 2,
+          "y": 0
+        }
+      ]
     }
   ]
 }

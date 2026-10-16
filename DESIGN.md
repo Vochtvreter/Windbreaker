@@ -61,17 +61,18 @@ the player from the level's **inventory**.
 | id | name | mount | rotations | intro level |
 |----|------|-------|-----------|-------------|
 | `window`     | Window       | exterior wall | 1 | 1  |
-| `fan`        | Fan          | floor         | 4 (`d` = direction it blows) | 6  |
-| `deflector`  | Deflector    | floor         | 2 (`0` = `/`, `1` = `\`) | 11 |
-| `curtain`    | Curtain      | floor         | 1 | 16 |
-| `vent`       | Wall vent    | interior wall | 1 | 21 |
-| `splitter`   | Splitter     | floor         | 1 | 26 |
-| `extractor`  | Extractor    | exterior wall | 1 | 31 |
-| `skylight`   | Skylight     | floor         | 1 | 36 |
-| `filter`     | Air filter   | floor         | 1 | 41 |
-| `ceilingfan` | Ceiling fan  | floor         | 1 | 46 |
+| `fan`        | Fan          | floor         | 4 (`d` = direction it blows) | 11 |
+| `deflector`  | Deflector    | floor         | 2 (`0` = `/`, `1` = `\`) | 21 |
+| `curtain`    | Curtain      | floor         | 1 | 31 |
+| `vent`       | Wall vent    | interior wall | 1 | 41 |
+| `splitter`   | Splitter     | floor         | 1 | 51 |
+| `extractor`  | Extractor    | exterior wall | 1 | 56 |
+| `skylight`   | Skylight     | floor         | 1 | 61 |
+| `filter`     | Air filter   | floor         | 1 | 66 |
+| `ceilingfan` | Ceiling fan  | floor         | 1 | 71 |
 
-A new tool is introduced every 5 levels; from level 46 on, all tools exist.
+Tools and objects arrive one at a time, each opening its own chapter (section 7);
+from level 71 on, everything exists.
 
 ### Placement
 
@@ -188,11 +189,11 @@ filter, and don't let smoky air hit a wall.*
 | object | char | happy when total flow `f` at its cell … | intro level |
 |--------|------|------------------------------------------|-------------|
 | Pinwheel | `p` | `f ≥ 1` | 1  |
-| Candle   | `c` | `f = 0` | 3  |
-| Stove    | `s` | its smoke is cleared | 8 |
-| Laundry  | `l` | `f ≥ 2` **and** no smoky air at its cell | 13 |
-| Papers   | `n` | `f ≤ 1` | 18 |
-| Fern     | `f` | `f = 1` | 23 |
+| Candle   | `c` | `f = 0` | 6  |
+| Stove    | `s` | its smoke is cleared | 16 |
+| Laundry  | `l` | `f ≥ 2` **and** no smoky air at its cell | 26 |
+| Papers   | `n` | `f ≤ 1` | 36 |
+| Fern     | `f` | `f = 1` | 46 |
 
 Laundry needs **clean** air: if any active tree crosses the laundry's cell
 while carrying smoke (smoke that has not been through a filter), the laundry
@@ -203,8 +204,8 @@ The level is solved when **every** object is happy at the same time. The flow
 is recomputed instantly after every move, so the player gets live feedback; the
 level completes as soon as all objects are happy.
 
-Calm days (`strength: 0`) can appear from level 6 (when fans arrive).
-Wind strength 2 can appear from level 13, strength 3 from level 26.
+Calm days, strong wind, gales and some map features are *twists* with their
+own first levels (section 7).
 
 ## 6. Level format
 
@@ -247,50 +248,65 @@ Source files live in `levels/src/chNN.json` (one per chapter of 5 levels):
    holds at least one object.
 2. Fixed and solution pieces are on valid cells, don't overlap, and the
    solution fits the inventory.
-3. Only tools, objects and wind strengths already introduced by that level
-   number appear (section 5).
+3. Only tools, objects and twists already introduced by that level number
+   appear (sections 4, 5, 7).
 4. The level is **not** solved before the player places anything.
 5. The reference solution solves it.
 6. On a tool's intro level, that tool is in the inventory and the level is
-   **not** solvable without it.
+   **not** solvable without it; an object's intro level has that object.
+7. Pacing (section 7), checked over the whole sequence: an intro level brings
+   exactly its one new thing and nothing else new, and has a tip; practice
+   levels bring no new tool or object; a twist first appears alone, on the
+   3rd–5th level of a chapter, with a tip.
 
-## 7. Chapters and difficulty curve
+## 7. Chapters and pacing
 
-100 levels in 20 chapters of 5.
+100 levels in 20 chapters of 5. **One new thing at a time:** each of chapters
+1–15 introduces exactly one tool or object on its first level — a gentle,
+focused tutorial with a tip — followed by four practice levels that add nothing
+new. So the player always gets at least four puzzles with what they know
+before anything else arrives. Chapters 16–20 are mastery chapters.
 
-| ch | levels | new tool | chapter title |
-|----|--------|----------|---------------|
-| 1  | 1–5    | window     | Open Windows |
-| 2  | 6–10   | fan        | Fans |
-| 3  | 11–15  | deflector  | Deflectors |
-| 4  | 16–20  | curtain    | Curtains |
-| 5  | 21–25  | vent       | Wall Vents |
-| 6  | 26–30  | splitter   | Splitters |
-| 7  | 31–35  | extractor  | Extractors |
-| 8  | 36–40  | skylight   | Skylights |
-| 9  | 41–45  | filter     | Filters |
-| 10 | 46–50  | ceilingfan | Ceiling Fans |
-| 11 | 51–55  | — (all tools) | Drafts |
-| 12 | 56–60  | — | Greenhouse |
-| 13 | 61–65  | — | Library |
-| 14 | 66–70  | — | Kitchen Rush |
-| 15 | 71–75  | — | Laundry Day |
-| 16 | 76–80  | — | Old Manor |
-| 17 | 81–85  | — | Still Air |
-| 18 | 86–90  | — | Storm Season |
-| 19 | 91–95  | — | Crosswinds |
-| 20 | 96–100 | — | Fresh Air |
+| ch | levels | introduces | kind |
+|----|--------|------------|------|
+| 1  | 1–5    | window (and the pinwheel) | tool |
+| 2  | 6–10   | candle     | object |
+| 3  | 11–15  | fan        | tool |
+| 4  | 16–20  | stove      | object |
+| 5  | 21–25  | deflector  | tool |
+| 6  | 26–30  | laundry    | object |
+| 7  | 31–35  | curtain    | tool |
+| 8  | 36–40  | papers     | object |
+| 9  | 41–45  | wall vent  | tool |
+| 10 | 46–50  | fern       | object |
+| 11 | 51–55  | splitter   | tool |
+| 12 | 56–60  | extractor  | tool |
+| 13 | 61–65  | skylight   | tool |
+| 14 | 66–70  | air filter | tool |
+| 15 | 71–75  | ceiling fan | tool |
+| 16–20 | 76–100 | — (mastery) | |
 
-Rough targets (player pieces in the inventory / objects / rooms):
+**Twists** are smaller variations. Each may first appear from its level on —
+always on the 3rd–5th level of a chapter, never on or right after an intro
+level, one twist per level, with a tip that explains it:
 
-* 1–5: 1–2 pieces, 1–2 objects, 1 room. Very easy.
-* 6–20: 1–4 pieces, 1–3 objects, 1–2 rooms.
-* 21–50: 2–5 pieces, 2–4 objects, 1–3 rooms.
-* 51–75: 3–6 pieces, 3–5 objects, 2–3 rooms, mixing tools.
-* 76–100: 4–8 pieces, 3–7 objects, 2–4 rooms, decoy pieces allowed.
+| twist | first allowed | what it is |
+|-------|---------------|------------|
+| courtyard (`~` inside the map) | 8  | courtyard walls are outside walls too |
+| calm day (strength 0) | 13 | no wind; windows only let air out |
+| hatched wall (`%`) | 18 | nothing can be fitted into it |
+| table (`o`) | 23 | air passes over, nothing can be placed |
+| strong wind (strength 2) | 28 | the wind blows in at 2 |
+| gale (strength 3) | 53 | the wind blows in at 3 |
 
-Each tool chapter starts with a gentle, focused tutorial for the new tool and
-ends with a puzzle that combines it with earlier tools.
+The schedule lives in the engine (`WB.INTRO_ORDER`, `WB.CONDITIONS`,
+`WB.introAt(n)`, `WB.levelConditions(def)`); `tools/check-levels.js` enforces
+it. Each built level also gets a stable `key` (from its unique name) so saved
+progress survives reordering.
+
+Rough targets: early chapters stay small (1–3 pieces, 1–3 objects, one or two
+rooms); practice levels in chapters 1–15 rise gently and use the newest thing;
+mastery chapters 16–20 bring 4–8 pieces, several rooms and decoy pieces.
 
 ## 8. Engine API (`js/engine.js`)
 
@@ -352,18 +368,26 @@ WB.isSolved(L, pieces) -> boolean
 ```
 index.html            entry point (GitHub Pages serves the repo root)
 .nojekyll             serve the files as they are on GitHub Pages
-css/style.css
+css/style.css         layout; colours come from js/theme.js as CSS variables
+js/theme.js           every colour (light + dark), size and speed: the visual tokens
 js/version.js         version shown on the level-select screen (bumped per release)
 js/engine.js          rules + simulation (UMD, shared with Node tools)
 js/levels.js          generated from levels/src by tools/build-levels.js
-js/render.js          canvas drawing
+js/migrate.js         translates saved progress when the level order changes
+js/sprites.js         sprite registry: every tool, object and mark drawing
+js/render.js          board composition (garden, house, airflow) using sprites
 js/game.js            UI, input, progress, screens
+art/art.js            image overrides for sprites (ships empty; see GRAPHICS.md)
+art/examples/         example override art
+studio.html           graphics workbench: preview and tweak sprites, tokens, art
 levels/src/chNN.json  level sources
+levels/unused.json    good levels that are not in the game (kept for reuse)
 tools/                build, check, solve, show + shared lib.js (Node, no deps)
 tools/e2e.js          browser end-to-end test (needs Playwright + Chromium)
+tools/visual.js       visual regression: screenshots compared pixel by pixel
 tests/                node:test unit tests (fixtures in tests/fixtures/)
 package.json          npm scripts only, no dependencies
-README.md, CHANGELOG.md, tools/README.md
+README.md, CHANGELOG.md, GRAPHICS.md, tools/README.md
 ```
 
 Plain classic `<script>` tags (no modules, no build step at runtime), so the
@@ -381,3 +405,4 @@ level is solved); smoke as grey puffs, and laundry reached by smoky air turns
 sooty grey with a grey smoke badge. Rounded shapes, gentle animations
 (pinwheels spin, candle flames flicker, laundry sways). System font stack.
 Works with mouse and touch, scales from phone to desktop, supports dark mode.
+All of it is tunable without touching game code — see GRAPHICS.md.

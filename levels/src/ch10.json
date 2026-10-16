@@ -1,101 +1,256 @@
 {
   "chapter": 10,
-  "title": "Ceiling Fans",
+  "title": "Ferns",
   "levels": [
     {
-      "name": "Overhead",
-      "tip": "A ceiling fan stirs a gentle breeze in all four directions at once, no window needed.",
-      "wind": { "from": "W", "strength": 0 },
+      "name": "First Frond",
+      "tip": "A fern wants exactly a gentle breeze (1): no more, no less. Soften the strong wind before it gets there.",
+      "wind": {
+        "from": "W",
+        "strength": 2
+      },
       "map": [
         "#########",
-        "#...p...#",
         "#.......#",
-        "#p.....p#",
-        "#...o...#",
+        "#.l...f.#",
+        "#.......#",
         "#########"
       ],
-      "fixed": [],
-      "inventory": { "ceilingfan": 1 },
-      "solution": [{ "type": "ceilingfan", "x": 4, "y": 3 }]
-    },
-    {
-      "name": "Sidestep",
-      "wind": { "from": "W", "strength": 0 },
-      "map": [
-        "~~~#####~~~",
-        "####.p.####",
-        "#.........#",
-        "#........p#",
-        "#.p.......#",
-        "#...oco...#",
-        "###########"
+      "fixed": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 2
+        }
       ],
-      "fixed": [],
-      "inventory": { "ceilingfan": 1, "deflector": 1 },
+      "inventory": {
+        "window": 1,
+        "curtain": 1
+      },
       "solution": [
-        { "type": "ceilingfan", "x": 5, "y": 3 },
-        { "type": "deflector", "x": 5, "y": 4, "d": 0 }
+        {
+          "type": "curtain",
+          "x": 4,
+          "y": 2
+        },
+        {
+          "type": "window",
+          "x": 8,
+          "y": 2
+        }
       ]
     },
     {
-      "name": "Backdraft",
-      "tip": "A window facing the wind pushes air back, just like a wall.",
-      "wind": { "from": "W", "strength": 1 },
+      "name": "Potted Fern",
+      "tip": "The laundry wants 2 or more, the fern exactly 1, and both stand in the same draught.",
+      "wind": {
+        "from": "S",
+        "strength": 2
+      },
       "map": [
-        "###########",
-        "#.o.p...o.#",
-        "#.........#",
-        "####.######",
-        "#l.s......#",
-        "#.........#",
-        "###########"
+        "#######",
+        "#.....#",
+        "#.f..o#",
+        "#.....#",
+        "####.##",
+        "#.....#",
+        "#.l...#",
+        "#######"
       ],
-      "fixed": [{ "type": "window", "x": 0, "y": 4 }],
-      "inventory": { "ceilingfan": 1, "window": 1, "filter": 1 },
+      "fixed": [
+        {
+          "type": "window",
+          "x": 2,
+          "y": 7
+        }
+      ],
+      "inventory": {
+        "window": 1,
+        "vent": 1,
+        "curtain": 1
+      },
       "solution": [
-        { "type": "ceilingfan", "x": 4, "y": 4 },
-        { "type": "window", "x": 10, "y": 4 },
-        { "type": "filter", "x": 2, "y": 4 }
+        {
+          "type": "vent",
+          "x": 2,
+          "y": 4
+        },
+        {
+          "type": "curtain",
+          "x": 2,
+          "y": 3
+        },
+        {
+          "type": "window",
+          "x": 2,
+          "y": 0
+        }
       ]
     },
     {
-      "name": "Drying Room",
-      "wind": { "from": "W", "strength": 0 },
+      "name": "Fern Aisle",
+      "tip": "A curtain softens each stream through it by 1, so a fan's gentle breeze stops right there.",
+      "wind": {
+        "from": "E",
+        "strength": 2
+      },
       "map": [
-        "###########",
-        "#....#....#",
-        "#.l..#....#",
-        "#....#....#",
-        "#...n...l.#",
-        "#....#....#",
-        "###########"
+        "##########",
+        "%.....p..#",
+        "#.l#.ooo.#",
+        "#..#.ooo.#",
+        "#.f#.....#",
+        "##########"
       ],
-      "fixed": [],
-      "inventory": { "ceilingfan": 2, "vent": 1 },
+      "fixed": [
+        {
+          "type": "window",
+          "x": 9,
+          "y": 1
+        },
+        {
+          "type": "window",
+          "x": 2,
+          "y": 5
+        }
+      ],
+      "inventory": {
+        "fan": 1,
+        "curtain": 1
+      },
       "solution": [
-        { "type": "ceilingfan", "x": 2, "y": 4 },
-        { "type": "ceilingfan", "x": 8, "y": 2 },
-        { "type": "vent", "x": 5, "y": 2 }
+        {
+          "type": "fan",
+          "x": 2,
+          "y": 1,
+          "d": 2
+        },
+        {
+          "type": "curtain",
+          "x": 2,
+          "y": 3
+        }
       ]
     },
     {
-      "name": "Gale House",
-      "wind": { "from": "N", "strength": 3 },
+      "name": "Delicates",
+      "tip": "Washing day! Papers and ferns want a soft touch, but the wash still needs a breeze of 2 or more.",
+      "wind": {
+        "from": "E",
+        "strength": 2
+      },
       "map": [
-        "%%%%%######",
-        "%...#.#...#",
-        "%...#.#...#",
-        "%.s.l...f.#",
-        "%...#n#...#",
-        "%%%%%######"
+        "~~~#####",
+        "~~~#.n.#",
+        "~~~#f..#",
+        "####...#",
+        "#lll...#",
+        "########"
       ],
-      "fixed": [{ "type": "window", "x": 5, "y": 0 }],
-      "inventory": { "ceilingfan": 1, "splitter": 1, "window": 1, "filter": 1 },
+      "fixed": [
+        {
+          "type": "window",
+          "x": 7,
+          "y": 1
+        },
+        {
+          "type": "fan",
+          "x": 4,
+          "y": 4,
+          "d": 3
+        }
+      ],
+      "inventory": {
+        "window": 1,
+        "deflector": 1,
+        "curtain": 1
+      },
       "solution": [
-        { "type": "splitter", "x": 5, "y": 3 },
-        { "type": "ceilingfan", "x": 3, "y": 3 },
-        { "type": "window", "x": 10, "y": 3 },
-        { "type": "filter", "x": 1, "y": 3 }
+        {
+          "type": "curtain",
+          "x": 6,
+          "y": 1
+        },
+        {
+          "type": "deflector",
+          "x": 4,
+          "y": 1,
+          "d": 0
+        },
+        {
+          "type": "window",
+          "x": 0,
+          "y": 4
+        }
+      ]
+    },
+    {
+      "name": "Blustery Washday",
+      "wind": {
+        "from": "W",
+        "strength": 2
+      },
+      "map": [
+        "#####~~~~",
+        "#...#~~~~",
+        "#l..#~~~~",
+        "##.##~~~~",
+        "#.f.#####",
+        "#....o..#",
+        "#c.o#l..#",
+        "#########"
+      ],
+      "fixed": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 2
+        },
+        {
+          "type": "deflector",
+          "x": 2,
+          "y": 2,
+          "d": 1
+        },
+        {
+          "type": "curtain",
+          "x": 2,
+          "y": 3
+        },
+        {
+          "type": "window",
+          "x": 0,
+          "y": 6
+        },
+        {
+          "type": "window",
+          "x": 8,
+          "y": 6
+        }
+      ],
+      "inventory": {
+        "vent": 1,
+        "deflector": 1,
+        "fan": 1
+      },
+      "solution": [
+        {
+          "type": "vent",
+          "x": 4,
+          "y": 6
+        },
+        {
+          "type": "deflector",
+          "x": 2,
+          "y": 6,
+          "d": 1
+        },
+        {
+          "type": "fan",
+          "x": 2,
+          "y": 5,
+          "d": 2
+        }
       ]
     }
   ]

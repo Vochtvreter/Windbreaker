@@ -1,82 +1,184 @@
 {
   "chapter": 2,
-  "title": "Fans",
+  "title": "Candles",
   "levels": [
     {
-      "name": "Becalmed",
-      "tip": "No wind today. Place the fan, then tap it to turn it until it blows on the pinwheel.",
-      "wind": { "from": "W", "strength": 0 },
-      "map": [
-        "#######",
-        "#.....#",
-        "#..p..#",
-        "#.....#",
-        "#######"
-      ],
-      "fixed": [],
-      "inventory": { "fan": 1 },
-      "solution": [ { "type": "fan", "x": 1, "y": 2, "d": 1 } ]
-    },
-    {
-      "name": "Turning Point",
-      "tip": "A fan pushes on any air that reaches it, even the wind, so it can steer a breeze round a corner.",
-      "wind": { "from": "W", "strength": 1 },
+      "name": "Candlelight",
+      "tip": "Candles need still air: keep every breeze off the flame. A breeze only flows once it has a way out.",
+      "wind": {
+        "from": "W",
+        "strength": 1
+      },
       "map": [
         "#########",
-        "#....p..#",
         "#..p....#",
+        "#.....c.#",
         "#.......#",
         "#########"
       ],
-      "fixed": [ { "type": "window", "x": 0, "y": 2 }, { "type": "window", "x": 5, "y": 0 } ],
-      "inventory": { "fan": 1 },
-      "solution": [ { "type": "fan", "x": 5, "y": 2, "d": 0 } ]
-    },
-    {
-      "name": "Smoke Signals",
-      "tip": "Blow the stove's smoke out of a window, never into a wall; hatched walls take no windows.",
-      "wind": { "from": "W", "strength": 0 },
-      "map": [
-        "########%",
-        "#.......%",
-        "#.s.....%",
-        "#.....p.%",
-        "########%"
+      "fixed": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 1
+        },
+        {
+          "type": "window",
+          "x": 0,
+          "y": 2
+        }
       ],
-      "fixed": [ { "type": "fan", "x": 1, "y": 2, "d": 1 } ],
-      "inventory": { "fan": 1, "window": 1 },
-      "solution": [ { "type": "fan", "x": 6, "y": 2, "d": 2 }, { "type": "window", "x": 6, "y": 4 } ]
+      "inventory": {
+        "window": 1
+      },
+      "solution": [
+        {
+          "type": "window",
+          "x": 8,
+          "y": 1
+        }
+      ]
     },
     {
-      "name": "Into the Wind",
-      "wind": { "from": "N", "strength": 1 },
-      "map": [
-        "#######",
-        "#.....#",
-        "#.....#",
-        "#..p..#",
-        "###.###",
-        "#..c..#",
-        "#.....#",
-        "#######"
-      ],
-      "fixed": [ { "type": "window", "x": 3, "y": 0 }, { "type": "window", "x": 3, "y": 7 } ],
-      "inventory": { "fan": 1 },
-      "solution": [ { "type": "fan", "x": 3, "y": 4, "d": 0 } ]
-    },
-    {
-      "name": "Sunday Roast",
-      "wind": { "from": "W", "strength": 1 },
+      "name": "Close Call",
+      "tip": "A breeze is only one square wide, so a candle right beside it stays lit.",
+      "wind": {
+        "from": "E",
+        "strength": 1
+      },
       "map": [
         "#########",
-        "#...#...#",
-        "#.c...s.#",
-        "#...#...#",
+        "#...c...#",
+        "#...p...#",
+        "#.......#",
         "#########"
       ],
-      "fixed": [ { "type": "window", "x": 0, "y": 2 } ],
-      "inventory": { "fan": 1, "window": 1 },
-      "solution": [ { "type": "fan", "x": 6, "y": 1, "d": 2 }, { "type": "window", "x": 6, "y": 4 } ]
+      "fixed": [],
+      "inventory": {
+        "window": 2
+      },
+      "solution": [
+        {
+          "type": "window",
+          "x": 8,
+          "y": 2
+        },
+        {
+          "type": "window",
+          "x": 0,
+          "y": 2
+        }
+      ]
+    },
+    {
+      "name": "Garden Court",
+      "tip": "Courtyard walls are outside walls too: a window there that faces the wind lets it in.",
+      "wind": {
+        "from": "E",
+        "strength": 1
+      },
+      "map": [
+        "############",
+        "#..........#",
+        "#...####...#",
+        "#.p.#~~#.c.#",
+        "#####~~#####"
+      ],
+      "fixed": [
+        {
+          "type": "window",
+          "x": 11,
+          "y": 3
+        }
+      ],
+      "inventory": {
+        "window": 2
+      },
+      "solution": [
+        {
+          "type": "window",
+          "x": 4,
+          "y": 3
+        },
+        {
+          "type": "window",
+          "x": 0,
+          "y": 3
+        }
+      ]
+    },
+    {
+      "name": "Horseshoe",
+      "tip": "A window onto the courtyard can let a breeze out, too.",
+      "wind": {
+        "from": "W",
+        "strength": 1
+      },
+      "map": [
+        "#####~~#####",
+        "#.p.#~~#.c.#",
+        "#...####...#",
+        "#..........#",
+        "#..........#",
+        "############"
+      ],
+      "fixed": [
+        {
+          "type": "window",
+          "x": 11,
+          "y": 1
+        }
+      ],
+      "inventory": {
+        "window": 2
+      },
+      "solution": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 1
+        },
+        {
+          "type": "window",
+          "x": 4,
+          "y": 1
+        }
+      ]
+    },
+    {
+      "name": "Between Gardens",
+      "wind": {
+        "from": "N",
+        "strength": 1
+      },
+      "map": [
+        "#######",
+        "#..c..#",
+        "#.###.#",
+        "#.#~#.#",
+        "#.###.#",
+        "#..p..#",
+        "#.###.#",
+        "#.#~#.#",
+        "###~###"
+      ],
+      "fixed": [],
+      "inventory": {
+        "window": 2
+      },
+      "solution": [
+        {
+          "type": "window",
+          "x": 3,
+          "y": 4
+        },
+        {
+          "type": "window",
+          "x": 3,
+          "y": 6
+        }
+      ],
+      "tip": "Even a little garden walled in on every side is outside, so the wind reaches it."
     }
   ]
 }

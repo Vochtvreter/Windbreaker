@@ -55,9 +55,64 @@ const TARGETS = [
   [76, 100, [4, 8], [3, 7], [2, 4]]
 ];
 
+// The thing level n introduces ({kind: 'tool'|'object', id}) or null (DESIGN.md §7).
+function introThing(n) {
+  return n == null || n < 1 ? null : WB.introAt(n);
+}
+
 function introTool(n) {
-  if (n == null || n < 1 || (n - 1) % 5 !== 0) return null;
-  return WB.TOOL_ORDER[(n - 1) / 5] || null;
+  const it = introThing(n);
+  return it && it.kind === 'tool' ? it.id : null;
+}
+
+// Tools (inventory + fixed) and objects a level uses.
+function levelThings(def) {
+  const things = new Set();
+  for (const k of Object.keys(def.inventory || {})) if (def.inventory[k] > 0) things.add(k);
+  for (const p of def.fixed || []) if (p && p.type) things.add(p.type);
+  for (const row of def.map || []) for (const ch of String(row)) if (WB.OBJECT_BY_CHAR[ch]) things.add(WB.OBJECT_BY_CHAR[ch]);
+  return things;
+}
+
+function thingName(id) {
+  return (WB.TOOLS[id] || WB.OBJECTS[id] || WB.CONDITIONS[id] || { name: id }).name.toLowerCase();
+}
+
+// Pacing over the whole sequence (DESIGN.md §7): one new tool/object per intro
+// level and nothing new elsewhere; each twist first appears alone, with a tip,
+// on the 3rd-5th level of a chapter. Returns Map(n -> [errors]).
+function pacingIssues(levels) {
+  const seen = new Set(), seenCond = new Set(), out = new Map();
+  const sorted = levels.filter((e) => e.n != null && e.def).slice().sort((a, b) => a.n - b.n);
+  for (const { n, def } of sorted) {
+    const errs = [];
+    const things = levelThings(def);
+    const conds = WB.levelConditions(def);
+    const newThings = [...things].filter((t) => !seen.has(t));
+    const newConds = conds.filter((c) => !seenCond.has(c));
+    const intro = introThing(n);
+    if (intro) {
+      const expected = n === 1 ? ['window', 'pinwheel'] : [intro.id];
+      // (a missing intro tool is reported by checkLevel: it must be in the inventory)
+      for (const e of expected) if (WB.OBJECTS[e] && !things.has(e)) errs.push('intro level for ' + thingName(intro.id) + ' must have a ' + thingName(e) + ' on the map');
+      const extra = newThings.filter((t) => !expected.includes(t));
+      if (extra.length) errs.push('intro level for ' + thingName(intro.id) + ' also introduces ' + extra.map(thingName).join(', ') + ' (one new thing at a time)');
+      if (newConds.length) errs.push('intro level for ' + thingName(intro.id) + ' also introduces a twist: ' + newConds.map(thingName).join(', '));
+      if (!def.tip) errs.push('intro level for ' + thingName(intro.id) + ' needs a tip explaining it');
+    } else {
+      if (newThings.length) errs.push('first ' + newThings.map(thingName).join(', ') + ' on a practice level (new tools and objects only on their intro level)');
+      if (newConds.length > 1) errs.push('introduces ' + newConds.length + ' twists at once: ' + newConds.map(thingName).join(', '));
+      if (newConds.length) {
+        const pos = (n - 1) % WB.LEVELS_PER_CHAPTER;
+        if (pos < 2) errs.push('first ' + thingName(newConds[0]) + ' right after an intro level (twists start on the 3rd-5th level of a chapter)');
+        if (!def.tip) errs.push('first ' + thingName(newConds[0]) + ' needs a tip explaining it');
+      }
+    }
+    things.forEach((t) => seen.add(t));
+    conds.forEach((c) => seenCond.add(c));
+    out.set(n, errs);
+  }
+  return out;
 }
 
 function difficulty(f, s) {
@@ -153,11 +208,10 @@ function checkLevel(entry, opts) {
   const refSolves = WB.simulate(L, fixed.concat(sol)).solved;
   if (!refSolves) err(sol.length ? 'reference solution does not solve the level' : 'no reference solution');
 
-  // 6: tool intro levels.
+  // 6: intro levels (tools: in the inventory and needed; objects: on the map).
   const tool = introTool(n);
   if (tool) {
     if (!((def.inventory || {})[tool] > 0)) err('intro level for ' + tool + ' but ' + tool + ' is not in the inventory');
-    if (!def.tip) warn('intro level for ' + tool + ' has no tip');
     if (!opts.fast) {
       // Must be a proof: the exclusion search gets its own, larger budget and
       // anything short of an exhaustive "unsolvable" fails the check.
@@ -235,7 +289,7 @@ function safeCheck(entry, opts) {
 function addSequenceWarnings(reports) {
   const byN = new Map(reports.map((r) => [r.n, r]));
   for (const r of reports) {
-    if (r.n == null || r.difficulty == null || introTool(r.n)) continue;
+    if (r.n == null || r.difficulty == null || introThing(r.n)) continue;
     const p = byN.get(r.n - 1);
     if (!p || p.difficulty == null) continue;
     const margin = Math.max(5, 0.25 * p.difficulty);
@@ -400,6 +454,11 @@ async function main(argv) {
   }
   const reports = await runParallel(levels, opts, a.flags.fast ? 1 : jobs);
   addSequenceWarnings(reports);
+  // Pacing needs the whole sequence: always judge it on all levels in the source dir.
+  if (!a.flags.file) {
+    const pace = pacingIssues(lib.loadAllLevels(a.flags.src).levels);
+    for (const r of reports) for (const m of pace.get(r.n) || []) r.errors.push(m);
+  }
 
   const fileErrors = problems.filter((p) => p.severity === 'error').map((p) => p.msg);
   const fileWarnings = problems.filter((p) => p.severity === 'warn').map((p) => p.msg);
@@ -434,7 +493,7 @@ async function main(argv) {
 }
 
 module.exports = {
-  checkLevel, safeCheck, addSequenceWarnings, difficulty, introTool, pieceFieldIssues, isMinimalSolution, runParallel, table,
+  checkLevel, safeCheck, addSequenceWarnings, difficulty, introTool, introThing, levelThings, pacingIssues, pieceFieldIssues, isMinimalSolution, runParallel, table,
   DEFAULT_TIME, DEFAULT_INTRO_TIME
 };
 

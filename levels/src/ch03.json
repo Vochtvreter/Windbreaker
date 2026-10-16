@@ -1,105 +1,198 @@
 {
   "chapter": 3,
-  "title": "Deflectors",
+  "title": "Fans",
   "levels": [
     {
-      "name": "Round the Corner",
-      "tip": "A deflector turns the breeze by 90 degrees. Tap it to flip between / and \\.",
-      "wind": { "from": "W", "strength": 1 },
+      "name": "Alcove",
+      "tip": "A fan blows a gentle breeze the way it faces. Place it, then tap it to turn it toward the pinwheel.",
+      "wind": {
+        "from": "W",
+        "strength": 1
+      },
       "map": [
-        "#########",
-        "#.......#",
-        "#####...#",
-        "~~~~#.p.#",
-        "~~~~#...#",
-        "~~~~#####"
-      ],
-      "fixed": [{ "type": "window", "x": 0, "y": 1 }, { "type": "window", "x": 6, "y": 5 }],
-      "inventory": { "deflector": 1 },
-      "solution": [{ "type": "deflector", "x": 6, "y": 1, "d": 1 }]
-    },
-    {
-      "name": "Candle Detour",
-      "wind": { "from": "E", "strength": 1 },
-      "map": [
-        "#########",
-        "#..oco..#",
-        "#......c#",
-        "#p......#",
-        "#########"
-      ],
-      "fixed": [{ "type": "window", "x": 8, "y": 1 }, { "type": "window", "x": 0, "y": 3 }],
-      "inventory": { "deflector": 2 },
-      "solution": [
-        { "type": "deflector", "x": 6, "y": 1, "d": 0 },
-        { "type": "deflector", "x": 6, "y": 3, "d": 0 }
-      ]
-    },
-    {
-      "name": "Clothesline",
-      "tip": "Laundry only dries in a breeze of 2 or more, and breezes that cross on it add up.",
-      "wind": { "from": "W", "strength": 1 },
-      "map": [
-        "#########",
-        "#.......#",
-        "###.##.##",
-        "#.....l.#",
-        "#.......#",
-        "#########"
-      ],
-      "fixed": [{ "type": "window", "x": 0, "y": 1 }, { "type": "fan", "x": 1, "y": 3, "d": 1 }],
-      "inventory": { "deflector": 1, "window": 1 },
-      "solution": [
-        { "type": "deflector", "x": 6, "y": 1, "d": 1 },
-        { "type": "window", "x": 6, "y": 5 }
-      ]
-    },
-    {
-      "name": "Confluence",
-      "wind": { "from": "W", "strength": 1 },
-      "map": [
-        "######~~~~",
-        "#.p..#~~~~",
-        "#....#~~~~",
-        "###.######",
-        "#.p...l..#",
-        "#........#",
-        "##########"
+        "#######",
+        "#.....#",
+        "#.....#",
+        "###p###",
+        "#######"
       ],
       "fixed": [
-        { "type": "window", "x": 0, "y": 1 },
-        { "type": "window", "x": 0, "y": 4 },
-        { "type": "window", "x": 9, "y": 4 }
+        {
+          "type": "window",
+          "x": 0,
+          "y": 1
+        },
+        {
+          "type": "window",
+          "x": 6,
+          "y": 1
+        }
       ],
-      "inventory": { "fan": 1, "deflector": 1 },
+      "inventory": {
+        "fan": 1
+      },
       "solution": [
-        { "type": "deflector", "x": 3, "y": 1, "d": 1 },
-        { "type": "fan", "x": 3, "y": 4, "d": 1 }
+        {
+          "type": "fan",
+          "x": 3,
+          "y": 2,
+          "d": 2
+        }
       ]
     },
     {
-      "name": "Crossroads",
-      "tip": "Laundry needs clean air: smoke drifting through it leaves it dirty, however strong the breeze.",
-      "wind": { "from": "N", "strength": 1 },
+      "name": "Mind the Flame",
+      "tip": "A fan's breeze runs on until it meets a wall, so point it away from the candle.",
+      "wind": {
+        "from": "E",
+        "strength": 1
+      },
       "map": [
-        "##########",
-        "#c...#.s.#",
-        "#....#...#",
-        "##.####.##",
-        "#........#",
-        "#......l.#",
-        "##########"
+        "#######",
+        "#.....#",
+        "#.....#",
+        "#.c.p.#",
+        "#######"
       ],
       "fixed": [
-        { "type": "window", "x": 2, "y": 0 },
-        { "type": "window", "x": 7, "y": 0 },
-        { "type": "window", "x": 9, "y": 4 },
-        { "type": "window", "x": 7, "y": 6 }
+        {
+          "type": "window",
+          "x": 6,
+          "y": 1
+        },
+        {
+          "type": "window",
+          "x": 0,
+          "y": 1
+        }
       ],
-      "inventory": { "fan": 1, "deflector": 1 },
+      "inventory": {
+        "fan": 1
+      },
       "solution": [
-        { "type": "fan", "x": 2, "y": 4, "d": 1 },
-        { "type": "deflector", "x": 7, "y": 4, "d": 1 }
+        {
+          "type": "fan",
+          "x": 3,
+          "y": 3,
+          "d": 1
+        }
+      ]
+    },
+    {
+      "name": "Becalmed",
+      "tip": "No wind today, so windows only let air out. Your fan has to make the breeze.",
+      "wind": {
+        "from": "W",
+        "strength": 0
+      },
+      "map": [
+        "#########",
+        "#.......#",
+        "#.p...p.#",
+        "#.......#",
+        "#########"
+      ],
+      "fixed": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 2
+        },
+        {
+          "type": "window",
+          "x": 8,
+          "y": 2
+        }
+      ],
+      "inventory": {
+        "fan": 1
+      },
+      "solution": [
+        {
+          "type": "fan",
+          "x": 1,
+          "y": 2,
+          "d": 1
+        }
+      ]
+    },
+    {
+      "name": "Turning Point",
+      "tip": "A fan pushes on any air that reaches it, even the wind, so it can steer a breeze round a corner.",
+      "wind": {
+        "from": "W",
+        "strength": 1
+      },
+      "map": [
+        "#########",
+        "#....p..#",
+        "#..p....#",
+        "#.......#",
+        "#########"
+      ],
+      "fixed": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 2
+        },
+        {
+          "type": "window",
+          "x": 5,
+          "y": 0
+        }
+      ],
+      "inventory": {
+        "fan": 1
+      },
+      "solution": [
+        {
+          "type": "fan",
+          "x": 5,
+          "y": 2,
+          "d": 0
+        }
+      ]
+    },
+    {
+      "name": "Into the Wind",
+      "tip": "Remember: the wind only blows through the house when it has a way out.",
+      "wind": {
+        "from": "N",
+        "strength": 1
+      },
+      "map": [
+        "#######",
+        "#.....#",
+        "#.....#",
+        "#..p..#",
+        "###.###",
+        "#..c..#",
+        "#.....#",
+        "#######"
+      ],
+      "fixed": [
+        {
+          "type": "window",
+          "x": 3,
+          "y": 0
+        },
+        {
+          "type": "window",
+          "x": 3,
+          "y": 7
+        }
+      ],
+      "inventory": {
+        "fan": 1
+      },
+      "solution": [
+        {
+          "type": "fan",
+          "x": 3,
+          "y": 4,
+          "d": 0
+        }
       ]
     }
   ]

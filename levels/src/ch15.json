@@ -1,117 +1,207 @@
 {
   "chapter": 15,
-  "title": "Laundry Day",
+  "title": "Ceiling Fans",
   "levels": [
     {
-      "name": "Delicates",
-      "tip": "Washing day! Papers and ferns want a soft touch, but the wash still needs a breeze of 2 or more.",
-      "wind": { "from": "E", "strength": 2 },
-      "map": [
-        "~~~#####",
-        "~~~#.n.#",
-        "~~~#f..#",
-        "####...#",
-        "#lll...#",
-        "########"
-      ],
-      "fixed": [{ "type": "window", "x": 7, "y": 1 }],
-      "inventory": { "window": 1, "fan": 1, "deflector": 1, "curtain": 1 },
-      "solution": [
-        { "type": "curtain", "x": 6, "y": 1 },
-        { "type": "deflector", "x": 4, "y": 1, "d": 0 },
-        { "type": "fan", "x": 4, "y": 4, "d": 3 },
-        { "type": "window", "x": 0, "y": 4 }
-      ]
-    },
-    {
-      "name": "Airing Cupboard",
-      "wind": { "from": "N", "strength": 1 },
+      "name": "Overhead",
+      "tip": "A ceiling fan stirs a gentle breeze in all four directions at once, no window needed.",
+      "wind": {
+        "from": "W",
+        "strength": 0
+      },
       "map": [
         "#########",
-        "#.l.#.l.#",
-        "#.l.#.l.#",
-        "#...#...#",
-        "#......l#",
+        "#...p...#",
+        "#.......#",
+        "#p.....p#",
+        "#.......#",
         "#########"
       ],
+      "fixed": [],
+      "inventory": {
+        "ceilingfan": 1
+      },
+      "solution": [
+        {
+          "type": "ceilingfan",
+          "x": 4,
+          "y": 3
+        }
+      ]
+    },
+    {
+      "name": "Sidestep",
+      "wind": {
+        "from": "W",
+        "strength": 0
+      },
+      "map": [
+        "~~~#####~~~",
+        "####.p.####",
+        "#.........#",
+        "#........p#",
+        "#.p.......#",
+        "#...oco...#",
+        "###########"
+      ],
+      "fixed": [],
+      "inventory": {
+        "ceilingfan": 1,
+        "deflector": 1
+      },
+      "solution": [
+        {
+          "type": "ceilingfan",
+          "x": 5,
+          "y": 3
+        },
+        {
+          "type": "deflector",
+          "x": 5,
+          "y": 4,
+          "d": 0
+        }
+      ]
+    },
+    {
+      "name": "Backdraft",
+      "tip": "A window facing the wind pushes air back, just like a wall.",
+      "wind": {
+        "from": "W",
+        "strength": 1
+      },
+      "map": [
+        "###########",
+        "#.o.p...o.#",
+        "#.........#",
+        "####.######",
+        "#l.s......#",
+        "#.........#",
+        "###########"
+      ],
       "fixed": [
-        { "type": "window", "x": 2, "y": 0 },
-        { "type": "window", "x": 6, "y": 0 }
+        {
+          "type": "window",
+          "x": 0,
+          "y": 4
+        }
       ],
-      "inventory": { "window": 2, "deflector": 1, "ceilingfan": 1 },
+      "inventory": {
+        "ceilingfan": 1,
+        "window": 1,
+        "filter": 1
+      },
       "solution": [
-        { "type": "deflector", "x": 2, "y": 4, "d": 1 },
-        { "type": "ceilingfan", "x": 6, "y": 4 },
-        { "type": "window", "x": 6, "y": 5 },
-        { "type": "window", "x": 8, "y": 4 }
+        {
+          "type": "ceilingfan",
+          "x": 4,
+          "y": 4
+        },
+        {
+          "type": "window",
+          "x": 10,
+          "y": 4
+        },
+        {
+          "type": "filter",
+          "x": 2,
+          "y": 4
+        }
       ]
     },
     {
-      "name": "Cross Stitch",
-      "wind": { "from": "S", "strength": 1 },
+      "name": "Velvet Curtain",
+      "wind": {
+        "from": "W",
+        "strength": 2
+      },
       "map": [
-        "#######",
-        "#...lf#",
-        "#.....#",
-        "##.#.##",
-        "#..o..#",
-        "#.l..c#",
-        "#..o..#",
-        "#######"
-      ],
-      "fixed": [{ "type": "window", "x": 2, "y": 7 }],
-      "inventory": { "window": 1, "fan": 1, "deflector": 2 },
-      "solution": [
-        { "type": "deflector", "x": 2, "y": 1, "d": 0 },
-        { "type": "window", "x": 6, "y": 1 },
-        { "type": "fan", "x": 1, "y": 5, "d": 1 },
-        { "type": "deflector", "x": 4, "y": 5, "d": 0 }
-      ]
-    },
-    {
-      "name": "Three Sheets",
-      "wind": { "from": "E", "strength": 3 },
-      "map": [
-        "~#######~",
-        "~#ll.ll#~",
-        "~#.....#~",
-        "~###n###~",
-        "~~~#..#~~",
-        "~###.###~",
-        "##.....##",
-        "#.ll....#",
-        "#########"
+        "%%%%%%%%%%%",
+        "%...p.....%",
+        "%p.......p%",
+        "%.o.....o.%",
+        "#l.......n#",
+        "%.o.c...o.%",
+        "%%%%%%%%%%%"
       ],
       "fixed": [
-        { "type": "window", "x": 6, "y": 4 },
-        { "type": "splitter", "x": 4, "y": 4 }
+        {
+          "type": "window",
+          "x": 0,
+          "y": 4
+        }
       ],
-      "inventory": { "fan": 1, "deflector": 1, "splitter": 1, "extractor": 1 },
+      "inventory": {
+        "ceilingfan": 1,
+        "curtain": 1,
+        "window": 1
+      },
       "solution": [
-        { "type": "fan", "x": 4, "y": 2, "d": 0 },
-        { "type": "splitter", "x": 4, "y": 1 },
-        { "type": "deflector", "x": 4, "y": 7, "d": 0 },
-        { "type": "extractor", "x": 0, "y": 7 }
+        {
+          "type": "ceilingfan",
+          "x": 4,
+          "y": 2
+        },
+        {
+          "type": "curtain",
+          "x": 4,
+          "y": 4
+        },
+        {
+          "type": "window",
+          "x": 10,
+          "y": 4
+        }
       ]
     },
     {
-      "name": "Tumble Dry",
-      "wind": { "from": "W", "strength": 1 },
+      "name": "Gale House",
+      "wind": {
+        "from": "N",
+        "strength": 3
+      },
       "map": [
-        "##########",
-        "#lll.....#",
-        "#........#",
-        "#......f.#",
-        "#....c.ll#",
-        "##########"
+        "%%%%%######",
+        "%...#.#...#",
+        "%...#.#...#",
+        "%.s.l...f.#",
+        "%...#n#...#",
+        "%%%%%######"
       ],
-      "fixed": [{ "type": "window", "x": 0, "y": 1 }],
-      "inventory": { "window": 1, "deflector": 2, "ceilingfan": 1 },
+      "fixed": [
+        {
+          "type": "window",
+          "x": 5,
+          "y": 0
+        }
+      ],
+      "inventory": {
+        "ceilingfan": 1,
+        "splitter": 1,
+        "window": 1,
+        "filter": 1
+      },
       "solution": [
-        { "type": "deflector", "x": 6, "y": 1, "d": 1 },
-        { "type": "deflector", "x": 6, "y": 4, "d": 1 },
-        { "type": "ceilingfan", "x": 6, "y": 3 },
-        { "type": "window", "x": 9, "y": 4 }
+        {
+          "type": "splitter",
+          "x": 5,
+          "y": 3
+        },
+        {
+          "type": "ceilingfan",
+          "x": 3,
+          "y": 3
+        },
+        {
+          "type": "window",
+          "x": 10,
+          "y": 3
+        },
+        {
+          "type": "filter",
+          "x": 1,
+          "y": 3
+        }
       ]
     }
   ]

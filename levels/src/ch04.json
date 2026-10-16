@@ -1,117 +1,187 @@
 {
   "chapter": 4,
-  "title": "Curtains",
+  "title": "Kitchen Smoke",
   "levels": [
     {
-      "name": "Shielded Flame",
-      "tip": "A curtain takes 1 off any breeze passing through it, so a gentle breeze stops right there.",
-      "wind": { "from": "W", "strength": 0 },
+      "name": "Burnt Toast",
+      "tip": "Air that passes the stove carries its smoke. Open a window so the smoke blows outside, not into a wall.",
+      "wind": {
+        "from": "W",
+        "strength": 1
+      },
       "map": [
-        "##########",
-        "#....#...#",
-        "#.p....c.#",
-        "#....#...#",
-        "##########"
+        "########",
+        "#......#",
+        "#..s...#",
+        "#......#",
+        "########"
       ],
       "fixed": [
-        { "type": "fan", "x": 1, "y": 2, "d": 1 }
+        {
+          "type": "fan",
+          "x": 1,
+          "y": 2,
+          "d": 1
+        }
       ],
-      "inventory": { "curtain": 1 },
+      "inventory": {
+        "window": 1
+      },
       "solution": [
-        { "type": "curtain", "x": 5, "y": 2 }
+        {
+          "type": "window",
+          "x": 7,
+          "y": 2
+        }
       ]
     },
     {
-      "name": "Strong Enough",
-      "tip": "Strong wind today: count the lines in a stream to see how strong it is.",
-      "wind": { "from": "W", "strength": 2 },
-      "map": [
-        "#########",
-        "#..#..c.#",
-        "#......p#",
-        "#..#..p.#",
-        "#..#....#",
-        "#########"
-      ],
-      "fixed": [
-        { "type": "window", "x": 0, "y": 2 },
-        { "type": "fan", "x": 6, "y": 4, "d": 0 }
-      ],
-      "inventory": { "window": 1, "curtain": 1 },
-      "solution": [
-        { "type": "window", "x": 8, "y": 2 },
-        { "type": "curtain", "x": 6, "y": 2 }
-      ]
-    },
-    {
-      "name": "Loose Papers",
-      "tip": "Papers scatter in strong wind: they can take a gentle breeze of 1 at most.",
-      "wind": { "from": "N", "strength": 2 },
-      "map": [
-        "#####~~~~",
-        "#...#~~~~",
-        "#...#####",
-        "#....n.p#",
-        "#.......#",
-        "#########"
-      ],
-      "fixed": [
-        { "type": "window", "x": 2, "y": 0 }
-      ],
-      "inventory": { "window": 1, "curtain": 1, "deflector": 1 },
-      "solution": [
-        { "type": "curtain", "x": 2, "y": 1 },
-        { "type": "deflector", "x": 2, "y": 3, "d": 1 },
-        { "type": "window", "x": 8, "y": 3 }
-      ]
-    },
-    {
-      "name": "Draught Stopper",
-      "wind": { "from": "E", "strength": 1 },
-      "map": [
-        "######",
-        "#....#",
-        "#...c#",
-        "#....#",
-        "#.####",
-        "#...p#",
-        "#l...#",
-        "#....#",
-        "#%%%%#"
-      ],
-      "fixed": [
-        { "type": "window", "x": 5, "y": 2 },
-        { "type": "window", "x": 5, "y": 5 },
-        { "type": "deflector", "x": 1, "y": 2, "d": 0 },
-        { "type": "fan", "x": 1, "y": 5, "d": 2 }
-      ],
-      "inventory": { "window": 1, "curtain": 1, "deflector": 1 },
-      "solution": [
-        { "type": "curtain", "x": 3, "y": 2 },
-        { "type": "deflector", "x": 1, "y": 7, "d": 0 },
-        { "type": "window", "x": 0, "y": 7 }
-      ]
-    },
-    {
-      "name": "Second Wind",
-      "wind": { "from": "S", "strength": 2 },
+      "name": "Airing Out",
+      "tip": "The wind can carry smoke too: let it in on one side and out on the far side.",
+      "wind": {
+        "from": "N",
+        "strength": 1
+      },
       "map": [
         "#########",
         "#...#...#",
-        "#.l.#...#",
-        "#...n...#",
-        "#ooo#o..#",
+        "#...#.s.#",
+        "#.......#",
+        "#.......#",
+        "#########"
+      ],
+      "fixed": [],
+      "inventory": {
+        "window": 2
+      },
+      "solution": [
+        {
+          "type": "window",
+          "x": 6,
+          "y": 0
+        },
+        {
+          "type": "window",
+          "x": 6,
+          "y": 5
+        }
+      ]
+    },
+    {
+      "name": "Smoke Signals",
+      "tip": "Nothing can be fitted into a hatched wall, so this smoke will have to leave another way.",
+      "wind": {
+        "from": "W",
+        "strength": 0
+      },
+      "map": [
+        "########%",
+        "#.......%",
+        "#.s.....%",
+        "#.....p.%",
+        "########%"
+      ],
+      "fixed": [
+        {
+          "type": "fan",
+          "x": 1,
+          "y": 2,
+          "d": 1
+        }
+      ],
+      "inventory": {
+        "fan": 1,
+        "window": 1
+      },
+      "solution": [
+        {
+          "type": "fan",
+          "x": 6,
+          "y": 2,
+          "d": 2
+        },
+        {
+          "type": "window",
+          "x": 6,
+          "y": 4
+        }
+      ]
+    },
+    {
+      "name": "Sunday Roast",
+      "tip": "Mind the candle: a breeze straight through the house would blow it out.",
+      "wind": {
+        "from": "W",
+        "strength": 1
+      },
+      "map": [
+        "#########",
+        "#...#...#",
+        "#.c...s.#",
+        "#...#...#",
         "#########"
       ],
       "fixed": [
-        { "type": "window", "x": 6, "y": 5 },
-        { "type": "window", "x": 2, "y": 0 }
+        {
+          "type": "window",
+          "x": 0,
+          "y": 2
+        }
       ],
-      "inventory": { "curtain": 1, "fan": 1, "deflector": 1 },
+      "inventory": {
+        "fan": 1,
+        "window": 1
+      },
       "solution": [
-        { "type": "curtain", "x": 6, "y": 4 },
-        { "type": "deflector", "x": 6, "y": 3, "d": 1 },
-        { "type": "fan", "x": 2, "y": 3, "d": 0 }
+        {
+          "type": "fan",
+          "x": 6,
+          "y": 1,
+          "d": 2
+        },
+        {
+          "type": "window",
+          "x": 6,
+          "y": 4
+        }
+      ]
+    },
+    {
+      "name": "Two Pans",
+      "wind": {
+        "from": "W",
+        "strength": 1
+      },
+      "map": [
+        "########",
+        "#......#",
+        "#.s....#",
+        "#....s.#",
+        "########"
+      ],
+      "fixed": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 2
+        }
+      ],
+      "inventory": {
+        "fan": 1,
+        "window": 1
+      },
+      "solution": [
+        {
+          "type": "fan",
+          "x": 5,
+          "y": 2,
+          "d": 2
+        },
+        {
+          "type": "window",
+          "x": 5,
+          "y": 4
+        }
       ]
     }
   ]

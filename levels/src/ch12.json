@@ -1,116 +1,213 @@
 {
   "chapter": 12,
-  "title": "Greenhouse",
+  "title": "Extractors",
   "levels": [
     {
-      "name": "Eddy",
-      "tip": "Where a breeze meets its own path again, it does not add to itself.",
-      "wind": { "from": "N", "strength": 2 },
+      "name": "Upwind Exit",
+      "tip": "An extractor lets air out of any outside wall, even the windy one, and gently pulls air toward itself.",
+      "wind": {
+        "from": "N",
+        "strength": 1
+      },
       "map": [
-        "%%%#%%%%%%",
-        "%o.l..oo.%",
-        "#p...p...%",
-        "%o..####.%",
-        "%..f####f%",
-        "%o..####.%",
-        "%....f...%",
-        "%%%%%%%%%%"
+        "#########",
+        "#...#...#",
+        "#.p.#...#",
+        "#....p..#",
+        "#########"
       ],
       "fixed": [
-        { "type": "window", "x": 3, "y": 0 },
-        { "type": "deflector", "x": 8, "y": 2, "d": 1 },
-        { "type": "deflector", "x": 8, "y": 6, "d": 0 }
+        {
+          "type": "window",
+          "x": 2,
+          "y": 0
+        },
+        {
+          "type": "deflector",
+          "x": 2,
+          "y": 3,
+          "d": 1
+        },
+        {
+          "type": "deflector",
+          "x": 6,
+          "y": 3,
+          "d": 0
+        }
       ],
-      "inventory": { "window": 1, "splitter": 1, "deflector": 1 },
+      "inventory": {
+        "extractor": 1
+      },
       "solution": [
-        { "type": "window", "x": 0, "y": 2 },
-        { "type": "splitter", "x": 3, "y": 2 },
-        { "type": "deflector", "x": 3, "y": 6, "d": 1 }
+        {
+          "type": "extractor",
+          "x": 6,
+          "y": 0
+        }
       ]
     },
     {
-      "name": "Fern Aisle",
-      "wind": { "from": "E", "strength": 2 },
+      "name": "Range Hood",
+      "tip": "An extractor's gentle pull carries smoke along its line and out of the house.",
+      "wind": {
+        "from": "N",
+        "strength": 1
+      },
       "map": [
-        "##########",
-        "%.....p..#",
-        "#.l#.ooo.#",
-        "#..#.ooo.#",
-        "#.f#.....#",
-        "##########"
-      ],
-      "fixed": [{ "type": "window", "x": 9, "y": 1 }],
-      "inventory": { "window": 1, "fan": 1, "curtain": 1 },
-      "solution": [
-        { "type": "fan", "x": 2, "y": 1, "d": 2 },
-        { "type": "curtain", "x": 2, "y": 3 },
-        { "type": "window", "x": 2, "y": 5 }
-      ]
-    },
-    {
-      "name": "Potting Shed",
-      "wind": { "from": "W", "strength": 3 },
-      "map": [
-        "%%%%%%%%%%%",
-        "#..#oofoo.#",
-        "#..#......#",
-        "#.p......c#",
-        "#..#......#",
-        "#..#oo..l.#",
-        "###########"
-      ],
-      "fixed": [{ "type": "window", "x": 0, "y": 3 }],
-      "inventory": { "window": 1, "fan": 1, "splitter": 1 },
-      "solution": [
-        { "type": "splitter", "x": 6, "y": 3 },
-        { "type": "fan", "x": 6, "y": 5, "d": 1 },
-        { "type": "window", "x": 10, "y": 5 }
-      ]
-    },
-    {
-      "name": "Quiet Wing",
-      "tip": "A window whose wind finds no way out adds nothing, but a fan's own breeze always blows.",
-      "wind": { "from": "N", "strength": 3 },
-      "map": [
-        "%%#%%%#%%%",
-        "#...#...o%",
-        "#.f.#.l.o%",
-        "#...#...o%",
-        "#.o.#....%",
-        "#..oc...p#",
-        "#####%%%%%"
+        "#########",
+        "#cs.#...#",
+        "#.....p.#",
+        "#####...#",
+        "#########"
       ],
       "fixed": [
-        { "type": "window", "x": 2, "y": 0 },
-        { "type": "window", "x": 6, "y": 0 },
-        { "type": "deflector", "x": 2, "y": 5, "d": 1 }
+        {
+          "type": "window",
+          "x": 6,
+          "y": 0
+        }
       ],
-      "inventory": { "window": 1, "fan": 2 },
+      "inventory": {
+        "window": 1,
+        "extractor": 1
+      },
       "solution": [
-        { "type": "fan", "x": 6, "y": 5, "d": 1 },
-        { "type": "window", "x": 9, "y": 5 },
-        { "type": "fan", "x": 2, "y": 3, "d": 0 }
+        {
+          "type": "extractor",
+          "x": 2,
+          "y": 0
+        },
+        {
+          "type": "window",
+          "x": 6,
+          "y": 4
+        }
       ]
     },
     {
-      "name": "Glasshouse Storm",
-      "wind": { "from": "S", "strength": 3 },
+      "name": "Candlelit Supper",
+      "tip": "An extractor pulls along its whole line, until a piece gets in the way.",
+      "wind": {
+        "from": "N",
+        "strength": 0
+      },
       "map": [
-        "###########",
-        "#o.o#f....#",
-        "#...#.ooo.#",
-        "#...l.....#",
-        "#.p.#.ooo.#",
-        "#o.o#f....#",
-        "%%#%%%%%%%%"
+        "#########",
+        "##.p#.o.#",
+        "#s....c.#",
+        "##..#.o.#",
+        "#########"
       ],
-      "fixed": [{ "type": "window", "x": 2, "y": 6 }],
-      "inventory": { "window": 1, "fan": 1, "curtain": 1, "splitter": 1 },
+      "fixed": [],
+      "inventory": {
+        "fan": 1,
+        "extractor": 1
+      },
       "solution": [
-        { "type": "fan", "x": 2, "y": 3, "d": 1 },
-        { "type": "curtain", "x": 3, "y": 3 },
-        { "type": "splitter", "x": 5, "y": 3 },
-        { "type": "window", "x": 5, "y": 0 }
+        {
+          "type": "extractor",
+          "x": 0,
+          "y": 2
+        },
+        {
+          "type": "fan",
+          "x": 3,
+          "y": 2,
+          "d": 0
+        }
+      ]
+    },
+    {
+      "name": "Wash House",
+      "wind": {
+        "from": "W",
+        "strength": 2
+      },
+      "map": [
+        "#######",
+        "#..f..#",
+        "#.....#",
+        "#.....#",
+        "###.###",
+        "#.....#",
+        "#s.l..#",
+        "#%%%%%#"
+      ],
+      "fixed": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 2
+        }
+      ],
+      "inventory": {
+        "window": 1,
+        "splitter": 1,
+        "extractor": 1
+      },
+      "solution": [
+        {
+          "type": "splitter",
+          "x": 3,
+          "y": 2
+        },
+        {
+          "type": "extractor",
+          "x": 0,
+          "y": 6
+        },
+        {
+          "type": "window",
+          "x": 3,
+          "y": 0
+        }
+      ]
+    },
+    {
+      "name": "Wet Cloak",
+      "tip": "Shh, this is a library: candles want still air, and papers a gentle breeze at most.",
+      "wind": {
+        "from": "W",
+        "strength": 1
+      },
+      "map": [
+        "%%%%###%%%%",
+        "%..%c..%..%",
+        "%.o%.o.%o.%",
+        "#.n..l..nc#",
+        "%.o%...%o.%",
+        "%..%...%..%",
+        "%%%%%%%%%%%"
+      ],
+      "fixed": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 3
+        }
+      ],
+      "inventory": {
+        "deflector": 1,
+        "extractor": 1,
+        "window": 1
+      },
+      "solution": [
+        {
+          "type": "deflector",
+          "x": 6,
+          "y": 3,
+          "d": 0
+        },
+        {
+          "type": "extractor",
+          "x": 5,
+          "y": 0
+        },
+        {
+          "type": "window",
+          "x": 6,
+          "y": 0
+        }
       ]
     }
   ]

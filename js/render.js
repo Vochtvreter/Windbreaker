@@ -1,107 +1,47 @@
 /*
  * Windbreaker — canvas renderer.
- * Draws a board from (level, pieces, simulation result, UI state, time).
+ * Draws a board from (level, pieces, simulation result, UI state, time):
+ * the garden, the house, the airflow and the marks over it. What each tool,
+ * object and status pip looks like comes from the sprite registry
+ * (js/sprites.js); every colour comes from the theme (js/theme.js).
  * Keeps only cosmetic animation state (spin angles, eased values, wind streaks).
- * Exposes window.WBRender = { readPalette, Board, icon, analyze }.
+ * Exposes window.WBRender = { Board, icon, analyze }.
  */
 (function (root) {
   'use strict';
 
   var WB = root.WB;
+  var Theme = root.WBTheme;
+  var SPR = root.WBSprites;
+  var K = SPR.kit;
   var DX = [0, 1, 0, -1];
   var DY = [-1, 0, 1, 0];
   var TAU = Math.PI * 2;
 
-  // ------------------------------------------------------------------ palette
+  // ------------------------------------------------------------------ theme + shapes
 
-  var PAL_KEYS = [
-    'bg', 'bg-2', 'surface', 'surface-2', 'ink', 'ink-soft', 'muted', 'accent', 'accent-2', 'good', 'bad',
-    'garden', 'garden-2', 'garden-mark', 'streak', 'floor', 'floor-grid', 'wall', 'wall-solid', 'wall-hatch',
-    'wall-hi', 'wall-lo', 'wall-light', 'icon-wall', 'house-shadow', 'table', 'table-edge', 'air', 'air-deep',
-    'smoke', 'glass', 'glass-in', 'window-mark', 'piece-base', 't-fan', 't-deflector', 't-curtain', 't-vent',
-    't-splitter', 't-extractor', 't-skylight', 't-filter', 't-ceilingfan', 'o-coral', 'o-sun', 'o-teal', 'o-sky',
-    'o-cream', 'o-flame', 'o-leaf', 'o-leaf-sad', 'o-pot', 'o-paper', 'o-stove', 'o-stove-edge', 'pip-idle',
-    'hl', 'hl-edge', 'hl-wall'
-  ];
-  var FALLBACK = {
-    bg: '#f4f0e8', surface: '#fffcf6', ink: '#3a414c', 'ink-soft': '#6b727d', accent: '#379a8f',
-    garden: '#dde7d5', floor: '#f7f2e8', wall: '#66707e', air: '#6aaee0', smoke: '#9a8f83'
-  };
-  var PAL = {};
-  var FONT = 'ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
-
-  function readPalette() {
-    var cs = getComputedStyle(document.documentElement);
-    PAL_KEYS.forEach(function (k) {
-      var v = cs.getPropertyValue('--' + k).trim();
-      PAL[k] = v || FALLBACK[k] || '#888888';
-    });
-    var f = cs.getPropertyValue('--font').trim();
-    if (f) FONT = f;
-    rgbCache = {}; strCache = {}; strCacheN = 0;
-  }
-  function P(k) { return PAL[k]; }
-
-  // colour helpers (hex / rgb / rgba). Results are cached, but every input is
-  // quantised first so the caches stay small even for per-frame values.
-  function parseColor(c) {
-    c = String(c).trim();
-    var m;
-    if (c.charAt(0) === '#') {
-      var h = c.slice(1);
-      if (h.length === 3) h = h.replace(/./g, function (x) { return x + x; });
-      var n = parseInt(h.slice(0, 6), 16);
-      return [(n >> 16) & 255, (n >> 8) & 255, n & 255, h.length === 8 ? parseInt(h.slice(6), 16) / 255 : 1];
-    }
-    m = c.match(/rgba?\(([^)]+)\)/);
-    if (m) {
-      var p = m[1].split(',').map(function (s) { return parseFloat(s); });
-      return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1];
-    }
-    return [136, 136, 136, 1];
-  }
-  var rgbCache = {}, strCache = {}, strCacheN = 0;
-  function rgbOf(c) {
-    var v = rgbCache[c];
-    if (!v) v = rgbCache[c] = parseColor(c);
-    return v;
-  }
-  function remember(key, v) {
-    if (++strCacheN > 3000) { strCache = {}; rgbCache = {}; strCacheN = 0; }
-    strCache[key] = v;
-    return v;
-  }
-  function mix(a, b, t) {
-    t = Math.round(clamp(t, 0, 1) * 64) / 64;
-    var key = a + '|' + b + '|' + t;
-    var r = strCache[key];
-    if (r) return r;
-    var A = rgbOf(a), B = rgbOf(b);
-    return remember(key, 'rgba(' + Math.round(A[0] + (B[0] - A[0]) * t) + ',' + Math.round(A[1] + (B[1] - A[1]) * t) + ',' +
-      Math.round(A[2] + (B[2] - A[2]) * t) + ',' + (A[3] + (B[3] - A[3]) * t).toFixed(3) + ')');
-  }
-  function alpha(c, a) {
-    a = Math.round(clamp(a, 0, 1) * 100) / 100;
-    var key = c + '|a|' + a;
-    var r = strCache[key];
-    if (r) return r;
-    var A = rgbOf(c);
-    return remember(key, 'rgba(' + A[0] + ',' + A[1] + ',' + A[2] + ',' + (A[3] * a).toFixed(3) + ')');
-  }
-  function darker(c, t) { return mix(c, '#000000', t); }
-  function lighter(c, t) { return mix(c, '#ffffff', t); }
+  var P = Theme.color;
+  var mix = Theme.mix, alpha = Theme.alpha, darker = Theme.darker;
+  var rr = K.rr, fillRR = K.fillRR, circle = K.circle, line = K.line;
 
   // ------------------------------------------------------------------ utils
 
-  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  var clamp = K.clamp;
   function easeOutBack(t) {
     t = clamp(t, 0, 1);
     var c1 = 1.70158, c3 = c1 + 1;
     return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
   }
   function approach(cur, target, rate, dt) {
+    if (SETTLE) return target;
     return cur + (target - cur) * (1 - Math.exp(-rate * dt));
   }
+
+  // Test hook (tools/visual.js): while window.__wbFreezeTime is a number (ms),
+  // every frame is drawn at that moment as a pure function of the scene: eased
+  // values are settled, nothing spins on, and spin angles and wind streaks come
+  // from a fixed seed. Never set in normal play.
+  var RAND = Math.random, SETTLE = false;
   function rng(seed) {
     var a = seed >>> 0;
     return function () {
@@ -117,760 +57,11 @@
   }
   function mod(a, n) { var r = a % n; return r < 0 ? r + n : r; }
 
-  // rounded rect path; r is a number or [tl, tr, br, bl]
-  function rr(ctx, x, y, w, h, r) {
-    var tl, tr, br, bl;
-    if (typeof r === 'number') { tl = tr = br = bl = r; } else { tl = r[0]; tr = r[1]; br = r[2]; bl = r[3]; }
-    var m = Math.min(w, h) / 2;
-    tl = Math.min(tl, m); tr = Math.min(tr, m); br = Math.min(br, m); bl = Math.min(bl, m);
-    ctx.moveTo(x + tl, y);
-    ctx.lineTo(x + w - tr, y);
-    if (tr) ctx.arc(x + w - tr, y + tr, tr, -Math.PI / 2, 0); else ctx.lineTo(x + w, y);
-    ctx.lineTo(x + w, y + h - br);
-    if (br) ctx.arc(x + w - br, y + h - br, br, 0, Math.PI / 2); else ctx.lineTo(x + w, y + h);
-    ctx.lineTo(x + bl, y + h);
-    if (bl) ctx.arc(x + bl, y + h - bl, bl, Math.PI / 2, Math.PI); else ctx.lineTo(x, y + h);
-    ctx.lineTo(x, y + tl);
-    if (tl) ctx.arc(x + tl, y + tl, tl, Math.PI, Math.PI * 1.5); else ctx.lineTo(x, y);
-    ctx.closePath();
-  }
-  function fillRR(ctx, x, y, w, h, r, col) {
-    ctx.beginPath(); rr(ctx, x, y, w, h, r); ctx.fillStyle = col; ctx.fill();
-  }
-  function circle(ctx, x, y, r) { ctx.moveTo(x + r, y); ctx.arc(x, y, r, 0, TAU); }
-  function line(ctx, ax, ay, bx, by) { ctx.moveTo(ax, ay); ctx.lineTo(bx, by); }
-
-  // A chevron (V) pointing in direction d, centred at x,y, size s (unit space)
-  function chevron(ctx, x, y, d, s) {
-    var dx = DX[d], dy = DY[d], px = -dy, py = dx;
-    ctx.moveTo(x - dx * s * 0.5 + px * s, y - dy * s * 0.5 + py * s);
-    ctx.lineTo(x + dx * s * 0.5, y + dy * s * 0.5);
-    ctx.lineTo(x - dx * s * 0.5 - px * s, y - dy * s * 0.5 - py * s);
-  }
-
-  // ------------------------------------------------------------------ tool glyphs
-  // All glyphs draw in unit space: origin = cell centre, 1 = one tile.
-  // o = { px, fixed, d, angle, role, outward, flow, sway, horiz, inDir, icon }
-  // px = the size of one CSS pixel in unit space (for minimum stroke widths).
-
-  function minW(o, w, pxs) { return Math.max(w, (o.px || 0) * pxs); }
-
-  function pieceBase(ctx, o) {
-    if (o.fixed) {
-      // a plinth that belongs to the house
-      fillRR(ctx, -0.44, -0.44, 0.88, 0.88, 0.16, mix(P('floor'), P('wall'), 0.2));
-      ctx.beginPath(); rr(ctx, -0.44, -0.44, 0.88, 0.88, 0.16);
-      ctx.lineWidth = minW(o, 0.03, 1.5);
-      ctx.strokeStyle = alpha(P('wall'), 0.45);
-      ctx.stroke();
-      var rv = minW(o, 0.032, 0.9);
-      ctx.beginPath();
-      circle(ctx, -0.32, -0.32, rv); circle(ctx, 0.32, -0.32, rv);
-      circle(ctx, 0.32, 0.32, rv); circle(ctx, -0.32, 0.32, rv);
-      ctx.fillStyle = alpha(P('wall'), 0.55);
-      ctx.fill();
-    } else {
-      fillRR(ctx, -0.43, -0.4, 0.86, 0.86, 0.17, 'rgba(30,35,30,0.12)');
-      fillRR(ctx, -0.43, -0.44, 0.86, 0.86, 0.17, P('piece-base'));
-    }
-  }
-
-  function glyphWindow(ctx, o) {
-    var out = o.outward < 0 ? 0 : o.outward;
-    var ox = DX[out], oy = DY[out], ax = -oy, ay = ox; // outward and along-the-wall units
-    var horiz = out === 0 || out === 2;
-    var W = horiz ? 0.9 : 0.4, H = horiz ? 0.4 : 0.9;
-    var inlet = o.role === 'inlet';
-    // frame: fixed windows are part of the house, player windows are bright
-    fillRR(ctx, -W / 2, -H / 2, W, H, 0.1, o.fixed ? P('wall-light') : P('piece-base'));
-    var ins = 0.07;
-    fillRR(ctx, -W / 2 + ins, -H / 2 + ins, W - 2 * ins, H - 2 * ins, 0.05, inlet ? P('glass-in') : P('glass'));
-    // glint
-    ctx.save();
-    ctx.beginPath(); rr(ctx, -W / 2 + ins, -H / 2 + ins, W - 2 * ins, H - 2 * ins, 0.05); ctx.clip();
-    ctx.beginPath();
-    if (horiz) { line(ctx, -0.37, 0.12, -0.27, -0.12); } else { line(ctx, -0.12, -0.27, 0.12, -0.37); }
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-    ctx.lineWidth = 0.04;
-    ctx.stroke();
-    ctx.restore();
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    if (o.icon) {
-      ctx.beginPath();
-      if (horiz) line(ctx, 0, -H / 2 + ins, 0, H / 2 - ins); else line(ctx, -W / 2 + ins, 0, W / 2 - ins, 0);
-      ctx.strokeStyle = o.fixed ? P('wall-light') : P('piece-base');
-      ctx.lineWidth = 0.06;
-      ctx.stroke();
-      return;
-    }
-    var mk = P('window-mark');
-    if (inlet) {
-      // two strong chevrons pointing into the house
-      var cd = (out + 2) % 4;
-      ctx.beginPath();
-      chevron(ctx, ax * -0.17, ay * -0.17, cd, 0.095);
-      chevron(ctx, ax * 0.17, ay * 0.17, cd, 0.095);
-      ctx.strokeStyle = mk;
-      ctx.lineWidth = minW(o, 0.06, 1.4);
-      ctx.stroke();
-      // a little wind-mouth on the garden side, catching the breeze
-      ctx.beginPath();
-      line(ctx, ox * 0.82 + ax * 0.3, oy * 0.82 + ay * 0.3, ox * 0.58 + ax * 0.13, oy * 0.58 + ay * 0.13);
-      line(ctx, ox * 0.82 - ax * 0.3, oy * 0.82 - ay * 0.3, ox * 0.58 - ax * 0.13, oy * 0.58 - ay * 0.13);
-      ctx.strokeStyle = alpha(P('air-deep'), 0.85);
-      ctx.lineWidth = minW(o, 0.05, 1.3);
-      ctx.stroke();
-    } else {
-      // pale pane, one soft chevron and an arrow poking out into the garden
-      ctx.beginPath();
-      chevron(ctx, 0, 0, out, 0.09);
-      ctx.strokeStyle = alpha(mk, 0.55);
-      ctx.lineWidth = minW(o, 0.05, 1.2);
-      ctx.stroke();
-      ctx.beginPath();
-      line(ctx, ox * 0.54, oy * 0.54, ox * 0.8, oy * 0.8);
-      chevron(ctx, ox * 0.76, oy * 0.76, out, 0.1);
-      ctx.strokeStyle = alpha(P('air-deep'), 0.7);
-      ctx.lineWidth = minW(o, 0.05, 1.3);
-      ctx.stroke();
-    }
-  }
-
-  function glyphFan(ctx, o) {
-    var col = P('t-fan');
-    var d = o.d | 0;
-    var dx = DX[d], dy = DY[d], px = -dy, py = dx;
-    // bold nozzle arrow on the blowing side
-    ctx.beginPath();
-    ctx.moveTo(dx * 0.53, dy * 0.53);
-    ctx.lineTo(dx * 0.24 + px * 0.22, dy * 0.24 + py * 0.22);
-    ctx.lineTo(dx * 0.24 - px * 0.22, dy * 0.24 - py * 0.22);
-    ctx.closePath();
-    ctx.fillStyle = col;
-    ctx.lineJoin = 'round';
-    ctx.lineWidth = 0.05;
-    ctx.strokeStyle = col;
-    ctx.fill();
-    ctx.stroke();
-    // cage
-    ctx.beginPath(); circle(ctx, 0, 0, 0.29);
-    ctx.fillStyle = o.fixed ? mix(P('piece-base'), P('wall-light'), 0.35) : P('piece-base');
-    ctx.fill();
-    ctx.lineWidth = minW(o, 0.06, 1.5);
-    ctx.strokeStyle = col;
-    ctx.stroke();
-    // blades
-    ctx.save();
-    ctx.rotate(o.angle || 0);
-    ctx.fillStyle = alpha(col, 0.85);
-    for (var k = 0; k < 3; k++) {
-      ctx.rotate(TAU / 3);
-      ctx.beginPath();
-      ctx.ellipse(0.02, -0.125, 0.068, 0.12, 0.35, 0, TAU);
-      ctx.fill();
-    }
-    ctx.restore();
-    ctx.beginPath(); circle(ctx, 0, 0, 0.05);
-    ctx.fillStyle = darker(col, 0.2);
-    ctx.fill();
-  }
-
-  function glyphDeflector(ctx, o) {
-    var col = P('t-deflector');
-    ctx.save();
-    ctx.rotate((o.d | 0) === 1 ? Math.PI / 4 : -Math.PI / 4);
-    var hl = 0.42, w = 0.1;
-    function vane(dy) {
-      ctx.beginPath();
-      ctx.moveTo(-hl, dy);
-      ctx.quadraticCurveTo(0, dy - w * 1.9, hl, dy);
-      ctx.quadraticCurveTo(0, dy + w * 1.5, -hl, dy);
-      ctx.closePath();
-    }
-    vane(0.035);
-    ctx.fillStyle = darker(col, 0.25);
-    ctx.fill();
-    vane(0);
-    ctx.fillStyle = col;
-    ctx.fill();
-    ctx.lineJoin = 'round';
-    ctx.lineWidth = minW(o, 0.03, 1);
-    ctx.strokeStyle = col;
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(-hl * 0.62, -0.03); ctx.quadraticCurveTo(0, -0.115, hl * 0.62, -0.03);
-    ctx.strokeStyle = 'rgba(255,255,255,0.45)';
-    ctx.lineWidth = 0.03;
-    ctx.lineCap = 'round';
-    ctx.stroke();
-    // pivot
-    ctx.beginPath(); circle(ctx, 0, -0.005, 0.055);
-    ctx.fillStyle = P('piece-base');
-    ctx.fill();
-    ctx.lineWidth = minW(o, 0.03, 1);
-    ctx.strokeStyle = darker(col, 0.35);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  function glyphCurtain(ctx, o) {
-    var col = P('t-curtain');
-    var sw = o.sway || 0;
-    var top = -0.29, bot = 0.33, L = -0.31, R = 0.31;
-    ctx.lineCap = 'round';
-    ctx.beginPath(); line(ctx, -0.39, -0.33, 0.39, -0.33);
-    ctx.strokeStyle = P('ink-soft');
-    ctx.lineWidth = minW(o, 0.045, 1.2);
-    ctx.stroke();
-    ctx.beginPath(); circle(ctx, -0.39, -0.33, 0.04); circle(ctx, 0.39, -0.33, 0.04);
-    ctx.fillStyle = P('ink-soft');
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(L, top);
-    ctx.lineTo(R, top);
-    ctx.quadraticCurveTo(R + sw * 0.3, 0.05, R + sw, bot);
-    var n = 4, wv = (R - L) / n;
-    for (var i = 0; i < n; i++) {
-      var x0 = R + sw - wv * i, x1 = x0 - wv;
-      ctx.quadraticCurveTo((x0 + x1) / 2, bot + 0.06, x1, bot);
-    }
-    ctx.quadraticCurveTo(L + sw * 0.3, 0.05, L, top);
-    ctx.closePath();
-    ctx.fillStyle = col;
-    ctx.fill();
-    ctx.beginPath();
-    for (var j = 1; j < n; j++) {
-      var fx = L + wv * j;
-      ctx.moveTo(fx, top + 0.04);
-      ctx.quadraticCurveTo(fx + sw * 0.3, 0.05, fx + sw, bot - 0.01);
-    }
-    ctx.strokeStyle = darker(col, 0.18);
-    ctx.lineWidth = minW(o, 0.03, 1);
-    ctx.stroke();
-    ctx.beginPath(); line(ctx, L + 0.03, top + 0.02, R - 0.03, top + 0.02);
-    ctx.strokeStyle = lighter(col, 0.35);
-    ctx.lineWidth = 0.035;
-    ctx.stroke();
-  }
-
-  function glyphVent(ctx, o) {
-    var horiz = o.horiz !== false; // air passes left-right
-    var W = horiz ? 0.74 : 0.5, H = horiz ? 0.5 : 0.74;
-    fillRR(ctx, -W / 2, -H / 2, W, H, 0.1, o.fixed ? mix(P('t-vent'), P('wall'), 0.3) : P('t-vent'));
-    ctx.beginPath();
-    var i;
-    if (horiz) { for (i = -1; i <= 1; i++) line(ctx, -0.25, i * 0.12, 0.25, i * 0.12); }
-    else { for (i = -1; i <= 1; i++) line(ctx, i * 0.12, -0.25, i * 0.12, 0.25); }
-    ctx.strokeStyle = alpha(P('wall'), 0.9);
-    ctx.lineWidth = minW(o, 0.05, 1.2);
-    ctx.lineCap = 'round';
-    ctx.stroke();
-  }
-
-  // A wedge body with a white T-arrow: air in from one side, out to left and right.
-  function glyphSplitter(ctx, o) {
-    var col = P('t-splitter');
-    var r = 0.37;
-    ctx.beginPath();
-    ctx.moveTo(0, -r); ctx.lineTo(r, 0); ctx.lineTo(0, r); ctx.lineTo(-r, 0); ctx.closePath();
-    ctx.fillStyle = col;
-    ctx.lineJoin = 'round';
-    ctx.lineWidth = 0.09;
-    ctx.strokeStyle = col;
-    ctx.fill();
-    ctx.stroke();
-    ctx.save();
-    ctx.rotate((o.inDir == null ? 0 : o.inDir) * Math.PI / 2);
-    ctx.beginPath();
-    line(ctx, 0, 0.24, 0, 0.0);
-    line(ctx, -0.2, 0.0, 0.2, 0.0);
-    ctx.moveTo(-0.11, -0.085); ctx.lineTo(-0.205, 0); ctx.lineTo(-0.11, 0.085);
-    ctx.moveTo(0.11, -0.085); ctx.lineTo(0.205, 0); ctx.lineTo(0.11, 0.085);
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = minW(o, 0.06, 1.4);
-    ctx.lineCap = 'round';
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  function glyphExtractor(ctx, o) {
-    var col = P('t-extractor');
-    ctx.beginPath(); circle(ctx, 0, 0, 0.38);
-    ctx.fillStyle = o.fixed ? P('wall-light') : P('piece-base');
-    ctx.fill();
-    ctx.beginPath(); circle(ctx, 0, 0, 0.3);
-    ctx.lineWidth = minW(o, 0.06, 1.4);
-    ctx.strokeStyle = col;
-    ctx.stroke();
-    ctx.save();
-    ctx.rotate(o.angle || 0);
-    ctx.fillStyle = alpha(col, 0.85);
-    for (var k = 0; k < 4; k++) {
-      ctx.rotate(TAU / 4);
-      ctx.beginPath();
-      ctx.ellipse(0.03, -0.13, 0.06, 0.12, 0.45, 0, TAU);
-      ctx.fill();
-    }
-    ctx.restore();
-    ctx.beginPath(); circle(ctx, 0, 0, 0.05);
-    ctx.fillStyle = darker(col, 0.25);
-    ctx.fill();
-  }
-
-  // A roof window seen from below: tapered glass and an arrow going up and out.
-  function glyphSkylight(ctx, o) {
-    var frame = P('wall-light');
-    fillRR(ctx, -0.37, -0.37, 0.74, 0.74, 0.1, frame);
-    ctx.beginPath();
-    ctx.moveTo(-0.21, -0.29); ctx.lineTo(0.21, -0.29); ctx.lineTo(0.29, 0.29); ctx.lineTo(-0.29, 0.29); ctx.closePath();
-    ctx.fillStyle = P('t-skylight');
-    ctx.fill();
-    ctx.beginPath();
-    line(ctx, 0, 0.18, 0, -0.14);
-    chevron(ctx, 0, -0.1, 0, 0.13);
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = minW(o, 0.065, 1.5);
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.stroke();
-  }
-
-  function glyphFilter(ctx, o) {
-    var col = P('t-filter');
-    fillRR(ctx, -0.34, -0.34, 0.68, 0.68, 0.11, mix(col, P('piece-base'), 0.62));
-    ctx.save();
-    ctx.beginPath(); rr(ctx, -0.29, -0.29, 0.58, 0.58, 0.07); ctx.clip();
-    ctx.beginPath();
-    var r = 0.085, hw = r * Math.sqrt(3) / 2;
-    for (var row = -3; row <= 3; row++) {
-      for (var c = -3; c <= 3; c++) {
-        var cx = c * hw * 2 + (row & 1 ? hw : 0), cy = row * r * 1.5;
-        for (var k = 0; k < 6; k++) {
-          var a = Math.PI / 6 + k * Math.PI / 3;
-          var x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
-          if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-        }
-        ctx.closePath();
-      }
-    }
-    ctx.strokeStyle = alpha(col, 0.9);
-    ctx.lineWidth = minW(o, 0.025, 0.8);
-    ctx.stroke();
-    ctx.restore();
-    ctx.beginPath(); rr(ctx, -0.34, -0.34, 0.68, 0.68, 0.11);
-    ctx.strokeStyle = col;
-    ctx.lineWidth = minW(o, 0.055, 1.4);
-    ctx.stroke();
-  }
-
-  function glyphCeilingFan(ctx, o) {
-    var col = P('t-ceilingfan');
-    ctx.save();
-    ctx.rotate(o.angle || 0);
-    ctx.fillStyle = alpha(col, 0.95);
-    for (var k = 0; k < 4; k++) {
-      ctx.rotate(TAU / 4);
-      // a swept paddle with a rounded tip
-      ctx.beginPath();
-      ctx.moveTo(0.1, -0.045);
-      ctx.quadraticCurveTo(0.27, -0.085, 0.4, -0.115);
-      ctx.arc(0.41, -0.035, 0.08, -Math.PI * 0.55, Math.PI * 0.5);
-      ctx.quadraticCurveTo(0.26, 0.06, 0.1, 0.045);
-      ctx.closePath();
-      ctx.fill();
-    }
-    ctx.restore();
-    // motor housing
-    ctx.beginPath(); circle(ctx, 0, 0, 0.16);
-    ctx.fillStyle = darker(col, 0.22);
-    ctx.fill();
-    ctx.beginPath(); circle(ctx, 0, 0, 0.11);
-    ctx.lineWidth = minW(o, 0.03, 1);
-    ctx.strokeStyle = lighter(col, 0.35);
-    ctx.stroke();
-    ctx.beginPath(); circle(ctx, 0, 0, 0.045);
-    ctx.fillStyle = o.fixed ? P('wall') : P('piece-base');
-    ctx.fill();
-  }
-
-  var GLYPHS = {
-    window: glyphWindow, fan: glyphFan, deflector: glyphDeflector, curtain: glyphCurtain,
-    vent: glyphVent, splitter: glyphSplitter, extractor: glyphExtractor, skylight: glyphSkylight,
-    filter: glyphFilter, ceilingfan: glyphCeilingFan
-  };
   function isWallTool(type) { return WB.TOOLS[type] && WB.TOOLS[type].mount !== 'floor'; }
-
-  // ------------------------------------------------------------------ objects
-  // a = animation state { angle, flow, lit, dry, scatter, flutter, bend, sway, small, px... }
-  // a.small switches to chunkier, simpler shapes for small tiles.
-
-  function objPinwheel(ctx, a) {
-    ctx.lineCap = 'round';
-    ctx.beginPath(); line(ctx, 0, 0, 0.02, 0.44);
-    ctx.strokeStyle = P('table-edge');
-    ctx.lineWidth = Math.max(0.05, (a.px || 0) * 1.4);
-    ctx.stroke();
-    var cols = [P('o-coral'), P('o-sun'), P('o-teal'), P('o-sky')];
-    var R = a.small ? 0.34 : 0.31;
-    ctx.save();
-    ctx.translate(0, -0.03);
-    ctx.rotate(a.angle || 0);
-    for (var k = 0; k < 4; k++) {
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(0, -R);
-      ctx.quadraticCurveTo(R * 0.65, -R * 0.97, R * 0.65, -0.04);
-      ctx.closePath();
-      ctx.fillStyle = cols[k];
-      ctx.fill();
-      ctx.rotate(TAU / 4);
-    }
-    ctx.restore();
-    ctx.beginPath(); circle(ctx, 0, -0.03, 0.05);
-    ctx.fillStyle = P('piece-base');
-    ctx.fill();
-  }
-
-  function objCandle(ctx, a, t) {
-    var lit = a.lit == null ? 1 : a.lit;
-    if (lit > 0.02) {
-      var g = ctx.createRadialGradient(0, -0.22, 0, 0, -0.22, 0.46);
-      g.addColorStop(0, alpha(P('o-flame'), 0.32 * lit));
-      g.addColorStop(1, alpha(P('o-flame'), 0));
-      ctx.fillStyle = g;
-      ctx.beginPath(); circle(ctx, 0, -0.22, 0.46); ctx.fill();
-    }
-    var sw = a.small ? 1.25 : 1;
-    ctx.beginPath(); ctx.ellipse(0, 0.33, 0.25, 0.075, 0, 0, TAU);
-    ctx.fillStyle = P('wall-light');
-    ctx.fill();
-    ctx.beginPath(); rr(ctx, -0.085 * sw, -0.12, 0.17 * sw, 0.45, 0.045);
-    ctx.fillStyle = P('o-cream');
-    ctx.fill();
-    ctx.strokeStyle = alpha(P('ink'), 0.22);
-    ctx.lineWidth = Math.max(0.025, (a.px || 0) * 0.9);
-    ctx.stroke();
-    ctx.beginPath(); line(ctx, 0, -0.12, 0, -0.17);
-    ctx.strokeStyle = P('ink');
-    ctx.lineWidth = 0.025;
-    ctx.lineCap = 'round';
-    ctx.stroke();
-    if (lit > 0.02) {
-      var fl = 1 + 0.07 * Math.sin(t * 13.1) + 0.05 * Math.sin(t * 21.7 + 1);
-      var h = 0.21 * lit * fl * sw, w = 0.075 * lit * sw;
-      var lean = 0.02 * Math.sin(t * 7.3);
-      ctx.beginPath();
-      ctx.moveTo(lean, -0.17 - h);
-      ctx.bezierCurveTo(w * 1.3, -0.17 - h * 0.45, w, -0.15, 0, -0.145);
-      ctx.bezierCurveTo(-w, -0.15, -w * 1.3, -0.17 - h * 0.45, lean, -0.17 - h);
-      ctx.fillStyle = P('o-flame');
-      ctx.fill();
-      ctx.beginPath(); ctx.ellipse(0, -0.19, w * 0.45, h * 0.28, 0, 0, TAU);
-      ctx.fillStyle = 'rgba(255,240,190,0.95)';
-      ctx.fill();
-    }
-    if (lit < 0.98) {
-      var al = (1 - lit) * 0.75;
-      ctx.beginPath();
-      for (var i = 0; i <= 12; i++) {
-        var u = i / 12;
-        var x = Math.sin(u * 7 - t * 3.2) * 0.05 * (0.3 + u) + (a.dirx || 0) * u * 0.12;
-        var y = -0.17 - u * 0.33;
-        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-      }
-      ctx.strokeStyle = alpha(P('smoke'), al);
-      ctx.lineWidth = Math.max(0.035, (a.px || 0) * 1.2);
-      ctx.stroke();
-    }
-  }
-
-  function tshirt(ctx) {
-    ctx.beginPath();
-    ctx.moveTo(-0.05, 0);
-    ctx.quadraticCurveTo(0, 0.04, 0.05, 0);
-    ctx.lineTo(0.15, 0.03);
-    ctx.lineTo(0.18, 0.11);
-    ctx.lineTo(0.11, 0.13);
-    ctx.lineTo(0.105, 0.31);
-    ctx.lineTo(-0.105, 0.31);
-    ctx.lineTo(-0.11, 0.13);
-    ctx.lineTo(-0.18, 0.11);
-    ctx.lineTo(-0.15, 0.03);
-    ctx.closePath();
-  }
-
-  function objLaundry(ctx, a, t) {
-    var f = a.flow || 0;
-    var dry = a.dry || 0;
-    var small = !!a.small;
-    ctx.lineCap = 'round';
-    var lineY = small ? -0.3 : -0.28;
-    if (!small) {
-      ctx.beginPath(); line(ctx, -0.41, -0.32, -0.41, 0.4); line(ctx, 0.41, -0.32, 0.41, 0.4);
-      ctx.strokeStyle = P('table-edge');
-      ctx.lineWidth = 0.045;
-      ctx.stroke();
-    }
-    ctx.beginPath(); ctx.moveTo(small ? -0.47 : -0.41, lineY); ctx.quadraticCurveTo(0, lineY + 0.1, small ? 0.47 : 0.41, lineY);
-    ctx.strokeStyle = P('ink-soft');
-    ctx.lineWidth = Math.max(small ? 0.04 : 0.02, (a.px || 0) * 1.5);
-    ctx.stroke();
-    var amp = 0.05 + 0.11 * Math.min(f, 3);
-    var lean = clamp(a.dirx || 0, -1, 1) * 0.16 * Math.min(f, 3);
-    var sw1 = lean + amp * Math.sin(t * (2.1 + f * 1.4));
-    var sw2 = lean + amp * 1.15 * Math.sin(t * (2.4 + f * 1.5) + 1.3);
-    var damp = 1 - dry;
-    var soot = a.soot || 0; // smoky air has reached it: grey, smudged garments
-    var sootCol = darker(P('smoke'), 0.18);
-    var shirtCol = mix(mix(P('o-sky'), mix(P('o-sky'), P('smoke'), 0.55), damp), sootCol, 0.62 * soot);
-    var towelCol = mix(mix(P('o-coral'), mix(P('o-coral'), P('smoke'), 0.55), damp), sootCol, 0.62 * soot);
-    var smudge = alpha(darker(P('smoke'), 0.45), 0.85 * soot);
-    var sx = small ? -0.2 : -0.17, tx = small ? 0.21 : 0.18;
-    var py = lineY + (small ? 0.05 : 0.055);
-    ctx.save();
-    ctx.translate(sx, py);
-    ctx.rotate(sw1);
-    if (small) ctx.scale(1.35, 1.3);
-    tshirt(ctx);
-    ctx.fillStyle = shirtCol;
-    ctx.fill();
-    if (soot > 0.02) {
-      ctx.beginPath(); ctx.ellipse(0.035, 0.17, 0.045, 0.032, 0.4, 0, TAU); circle(ctx, -0.05, 0.24, 0.022);
-      ctx.fillStyle = smudge;
-      ctx.fill();
-    }
-    ctx.restore();
-    ctx.save();
-    ctx.translate(tx, py + 0.01);
-    ctx.rotate(sw2);
-    var tw = small ? 0.12 : 0.085, th = small ? 0.38 : 0.3;
-    ctx.beginPath(); rr(ctx, -tw, 0, tw * 2, th, 0.03);
-    ctx.fillStyle = towelCol;
-    ctx.fill();
-    ctx.beginPath(); line(ctx, -tw, th * 0.78, tw, th * 0.78);
-    ctx.strokeStyle = 'rgba(255,255,255,' + (0.6 - 0.35 * soot) + ')';
-    ctx.lineWidth = small ? 0.045 : 0.03;
-    ctx.stroke();
-    if (soot > 0.02) {
-      ctx.beginPath(); ctx.ellipse(-tw * 0.15, th * 0.4, tw * 0.55, th * 0.1, -0.3, 0, TAU);
-      ctx.fillStyle = smudge;
-      ctx.fill();
-    }
-    ctx.restore();
-    if (!small) {
-      ctx.beginPath(); circle(ctx, sx, py, 0.025); circle(ctx, tx, py + 0.01, 0.025);
-      ctx.fillStyle = P('table-edge');
-      ctx.fill();
-    }
-    // a small grey wisp curling off the line
-    if (soot > 0.02 && !small) {
-      for (var k = 0; k < 2; k++) {
-        var wp = (t * 0.5 + k * 0.5) % 1;
-        ctx.beginPath(); circle(ctx, 0.02 + Math.sin(wp * 4 + k) * 0.04, lineY - 0.04 - wp * 0.16, 0.035 + 0.04 * wp);
-        ctx.fillStyle = alpha(P('smoke'), 0.5 * soot * (1 - wp));
-        ctx.fill();
-      }
-    }
-    if (damp > 0.05) {
-      ctx.fillStyle = alpha(P('air-deep'), 0.75 * damp);
-      var dr = small ? 0.03 : 0.02;
-      for (var i = 0; i < 2; i++) {
-        var ph = (t * 0.9 + i * 0.5) % 1;
-        var x = i === 0 ? sx + Math.sin(sw1) * -0.3 : tx + Math.sin(sw2) * -0.3;
-        var y = 0.1 + ph * 0.3;
-        ctx.globalAlpha = (1 - ph);
-        ctx.beginPath(); ctx.ellipse(x, y, dr, dr * 1.4, 0, 0, TAU); ctx.fill();
-        ctx.globalAlpha = 1;
-      }
-    }
-  }
-
-  function paperSheet(ctx, w, h, lines, corner, lw) {
-    ctx.beginPath();
-    if (corner > 0.001) {
-      ctx.moveTo(-w / 2, -h / 2);
-      ctx.lineTo(w / 2, -h / 2);
-      ctx.lineTo(w / 2, h / 2 - corner);
-      ctx.lineTo(w / 2 - corner, h / 2);
-      ctx.lineTo(-w / 2, h / 2);
-      ctx.closePath();
-    } else {
-      rr(ctx, -w / 2, -h / 2, w, h, 0.02);
-    }
-    ctx.fillStyle = P('o-paper');
-    ctx.fill();
-    ctx.strokeStyle = alpha(P('ink'), 0.22);
-    ctx.lineWidth = lw ? lw * 0.6 : 0.02;
-    ctx.stroke();
-    if (lines) {
-      ctx.beginPath();
-      var step = (h - 0.16) / Math.max(1, lines - 0.4);
-      for (var i = 0; i < lines; i++) {
-        var y = -h / 2 + 0.09 + i * step;
-        line(ctx, -w / 2 + 0.07, y, w / 2 - (i === lines - 1 ? 0.15 : 0.07), y);
-      }
-      ctx.strokeStyle = alpha(P('ink-soft'), 0.55);
-      ctx.lineWidth = lw || 0.022;
-      ctx.lineCap = 'round';
-      ctx.stroke();
-    }
-    if (corner > 0.001) {
-      ctx.beginPath();
-      ctx.moveTo(w / 2, h / 2 - corner);
-      ctx.lineTo(w / 2 - corner * 0.9, h / 2 - corner * 0.9);
-      ctx.lineTo(w / 2 - corner, h / 2);
-      ctx.closePath();
-      ctx.fillStyle = mix(P('o-paper'), P('ink-soft'), 0.22);
-      ctx.fill();
-    }
-  }
-
-  function objPapers(ctx, a, t) {
-    var sc = a.scatter || 0;
-    var fl = a.flutter || 0;
-    var small = !!a.small;
-    var W = small ? 0.52 : 0.44, H = small ? 0.62 : 0.54;
-    var lw = small ? Math.max(0.045, (a.px || 0) * 1.3) : 0.022;
-    ctx.save(); ctx.rotate(-0.14); ctx.translate(-0.03, 0.03); paperSheet(ctx, W, H, 0, 0, small ? lw : 0); ctx.restore();
-    if (!small && sc < 0.9) {
-      ctx.save(); ctx.rotate(0.07); ctx.translate(0.02, 0.0); paperSheet(ctx, W, H, 0, 0); ctx.restore();
-    }
-    var corner = 0.04 + fl * (0.08 + 0.05 * Math.sin(t * 9));
-    ctx.save();
-    ctx.globalAlpha = 1 - sc;
-    ctx.rotate(0.03 + fl * 0.03 * Math.sin(t * 7));
-    paperSheet(ctx, W, H, small ? 3 : 5, corner, small ? lw : 0);
-    ctx.restore();
-    if (sc > 0.01) {
-      var dx = a.dirx || 0, dy = a.diry || 0;
-      if (!dx && !dy) dx = 1;
-      var px = -dy, py = dx;
-      var n = small ? 2 : 3;
-      for (var i = 0; i < n; i++) {
-        var ph = (t * 0.35 + i / n) % 1;
-        var dist = (0.12 + 0.42 * ph) * sc;
-        var wob = Math.sin(t * 3 + i * 2.1) * 0.16 * sc;
-        var side = (i - (n - 1) / 2) * 0.2 * sc;
-        ctx.save();
-        ctx.translate(dx * dist + px * (wob + side), dy * dist + py * (wob + side));
-        ctx.rotate(t * (1.4 + i * 0.5) + i * 2);
-        ctx.globalAlpha = sc * (1 - Math.pow(ph, 3));
-        paperSheet(ctx, small ? 0.32 : 0.27, small ? 0.38 : 0.33, small ? 2 : 3, 0, small ? lw : 0);
-        ctx.restore();
-      }
-    }
-  }
-
-  function objFern(ctx, a, t) {
-    var f = a.flow || 0;
-    var bend = a.bend || 0;
-    var swayAmp = (a.sway || 0) * 0.13 + 0.015;
-    var dirx = a.dirx || 0;
-    var side = dirx < -0.1 ? -1 : 1;
-    var leaf = mix(P('o-leaf'), P('o-leaf-sad'), bend);
-    var dark = darker(leaf, 0.2);
-    var i, ang;
-    if (a.small) {
-      // three fat fronds
-      var angs = [-0.78, 0, 0.78], ls = [0.36, 0.44, 0.36];
-      for (i = 0; i < 3; i++) {
-        ang = angs[i] + swayAmp * Math.sin(t * (2.2 + f * 0.6) + i * 0.9);
-        ang = ang * (1 - bend * 0.45) + side * bend * (0.75 + 0.15 * Math.sin(t * 6 + i));
-        var L = ls[i] * (1 - bend * 0.12);
-        var bx = 0, by = 0.15;
-        var tx = bx + Math.sin(ang) * L, ty = by - Math.cos(ang) * L + bend * 0.06;
-        var nx = Math.cos(ang), ny = Math.sin(ang), wd = 0.12;
-        var mx = (bx + tx) / 2, my = (by + ty) / 2;
-        ctx.beginPath();
-        ctx.moveTo(bx, by);
-        ctx.quadraticCurveTo(mx + nx * wd, my + ny * wd, tx, ty);
-        ctx.quadraticCurveTo(mx - nx * wd, my - ny * wd, bx, by);
-        ctx.fillStyle = leaf;
-        ctx.fill();
-        ctx.beginPath(); line(ctx, bx, by, mx + (tx - mx) * 0.6, my + (ty - my) * 0.6);
-        ctx.strokeStyle = dark;
-        ctx.lineWidth = Math.max(0.03, (a.px || 0) * 1);
-        ctx.lineCap = 'round';
-        ctx.stroke();
-      }
-      ctx.beginPath();
-      ctx.moveTo(-0.19, 0.17); ctx.lineTo(0.19, 0.17); ctx.lineTo(0.15, 0.44); ctx.lineTo(-0.15, 0.44); ctx.closePath();
-      ctx.fillStyle = P('o-pot');
-      ctx.fill();
-      fillRR(ctx, -0.215, 0.12, 0.43, 0.09, 0.035, darker(P('o-pot'), 0.12));
-      return;
-    }
-    var base = [-1.05, -0.52, 0, 0.52, 1.05];
-    var lens = [0.3, 0.38, 0.42, 0.38, 0.3];
-    for (i = 0; i < 5; i++) {
-      ang = base[i] + swayAmp * Math.sin(t * (2.2 + f * 0.6) + i * 0.9);
-      ang = ang * (1 - bend * 0.45) + side * bend * (0.75 + 0.15 * Math.sin(t * 6 + i));
-      var len = lens[i] * (1 - bend * 0.15);
-      var curl = (0.22 + bend * 0.5) * (ang >= 0 ? 1 : -1);
-      var sx = 0, sy = 0.16;
-      var ex = sx + Math.sin(ang) * len, ey = sy - Math.cos(ang) * len;
-      var cx = sx + Math.sin(ang - curl * 0.5) * len * 0.55, cy = sy - Math.cos(ang - curl * 0.5) * len * 0.55;
-      ctx.beginPath();
-      ctx.moveTo(sx, sy);
-      ctx.quadraticCurveTo(cx, cy, ex, ey + bend * 0.08);
-      ctx.strokeStyle = dark;
-      ctx.lineWidth = 0.025;
-      ctx.lineCap = 'round';
-      ctx.stroke();
-      ctx.fillStyle = leaf;
-      for (var j = 1; j <= 5; j++) {
-        var u = j / 6;
-        var qx = (1 - u) * (1 - u) * sx + 2 * (1 - u) * u * cx + u * u * ex;
-        var qy = (1 - u) * (1 - u) * sy + 2 * (1 - u) * u * cy + u * u * (ey + bend * 0.08);
-        var tgx = 2 * (1 - u) * (cx - sx) + 2 * u * (ex - cx);
-        var tgy = 2 * (1 - u) * (cy - sy) + 2 * u * (ey - cy);
-        var ta = Math.atan2(tgy, tgx);
-        var sz = 0.055 * (1.15 - u * 0.75);
-        ctx.beginPath();
-        ctx.ellipse(qx + Math.cos(ta - 1.1) * sz, qy + Math.sin(ta - 1.1) * sz, sz, sz * 0.42, ta - 1.1, 0, TAU);
-        ctx.ellipse(qx + Math.cos(ta + 1.1) * sz, qy + Math.sin(ta + 1.1) * sz, sz, sz * 0.42, ta + 1.1, 0, TAU);
-        ctx.fill();
-      }
-    }
-    ctx.beginPath();
-    ctx.moveTo(-0.16, 0.19); ctx.lineTo(0.16, 0.19); ctx.lineTo(0.125, 0.42); ctx.lineTo(-0.125, 0.42); ctx.closePath();
-    ctx.fillStyle = P('o-pot');
-    ctx.fill();
-    fillRR(ctx, -0.185, 0.14, 0.37, 0.075, 0.03, darker(P('o-pot'), 0.12));
-  }
-
-  function objStove(ctx, a, t) {
-    fillRR(ctx, -0.38, -0.38, 0.76, 0.76, 0.13, P('o-stove'));
-    ctx.beginPath(); rr(ctx, -0.38, -0.38, 0.76, 0.76, 0.13);
-    ctx.strokeStyle = P('o-stove-edge');
-    ctx.lineWidth = Math.max(0.035, (a.px || 0) * 1.1);
-    ctx.stroke();
-    ctx.beginPath(); circle(ctx, 0, -0.05, 0.21);
-    ctx.fillStyle = '#3b4049';
-    ctx.fill();
-    var glow = 0.75 + 0.25 * Math.sin(t * 2.3);
-    ctx.beginPath(); circle(ctx, 0, -0.05, 0.12);
-    ctx.strokeStyle = alpha(P('o-flame'), 0.85 * glow);
-    ctx.lineWidth = 0.05;
-    ctx.stroke();
-    ctx.beginPath();
-    for (var k = 0; k < 4; k++) {
-      var an = k * Math.PI / 2 + Math.PI / 4;
-      line(ctx, Math.cos(an) * 0.15, -0.05 + Math.sin(an) * 0.15, Math.cos(an) * 0.22, -0.05 + Math.sin(an) * 0.22);
-    }
-    ctx.strokeStyle = '#2a2e35';
-    ctx.lineWidth = 0.04;
-    ctx.stroke();
-    ctx.beginPath(); circle(ctx, -0.14, 0.27, 0.038); circle(ctx, 0.14, 0.27, 0.038);
-    ctx.fillStyle = P('o-stove-edge');
-    ctx.fill();
-  }
-
-  var OBJ_DRAW = {
-    pinwheel: objPinwheel, candle: objCandle, laundry: objLaundry,
-    papers: objPapers, fern: objFern, stove: objStove
-  };
+  // sprite names, built once
+  var TOOL_SPRITE = {}, OBJ_SPRITE = {};
+  WB.TOOL_ORDER.forEach(function (t) { TOOL_SPRITE[t] = 'tool.' + t; });
+  Object.keys(WB.OBJECTS).forEach(function (t) { OBJ_SPRITE[t] = 'object.' + t; });
 
   // Requirement meters: one slot per unit of air.
   //   req = must be filled, opt = may be filled, bar = no more than this, plus = or more.
@@ -880,48 +71,7 @@
     fern: { slots: ['req'], cap: true }
   };
 
-  // ------------------------------------------------------------------ status pip + meter (shared with icons)
-
-  function pipShape(ctx, state, r) {
-    ctx.beginPath(); circle(ctx, 0, 0, r + Math.max(1.5, r * 0.28));
-    ctx.fillStyle = P('surface');
-    ctx.fill();
-    ctx.beginPath(); circle(ctx, 0, 0, r);
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    if (state === 'happy') {
-      ctx.fillStyle = P('good'); ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(-r * 0.45, 0.02 * r); ctx.lineTo(-r * 0.1, r * 0.36); ctx.lineTo(r * 0.48, -r * 0.34);
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = Math.max(1.3, r * 0.3);
-      ctx.stroke();
-    } else if (state === 'dirty') {
-      // laundry reached by smoky air: a soot-grey badge with a little puff
-      ctx.fillStyle = darker(P('smoke'), 0.3); ctx.fill();
-      ctx.beginPath();
-      circle(ctx, -r * 0.3, r * 0.1, r * 0.27);
-      circle(ctx, r * 0.02, -r * 0.14, r * 0.33);
-      circle(ctx, r * 0.33, r * 0.12, r * 0.25);
-      ctx.fillStyle = '#ffffff';
-      ctx.fill();
-      ctx.beginPath(); rr(ctx, -r * 0.55, r * 0.08, r * 1.1, r * 0.3, r * 0.15);
-      ctx.fill();
-    } else if (state === 'bad') {
-      ctx.fillStyle = P('bad'); ctx.fill();
-      ctx.beginPath();
-      line(ctx, -r * 0.36, -r * 0.36, r * 0.36, r * 0.36);
-      line(ctx, r * 0.36, -r * 0.36, -r * 0.36, r * 0.36);
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = Math.max(1.3, r * 0.28);
-      ctx.stroke();
-    } else {
-      ctx.fillStyle = P('surface'); ctx.fill();
-      ctx.strokeStyle = P('pip-idle');
-      ctx.lineWidth = Math.max(1.4, r * 0.3);
-      ctx.beginPath(); circle(ctx, 0, 0, r * 0.8); ctx.stroke();
-    }
-  }
+  // ------------------------------------------------------------------ requirement meter (shared with icons)
 
   // Draws a requirement meter centred at (0,0), in CSS px.
   function meterShape(ctx, type, flow, state, T) {
@@ -982,24 +132,6 @@
     ctx.restore();
   }
 
-  // "No way out": a bare red x (no ring, so it never reads as an unhappy
-  // status pip), drawn inside the wall the stalled stream runs into.
-  function stallMarker(ctx, x, y, r, col) {
-    var k = r * 0.62;
-    ctx.save();
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    line(ctx, x - k, y - k, x + k, y + k);
-    line(ctx, x + k, y - k, x - k, y + k);
-    ctx.strokeStyle = P('surface');
-    ctx.lineWidth = Math.max(3.6, r * 0.8);
-    ctx.stroke();
-    ctx.strokeStyle = col || P('bad');
-    ctx.lineWidth = Math.max(1.9, r * 0.4);
-    ctx.stroke();
-    ctx.restore();
-  }
-
   // ------------------------------------------------------------------ icons
 
   function setupCanvas(canvas, w, h) {
@@ -1011,43 +143,11 @@
     return ctx;
   }
 
-  function toolIcon(ctx, id) {
-    if (id === 'window') {
-      // a window seen from the front: frame, two panes, a sill
-      fillRR(ctx, -0.33, -0.38, 0.66, 0.68, 0.09, P('piece-base'));
-      ctx.beginPath(); rr(ctx, -0.33, -0.38, 0.66, 0.68, 0.09);
-      ctx.lineWidth = 0.05;
-      ctx.strokeStyle = P('icon-wall');
-      ctx.stroke();
-      fillRR(ctx, -0.25, -0.3, 0.215, 0.52, 0.04, P('glass-in'));
-      fillRR(ctx, 0.035, -0.3, 0.215, 0.52, 0.04, P('glass-in'));
-      ctx.beginPath(); line(ctx, -0.2, -0.12, -0.1, -0.24); line(ctx, 0.08, -0.12, 0.18, -0.24);
-      ctx.strokeStyle = 'rgba(255,255,255,0.55)';
-      ctx.lineWidth = 0.04;
-      ctx.lineCap = 'round';
-      ctx.stroke();
-      fillRR(ctx, -0.43, 0.27, 0.86, 0.12, 0.06, P('icon-wall'));
-    } else if (id === 'vent') {
-      fillRR(ctx, -0.5, -0.42, 1, 0.84, 0.16, P('icon-wall'));
-      glyphVent(ctx, { horiz: true });
-    } else if (id === 'extractor') {
-      fillRR(ctx, -0.46, -0.46, 0.92, 0.92, 0.2, P('icon-wall'));
-      glyphExtractor(ctx, { angle: 0.3 });
-    } else if (id === 'fan') {
-      ctx.translate(-0.04, 0);
-      glyphFan(ctx, { d: 1, angle: 0.4 });
-    } else if (id === 'splitter') {
-      glyphSplitter(ctx, { inDir: 0 });
-    } else {
-      GLYPHS[id](ctx, { d: 0, angle: 0.4, sway: 0 });
-    }
-  }
-
   // icon(canvas, kind, id, cssSize)
   //   kind: 'tool' | 'pair' ('a+b') | 'object' | 'swirl' | 'ui'
   //   ui ids: pip-idle, pip-happy, pip-bad, stall, table, inlet, outlet, meter-<type>-<flow>, lanes-<n>
+  // Tools are the sprites icon.<tool>, objects object.<type> (js/sprites.js).
   function icon(canvas, kind, id, size) {
-    if (!PAL.wall) readPalette();
     var ctx = setupCanvas(canvas, size, size);
     ctx.clearRect(0, 0, size, size);
     ctx.save();
@@ -1055,20 +155,20 @@
     if (kind === 'tool') {
       var s = size * 0.86;
       ctx.scale(s, s);
-      toolIcon(ctx, id);
+      SPR.draw('icon.' + id, ctx);
     } else if (kind === 'pair') {
       var ids = String(id).split('+');
       var s2 = size * 0.86;
       ctx.scale(s2, s2);
-      ctx.save(); ctx.translate(-0.17, -0.15); ctx.scale(0.64, 0.64); toolIcon(ctx, ids[0]); ctx.restore();
+      ctx.save(); ctx.translate(-0.17, -0.15); ctx.scale(0.64, 0.64); SPR.draw('icon.' + ids[0], ctx); ctx.restore();
       ctx.beginPath(); rr(ctx, -0.04, -0.02, 0.5, 0.5, 0.14);
       ctx.fillStyle = P('bg-2'); ctx.fill();
-      ctx.save(); ctx.translate(0.21, 0.23); ctx.scale(0.64, 0.64); toolIcon(ctx, ids[1] || ids[0]); ctx.restore();
+      ctx.save(); ctx.translate(0.21, 0.23); ctx.scale(0.64, 0.64); SPR.draw('icon.' + (ids[1] || ids[0]), ctx); ctx.restore();
     } else if (kind === 'object') {
       var so = size * 0.92;
       ctx.scale(so, so);
       var st = { angle: 0.5, lit: 1, dry: 1, flow: 0, scatter: 0, flutter: 0, bend: 0, sway: 0, small: size < 30, px: 1 / so };
-      OBJ_DRAW[id](ctx, st, 0.2);
+      SPR.draw('object.' + id, ctx, st, 0.2);
     } else if (kind === 'ui') {
       uiIcon(ctx, id, size);
     } else {
@@ -1088,7 +188,7 @@
 
   function uiIcon(ctx, id, size) {
     var parts = String(id).split('-');
-    if (parts[0] === 'pip') { pipShape(ctx, parts[1], size * 0.3); return; }
+    if (parts[0] === 'pip') { SPR.draw('ui.pip', ctx, { state: parts[1], r: size * 0.3 }); return; }
     if (parts[0] === 'meter') { meterShape(ctx, parts[1], +parts[2] || 0, parts[3] || 'idle', size * 0.75); return; }
     if (id === 'stall') {
       ctx.beginPath(); line(ctx, -size * 0.46, 0, size * 0.12, 0);
@@ -1099,7 +199,7 @@
       ctx.stroke();
       ctx.setLineDash([]);
       fillRR(ctx, size * 0.15, -size * 0.32, size * 0.3, size * 0.64, size * 0.06, P('icon-wall'));
-      stallMarker(ctx, size * 0.3, 0, size * 0.15);
+      SPR.draw('ui.stall', ctx, { x: size * 0.3, y: 0, r: size * 0.15 });
       return;
     }
     if (id === 'table') {
@@ -1136,7 +236,7 @@
       fillRR(ctx, -0.5, -0.05, 1, 0.3, 0.06, P('icon-wall'));
       ctx.translate(0, 0.1);
       ctx.scale(0.6, 0.6);
-      glyphWindow(ctx, { outward: 0, role: id, px: 1 / (s * 0.6) });
+      SPR.draw('tool.window', ctx, { outward: 0, role: id, px: 1 / (s * 0.6) });
     }
   }
 
@@ -1270,7 +370,6 @@
     this.lastNow = 0;
     this.seed = 1;
     this.lay = null;
-    if (!PAL.wall) readPalette();
   }
 
   Board.prototype.setLevel = function (L, seed) {
@@ -1328,8 +427,9 @@
     return { w: this.cssW, h: this.cssH, T: T };
   };
 
+  // The theme or the art changed: rebuild the cached garden and house layers
+  // (the rest is drawn fresh every frame).
   Board.prototype.refreshPalette = function () {
-    readPalette();
     if (this.L && this.cssW) this.renderStatic();
   };
 
@@ -1374,6 +474,8 @@
     grad.addColorStop(1, P('garden-2'));
     gc.fillStyle = grad;
     gc.fillRect(0, 0, W, H);
+    var tex = texturePattern(gc, 'garden', T, dpr);
+    if (tex) { gc.save(); gc.globalAlpha = tex.alpha; gc.fillStyle = tex.pattern; gc.fillRect(0, 0, W, H); gc.restore(); }
     var rand = rng(this.seed * 7919 + L.w * 31 + L.h);
     gc.strokeStyle = P('garden-mark');
     gc.lineWidth = Math.max(1, T * 0.045);
@@ -1436,6 +538,8 @@
     for (y = 0; y < L.h; y++) for (x = 0; x < L.w; x++) if (isFloor(x, y)) c.rect(x * T, y * T, T, T);
     c.fillStyle = P('floor');
     c.fill();
+    tex = texturePattern(c, 'floor', T, dpr);
+    if (tex) { c.save(); c.globalAlpha = tex.alpha; c.fillStyle = tex.pattern; c.fill(); c.restore(); }
     c.beginPath();
     var hp = 0.5 / dpr;
     for (y = 0; y < L.h; y++) {
@@ -1555,6 +659,9 @@
     c.fill(wp);
     c.restore();
 
+    tex = texturePattern(c, 'wall', T, dpr);
+    if (tex) { c.save(); c.globalAlpha = tex.alpha; c.fillStyle = tex.pattern; c.fill(wp); c.restore(); }
+
     // solid walls: slightly different shade + hatch
     if (L.cells.indexOf('%') >= 0) {
       c.save();
@@ -1575,6 +682,26 @@
     this.staticReady = true;
   };
 
+  // A texture from the art manifest (js/sprites.js) as a fill: the image is
+  // rasterised at its on-screen size and repeats every `tiles` tiles, from the
+  // house's top-left corner (the garden's from the canvas corner).
+  function texturePattern(ctx, name, T, dpr) {
+    var tx = SPR.texture(name);
+    if (!tx) return null;
+    var iw = tx.img.naturalWidth || tx.img.width, ih = tx.img.naturalHeight || tx.img.height;
+    var w = T * tx.tiles, h = w * ih / iw;
+    var pw = Math.max(2, Math.min(2048, Math.round(w * dpr))), ph = Math.max(2, Math.min(2048, Math.round(h * dpr)));
+    var cv = document.createElement('canvas');
+    cv.width = pw; cv.height = ph;
+    var cc = cv.getContext('2d');
+    cc.imageSmoothingQuality = 'high';
+    cc.drawImage(tx.img, 0, 0, pw, ph);
+    var pat = ctx.createPattern(cv, 'repeat');
+    if (!pat) return null;
+    if (pat.setTransform && root.DOMMatrix) pat.setTransform(new root.DOMMatrix([w / pw, 0, 0, h / ph, 0, 0]));
+    return { pattern: pat, alpha: tx.alpha };
+  }
+
   // --------------------------------------------- wind streaks / calm motes
 
   Board.prototype.stepStreaks = function (dt, motion) {
@@ -1587,22 +714,22 @@
     var dir = L.wind.dir;
     var self = this;
     function spawn(initial) {
-      var life = calm ? 5 + Math.random() * 5 : 1.5 + Math.random() * 1.5;
-      var x = Math.random() * W, y = Math.random() * H;
+      var life = calm ? 5 + RAND() * 5 : 1.5 + RAND() * 1.5;
+      var x = RAND() * W, y = RAND() * H;
       // favour the band just upwind of the house, where the breeze meets the wall
-      if (!calm && Math.random() < 0.35) {
-        var depth = T * (0.4 + Math.random() * 1.6);
-        if (dir === 1) { x = self.ox - depth; y = self.oy + Math.random() * L.h * T; }
-        else if (dir === 3) { x = self.ox + L.w * T + depth; y = self.oy + Math.random() * L.h * T; }
-        else if (dir === 2) { y = self.oy - depth; x = self.ox + Math.random() * L.w * T; }
-        else { y = self.oy + L.h * T + depth; x = self.ox + Math.random() * L.w * T; }
+      if (!calm && RAND() < 0.35) {
+        var depth = T * (0.4 + RAND() * 1.6);
+        if (dir === 1) { x = self.ox - depth; y = self.oy + RAND() * L.h * T; }
+        else if (dir === 3) { x = self.ox + L.w * T + depth; y = self.oy + RAND() * L.h * T; }
+        else if (dir === 2) { y = self.oy - depth; x = self.ox + RAND() * L.w * T; }
+        else { y = self.oy + L.h * T + depth; x = self.ox + RAND() * L.w * T; }
       }
       list.push({
         x: x, y: y,
-        len: T * (0.4 + Math.random() * 0.5),
-        life: life, age: initial ? Math.random() * life : 0,
-        sp: 0.8 + Math.random() * 0.45, ph: Math.random() * TAU,
-        vx: (Math.random() - 0.5), vy: (Math.random() - 0.5), r: 0.7 + Math.random() * 0.8
+        len: T * (0.4 + RAND() * 0.5),
+        life: life, age: initial ? RAND() * life : 0,
+        sp: 0.8 + RAND() * 0.45, ph: RAND() * TAU,
+        vx: (RAND() - 0.5), vy: (RAND() - 0.5), r: 0.7 + RAND() * 0.8
       });
     }
     if (!this.streakSeeded) {
@@ -1676,18 +803,18 @@
     return a;
   };
 
-  function newPieceAnim() { return { angle: Math.random() * TAU, sway: 0 }; }
+  function newPieceAnim() { return { angle: RAND() * TAU, sway: 0 }; }
   function newObjAnim(gl) {
     var f = gl.flow;
     return {
-      angle: Math.random() * TAU, spd: 0, lit: f > 0 ? 0 : 1, dry: f >= 2 ? 1 : 0,
+      angle: RAND() * TAU, spd: 0, lit: f > 0 ? 0 : 1, dry: f >= 2 ? 1 : 0,
       scatter: f >= 2 ? 1 : 0, flutter: f === 1 ? 1 : 0, bend: f >= 2 ? 1 : 0, sway: f === 1 ? 1 : 0,
       state: gl.state, stateT: -1e9, flow: f, haze: gl.state !== 'happy' ? 1 : 0, soot: gl.smoky ? 1 : 0,
       dirx: 0, diry: 0, small: false, px: 0
     };
   }
   var NO_GOAL = { flow: 0, state: 'idle', ok: false };
-  var GLYPH_OPT = {};
+  var GLYPH_OPT = {}, PIP_OPT = {}, STALL_OPT = {};
 
   // ------------------------------------------------------------------ draw
 
@@ -1706,6 +833,14 @@
   Board.prototype.draw = function (S, now) {
     var L = this.L;
     if (!L || !this.cssW) return;
+    SETTLE = typeof root.__wbFreezeTime === 'number';
+    RAND = Math.random;
+    if (SETTLE) {
+      now = root.__wbFreezeTime;
+      this.lastNow = now;
+      this.anim = {}; this.streaks = []; this.streakSeeded = false;
+      RAND = rng(this.seed * 7919 + 17);
+    }
     var ctx = this.ctx, T = this.T, dpr = this.dpr;
     var t = now / 1000;
     var dt = this.lastNow ? clamp((now - this.lastNow) / 1000, 0, 0.1) : 0.016;
@@ -1789,7 +924,7 @@
       p = pieces[i];
       if (isWallTool(p.type)) continue;
       baseOpt.fixed = p.fixed;
-      ctx.save(); pieceTransform(p); pieceBase(ctx, baseOpt); ctx.restore();
+      ctx.save(); pieceTransform(p); SPR.draw('piece.base', ctx, baseOpt); ctx.restore();
     }
 
     // ---------------- airflow
@@ -1826,7 +961,7 @@
         var vx = A.dir[di], vy = A.dir[di + 1];
         if (Math.abs(vx) > 0.01 || Math.abs(vy) > 0.01) o.inDir = Math.abs(vx) > Math.abs(vy) ? (vx > 0 ? 1 : 3) : (vy > 0 ? 2 : 0);
       }
-      ctx.save(); pieceTransform(p); GLYPHS[p.type](ctx, o); ctx.restore();
+      ctx.save(); pieceTransform(p); SPR.draw(TOOL_SPRITE[p.type], ctx, o); ctx.restore();
     }
 
     this.drawStallMarkers(ctx, A, T, sim.solved, S.valid);
@@ -1878,7 +1013,7 @@
       ctx.save();
       ctx.translate(cx, cy + hop - lift * T);
       ctx.scale(T * objScale, T * objScale);
-      OBJ_DRAW[ob.type](ctx, an, ot);
+      SPR.draw(OBJ_SPRITE[ob.type], ctx, an, ot);
       ctx.restore();
     }
 
@@ -2039,12 +1174,12 @@
     ctx.translate((p.x + 0.5) * T, (p.y + 0.5) * T);
     ctx.scale(T, T);
     var o = { px: 1 / T, fixed: false };
-    if (!isWallTool(p.type)) pieceBase(ctx, o);
+    if (!isWallTool(p.type)) SPR.draw('piece.base', ctx, o);
     var out = (p.type === 'window' || p.type === 'extractor') ? WB.outwardDir(L, p.x, p.y) : -1;
     o.d = p.d | 0; o.angle = t * 1.5; o.sway = 0; o.outward = out;
     o.role = p.type === 'window' ? (out >= 0 ? WB.windowRole(L, p) : 'outlet') : null;
     o.horiz = p.type === 'vent' ? WB.isFloorish(WB.cellAt(L, p.x - 1, p.y)) && WB.isFloorish(WB.cellAt(L, p.x + 1, p.y)) : true;
-    GLYPHS[p.type](ctx, o);
+    SPR.draw(TOOL_SPRITE[p.type], ctx, o);
     ctx.restore();
   };
 
@@ -2264,7 +1399,8 @@
       }
       ctx.save();
       if (onSlot) ctx.globalAlpha = 0.35;
-      stallMarker(ctx, mx * T, my * T, Math.max(5.5, T * 0.13), solved ? P('pip-idle') : null);
+      STALL_OPT.x = mx * T; STALL_OPT.y = my * T; STALL_OPT.r = Math.max(5.5, T * 0.13); STALL_OPT.quiet = !!solved;
+      SPR.draw('ui.stall', ctx, STALL_OPT);
       ctx.restore();
     }
   };
@@ -2323,7 +1459,8 @@
     ctx.save();
     ctx.translate(px, py);
     ctx.scale(pop, pop);
-    pipShape(ctx, state, r);
+    PIP_OPT.state = state; PIP_OPT.r = r;
+    SPR.draw('ui.pip', ctx, PIP_OPT);
     ctx.restore();
   };
 
@@ -2336,10 +1473,8 @@
   };
 
   root.WBRender = {
-    readPalette: readPalette,
     Board: Board,
     icon: icon,
-    analyze: analyze,
-    palette: PAL
+    analyze: analyze
   };
 })(typeof self !== 'undefined' ? self : this);

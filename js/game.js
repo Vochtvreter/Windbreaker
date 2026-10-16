@@ -1,6 +1,7 @@
 /*
  * Windbreaker — screens, state, input, persistence and audio.
- * Depends on window.WB (engine + levels) and window.WBRender.
+ * Depends on window.WB (engine + levels), window.WBRender, and window.WBTheme
+ * and window.WBSprites (repaints when the theme or the art changes).
  *
  * Sections: helpers · storage · audio · DOM · game state · routing · home ·
  * game screen · tray · goals · changes · win · hint · toast/tooltip ·
@@ -53,7 +54,6 @@
       .replace(/\s+/g, ' ').replace(/\s+([,.])/g, '$1').trim();
   }
   var reducedMQ = mq('(prefers-reduced-motion: reduce)');
-  var darkMQ = mq('(prefers-color-scheme: dark)');
   var landscapeMQ = mq('(max-height: 520px) and (min-aspect-ratio: 4/3)');
   var coarseMQ = mq('(pointer: coarse)');
 
@@ -2319,11 +2319,15 @@
       renderHome();
     }
   }
-  onMQ(darkMQ, function () {
+  // light/dark switched, or the art manifest (art/art.js) retheme'd tokens or
+  // finished loading images: repaint the board's cached layers and the icons
+  function repaintArt() {
     board.refreshPalette();
     G.paletteVersion++;
     refreshIcons();
-  });
+  }
+  window.WBTheme.onChange(repaintArt);
+  window.WBSprites.onChange(repaintArt);
   // icons are painted at the current devicePixelRatio; repaint when it changes
   (function watchDpr() {
     var m = mq('(resolution: ' + (window.devicePixelRatio || 1) + 'dppx)');

@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+  <!-- the "out" state of the flame layer: a curl of smoke -->
+  <path d="M50 33 C43 27 57 21 50 14 C45 9 53 5 51 1" fill="none" stroke="#9a8f83" stroke-width="3.2" stroke-linecap="round" opacity=".75"/>
+</svg>

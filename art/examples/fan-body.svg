@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+  <!-- a box fan blowing north (up); the game turns it. Blades: fan-blades.svg -->
+  <path d="M50 3 L33 20 H67 Z" fill="#3a9d92" stroke="#3a9d92" stroke-width="4" stroke-linejoin="round"/>
+  <rect x="22" y="24" width="56" height="56" rx="15" fill="#fffdf8" stroke="#3a9d92" stroke-width="5"/>
+  <circle cx="50" cy="52" r="21" fill="none" stroke="#3a9d92" stroke-opacity=".25" stroke-width="2"/>
+  <path d="M30 86 h12 M58 86 h12" stroke="#2c7d74" stroke-width="5" stroke-linecap="round"/>
+</svg>

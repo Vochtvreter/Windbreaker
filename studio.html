@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Windbreaker art studio</title>
+  <!-- the same theme, sprites and renderer as the game; see GRAPHICS.md -->
+  <script src="js/theme.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body {
+      margin: 0; font-family: var(--font); font-size: 14px; line-height: 1.45;
+      color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, p { margin: 0; }
+    code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+    a { color: var(--accent-text); }
+
+    .bar {
+      position: sticky; top: 0; z-index: 5; background: var(--bg);
+      border-bottom: 1px solid var(--line); padding: 10px 16px;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px;
+    }
+    .bar h1 { font-size: 17px; display: flex; align-items: center; gap: 8px; }
+    .bar h1 svg { width: 26px; height: 26px; flex: none; }
+    .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+    .controls label { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-soft); }
+    select, input[type="text"], button {
+      font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong);
+      border-radius: 8px; padding: 4px 8px; min-height: 30px;
+    }
+    button { cursor: pointer; }
+    button:hover { border-color: var(--accent); }
+    button.primary { background: var(--accent-fill); color: var(--accent-ink); border-color: transparent; }
+    :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+    input[type="range"] { accent-color: var(--accent); width: 110px; }
+    output { min-width: 2.2em; font-variant-numeric: tabular-nums; }
+    .bar nav { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-left: auto; }
+    @media (max-width: 640px) { .bar { position: static; } }
+
+    main { padding: 0 16px 48px; max-width: 1500px; margin: 0 auto; }
+    section { padding-top: 26px; scroll-margin-top: 70px; }
+    section > h2 { font-size: 20px; margin-bottom: 4px; }
+    .lead { color: var(--ink-soft); max-width: 70ch; margin-bottom: 14px; }
+    h3.group { font-size: 15px; margin: 20px 0 8px; color: var(--ink-soft); font-weight: 600; }
+
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; }
+    .card {
+      background: var(--surface); border-radius: 14px; padding: 12px; box-shadow: var(--shadow);
+      display: flex; flex-direction: column; gap: 8px; min-width: 0;
+    }
+    .card-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .card-head code { font-weight: 600; font-size: 13.5px; }
+    .note { color: var(--ink-soft); font-size: 12.5px; }
+    .states { color: var(--muted); font-size: 12px; }
+    .badge { font-size: 11px; padding: 1px 7px; border-radius: 99px; background: var(--bg-2); color: var(--ink-soft); }
+    .badge.image, .badge.code { background: var(--accent-soft); color: var(--accent-text); }
+    .badge.error { background: var(--bad); color: var(--danger-ink); }
+    .samples { display: flex; flex-wrap: wrap; gap: 8px; }
+    figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    figure .pair { display: flex; gap: 3px; }
+    figure canvas { display: block; border-radius: 8px; }
+    figcaption { font-size: 11.5px; color: var(--muted); text-align: center; }
+
+    .board-controls { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-bottom: 10px; }
+    .board-controls label { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-soft); }
+    .boards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 12px; }
+    .boards figure { align-items: stretch; }
+    .boards canvas { width: 100%; border-radius: 14px; }
+
+    .tok-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 4px; align-items: center; }
+    .tok-wrap { overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; min-width: 560px; }
+    th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    th { font-size: 12px; color: var(--muted); font-weight: 600; }
+    td.tok code { font-weight: 600; }
+    tr.is-changed td.tok code::after { content: " \2022"; color: var(--accent-text); }
+    .val { display: flex; align-items: center; gap: 6px; }
+    .val input[type="text"] { width: 100%; min-width: 0; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+    .val input[type="color"] { width: 34px; height: 30px; padding: 0 2px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); flex: none; }
+    .chip { width: 30px; height: 30px; border-radius: 8px; flex: none; border: 1px solid var(--line-strong); }
+    textarea {
+      width: 100%; min-height: 120px; font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; color: var(--ink);
+      background: var(--surface); border: 1px solid var(--line-strong); border-radius: 10px; padding: 10px;
+    }
+    .status td, .status th { font-size: 13px; }
+    .err { color: var(--bad-text); }
+    .muted { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header class="bar">
+    <h1><svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="var(--t-fan)"/><path d="M11 25h27a8 8 0 1 0-8-8" fill="none" stroke="#fffdf8" stroke-width="5" stroke-linecap="round"/><path d="M11 36h33a8.5 8.5 0 1 1-8.5 8.5" fill="none" stroke="#fffdf8" stroke-width="5" stroke-linecap="round"/></svg>Windbreaker art studio</h1>
+    <div class="controls">
+      <label>Mode <select id="mode">
+        <option value="both">Light + dark</option><option value="light">Light</option><option value="dark">Dark</option>
+      </select></label>
+      <label>Tile <input id="size" type="range" min="28" max="96" step="2" value="56"><output id="size-out" for="size">56</output></label>
+      <label>Art <select id="art"><option value="">art/art.js</option><option value="examples">art/examples/art.js</option></select></label>
+      <label><input id="motion" type="checkbox" checked> Motion</label>
+    </div>
+    <nav aria-label="Sections"><a href="#sprites">Sprites</a><a href="#boards">Boards</a><a href="#tokens">Tokens</a><a href="#art-in-use">Art in use</a></nav>
+  </header>
+
+  <main>
+    <section id="sprites" aria-labelledby="sprites-h">
+      <h2 id="sprites-h">Sprites</h2>
+      <p class="lead">Every sprite in the registry (<code>js/sprites.js</code>) in the poses the game uses. A badge shows when
+        <code>art/art.js</code> overrides one; the states are the names an image override can give per state.</p>
+      <div id="sprite-groups"></div>
+    </section>
+
+    <section id="boards" aria-labelledby="boards-h">
+      <h2 id="boards-h">Boards</h2>
+      <p class="lead">Live boards drawn by the game's renderer with the current theme and art. The gallery rooms
+        (<code>tools/gallery.js</code>) show every tool and object at once.</p>
+      <div class="board-controls">
+        <label>Room <select id="room"></select></label>
+        <label><input id="solved" type="checkbox" checked> With the solution</label>
+      </div>
+      <div id="board-list" class="boards"></div>
+    </section>
+
+    <section id="tokens" aria-labelledby="tokens-h">
+      <h2 id="tokens-h">Tokens</h2>
+      <p class="lead">The theme (<code>js/theme.js</code>): every colour the page and the canvas use. Edits apply live
+        here only; copy the result into the <code>theme</code> section of <code>art/art.js</code> to keep it.</p>
+      <div class="tok-actions">
+        <button id="copy-theme" class="primary" type="button">Copy theme for art/art.js</button>
+        <button id="reset-theme" type="button">Undo my edits</button>
+        <span id="copy-note" class="muted" role="status"></span>
+      </div>
+      <textarea id="theme-out" readonly hidden aria-label="Theme section for art/art.js"></textarea>
+      <div id="token-groups"></div>
+    </section>
+
+    <section id="art-in-use" aria-labelledby="art-h">
+      <h2 id="art-h">Art in use</h2>
+      <p class="lead">What the manifest overrides and whether its files loaded. Edit <code>art/art.js</code> (or
+        <code>art/&lt;name&gt;/art.js</code>, opened with <code>?art=&lt;name&gt;</code>) and reload.</p>
+      <div id="art-status"></div>
+    </section>
+  </main>
+
+  <script src="js/engine.js"></script>
+  <script src="js/levels.js"></script>
+  <script src="tools/gallery.js"></script>
+  <script src="js/sprites.js"></script>
+  <script src="js/render.js"></script>
+  <script src="art/art.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    var Theme = window.WBTheme, SPR = window.WBSprites, WB = window.WB, R = window.WBRender;
+    var P = Theme.color;
+    var $ = function (id) { return document.getElementById(id); };
+    function el(tag, cls, text) {
+      var e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text != null) e.textContent = text;
+      return e;
+    }
+    var params = new URLSearchParams(location.search);
+    var ui = { mode: 'both', size: 56, motion: true };
+    try {
+      var saved = JSON.parse(localStorage.getItem('windbreaker.studio') || '{}');
+      if (saved.mode) ui.mode = saved.mode;
+      if (saved.size) ui.size = saved.size;
+      if (saved.motion === false) ui.motion = false;
+    } catch (e) { /* no storage */ }
+    function save() { try { localStorage.setItem('windbreaker.studio', JSON.stringify(ui)); } catch (e) { /* no storage */ } }
+    function modes() { return ui.mode === 'both' ? ['light', 'dark'] : [ui.mode]; }
+    function inMode(mode, fn) {
+      var prev = Theme.use(mode);
+      try { return fn(); } finally { Theme.use(prev); }
+    }
+    function dpr() { return Math.min(window.devicePixelRatio || 1, 3); }
+    function setup(cv, w, h) {
+      var k = dpr();
+      if (cv.width !== Math.round(w * k) || cv.height !== Math.round(h * k)) {
+        cv.width = Math.round(w * k); cv.height = Math.round(h * k);
+        cv.style.width = w + 'px'; cv.style.height = h + 'px';
+      }
+      var ctx = cv.getContext('2d');
+      ctx.setTransform(k, 0, 0, k, 0, 0);
+      return ctx;
+    }
+
+    // ---------------------------------------------------------------- sprites
+
+    var GROUPS = [
+      { id: 'tool', title: 'Tools' }, { id: 'object', title: 'Objects' },
+      { id: 'icon', title: 'Tray and help icons' }, { id: 'ui', title: 'Board marks' }
+    ];
+    var SPIN = { 'tool.fan': 6, 'tool.extractor': 4.5, 'tool.ceilingfan': 1.4, 'object.pinwheel': 3.2 };
+    var samples = []; // { cv, name, sample, mode, visible }
+    var io = window.IntersectionObserver ? new IntersectionObserver(function (es) {
+      es.forEach(function (e) { e.target.__s.visible = e.isIntersecting; });
+    }) : null;
+
+    function toolType(name) { return name.indexOf('tool.') === 0 ? name.slice(5) : null; }
+    function isWallTool(name) { var t = toolType(name); return !!t && WB.TOOLS[t] && WB.TOOLS[t].mount !== 'floor'; }
+
+    function sampleSize(spec) {
+      var T = ui.size;
+      if (spec.group === 'tool') return Math.round(T * 1.7);
+      if (spec.group === 'object') return Math.round(T * 1.5);
+      if (spec.group === 'icon') return Math.max(36, Math.round(T * 0.8));
+      return Math.max(32, Math.round(T * 0.7));
+    }
+
+    // the bit of house around a tool: floor, and for wall tools the wall and the garden
+    function backdrop(ctx, name, o, half) {
+      ctx.fillStyle = P('floor');
+      ctx.fillRect(-half, -half, half * 2, half * 2);
+      if (!isWallTool(name)) return;
+      var vertical = name === 'tool.vent' ? o.horiz !== false : o.outward === 1 || o.outward === 3;
+      if (name !== 'tool.vent') {
+        ctx.fillStyle = P('garden');
+        var out = o.outward | 0;
+        if (out === 0) ctx.fillRect(-half, -half, half * 2, half - 0.5);
+        else if (out === 2) ctx.fillRect(-half, 0.5, half * 2, half - 0.5);
+        else if (out === 1) ctx.fillRect(0.5, -half, half - 0.5, half * 2);
+        else ctx.fillRect(-half, -half, half - 0.5, half * 2);
+      }
+      ctx.fillStyle = P('wall');
+      if (vertical) ctx.fillRect(-0.5, -half, 1, half * 2); else ctx.fillRect(-half, -0.5, half * 2, 1);
+    }
+
+    function paint(s, t) {
+      var spec = SPR.get(s.name), size = sampleSize(spec), T = ui.size;
+      inMode(s.mode, function () {
+        var ctx = setup(s.cv, size, size);
+        ctx.clearRect(0, 0, size, size);
+        ctx.save();
+        ctx.translate(size / 2, size / 2);
+        var o = Object.assign({}, s.sample.o);
+        var tt = (s.sample.t || 0) + t;
+        if (SPIN[s.name] && (s.name !== 'object.pinwheel' || o.flow > 0)) o.angle = (o.angle || 0) + t * SPIN[s.name];
+        if (spec.group === 'tool' || spec.group === 'object') {
+          ctx.scale(T, T);
+          o.px = 1 / T;
+          backdrop(ctx, s.name, o, size / 2 / T);
+          if (spec.group === 'tool' && s.name !== 'piece.base' && !isWallTool(s.name)) SPR.draw('piece.base', ctx, { px: o.px, fixed: o.fixed });
+          if (spec.group === 'object') o.small = T < 34;
+          SPR.draw(s.name, ctx, o, tt);
+        } else if (spec.group === 'icon') {
+          ctx.fillStyle = P('surface');
+          ctx.fillRect(-size / 2, -size / 2, size, size);
+          var k = size * 0.86;
+          ctx.scale(k, k);
+          SPR.draw(s.name, ctx, o, tt);
+        } else {
+          ctx.fillStyle = P('floor');
+          ctx.fillRect(-size / 2, -size / 2, size, size);
+          if (s.name === 'ui.pip') o.r = Math.max(5, size * 0.22);
+          else { o.r = Math.max(5.5, size * 0.2); ctx.fillStyle = P('wall'); ctx.fillRect(-size * 0.22, -size / 2, size * 0.44, size); }
+          SPR.draw(s.name, ctx, o, tt);
+        }
+        ctx.restore();
+      });
+    }
+
+    function buildSprites() {
+      samples.forEach(function (s) { if (io) io.unobserve(s.cv); });
+      samples = [];
+      var root = $('sprite-groups');
+      root.textContent = '';
+      var st = {};
+      SPR.status().forEach(function (x) { st[x.name] = x; });
+      GROUPS.forEach(function (g) {
+        root.appendChild(el('h3', 'group', g.title));
+        var cards = el('div', 'cards');
+        SPR.list(g.id).forEach(function (name) {
+          var spec = SPR.get(name), info = st[name];
+          var card = el('article', 'card');
+          var head = el('div', 'card-head');
+          head.appendChild(el('code', null, name));
+          var badge = el('span', 'badge ' + (info.state === 'error' ? 'error' : info.art), info.state === 'error' ? 'error: built-in shown' : info.art === 'built-in' ? 'built-in' : info.art + (info.state === 'loading' ? ' (loading)' : ''));
+          if (info.error) badge.title = info.error;
+          head.appendChild(badge);
+          card.appendChild(head);
+          if (spec.note) card.appendChild(el('p', 'note', spec.note));
+          if (spec.states.length) card.appendChild(el('p', 'states', 'states: ' + spec.states.join(', ')));
+          var row = el('div', 'samples');
+          spec.samples.forEach(function (sample) {
+            var fig = el('figure');
+            var pair = el('div', 'pair');
+            modes().forEach(function (mode) {
+              var cv = el('canvas');
+              cv.setAttribute('role', 'img');
+              cv.setAttribute('aria-label', name + (sample.label ? ', ' + sample.label : '') + ', ' + mode);
+              var s = { cv: cv, name: name, sample: sample, mode: mode, visible: true, still: g.id === 'icon' || g.id === 'ui' };
+              cv.__s = s;
+              samples.push(s);
+              if (io) io.observe(cv);
+              pair.appendChild(cv);
+            });
+            fig.appendChild(pair);
+            if (sample.label) fig.appendChild(el('figcaption', null, sample.label));
+            row.appendChild(fig);
+          });
+          card.appendChild(row);
+          cards.appendChild(card);
+        });
+        root.appendChild(cards);
+      });
+      paintAll(true);
+    }
+    function paintAll(all) {
+      var t = ui.motion ? performance.now() / 1000 : 0;
+      samples.forEach(function (s) {
+        if (!all && (!s.visible || s.still)) return;
+        paint(s, t);
+      });
+    }
+
+    // ---------------------------------------------------------------- boards
+
+    var rooms = (window.WBGallery || []).map(function (d) { return { key: 'g' + d.id, label: d.name, def: d }; })
+      .concat((WB.LEVELS || []).map(function (d) { return { key: 'l' + d.id, label: 'Level ' + d.id + ' · ' + d.name, def: d }; }));
+    var boards = []; // { mode, board, cv, S }
+    function currentRoom() {
+      var k = $('room').value;
+      for (var i = 0; i < rooms.length; i++) if (rooms[i].key === k) return rooms[i];
+      return rooms[0];
+    }
+    function buildBoards() {
+      var list = $('board-list');
+      list.textContent = '';
+      boards = [];
+      var room = currentRoom();
+      if (!room) { list.appendChild(el('p', 'muted', 'No levels found.')); return; }
+      var L = WB.parseLevel(room.def);
+      var fixed = L.fixed.map(function (p) { return { type: p.type, x: p.x, y: p.y, d: p.d | 0 }; });
+      var placed = $('solved').checked ? (room.def.solution || []).map(function (p) { return { type: p.type, x: p.x, y: p.y, d: p.d | 0 }; }) : [];
+      var sim = WB.simulate(L, fixed.concat(placed));
+      var pieces = fixed.map(function (p) { return Object.assign({ fixed: true }, p); }).concat(placed.map(function (p) { return Object.assign({ fixed: false }, p); }));
+      modes().forEach(function (mode) {
+        var fig = el('figure');
+        var cv = el('canvas');
+        cv.setAttribute('role', 'img');
+        cv.setAttribute('aria-label', room.label + ', ' + mode + ' mode');
+        fig.appendChild(cv);
+        if (ui.mode === 'both') fig.appendChild(el('figcaption', null, mode));
+        list.appendChild(fig);
+        var b = { mode: mode, cv: cv, board: new R.Board(cv), L: L, S: { pieces: pieces, sim: sim, reduced: !ui.motion } };
+        b.board.setLevel(L, room.def.id || 1);
+        boards.push(b);
+      });
+      layoutBoards();
+    }
+    function layoutBoards() {
+      boards.forEach(function (b) {
+        var w = b.cv.parentNode.clientWidth || 400;
+        var h = Math.round(Math.min(w * (b.L.h + 2) / (b.L.w + 2), window.innerHeight * 0.8));
+        inMode(b.mode, function () { b.board.layout(w, Math.max(160, h), 0); });
+      });
+      boardsDirty = true;
+    }
+    var boardsDirty = true;
+    function drawBoards(now) {
+      if (!ui.motion && !boardsDirty) return;
+      boardsDirty = false;
+      boards.forEach(function (b) {
+        b.S.reduced = !ui.motion;
+        inMode(b.mode, function () { b.board.draw(b.S, ui.motion ? now : 0); });
+      });
+    }
+
+    // ---------------------------------------------------------------- tokens
+
+    var tokenInputs = []; // { name, mode, text, color, chip, row }
+    function buildTokens() {
+      var root = $('token-groups');
+      root.textContent = '';
+      tokenInputs = [];
+      Theme.groups.forEach(function (g) {
+        root.appendChild(el('h3', 'group', g.title + ' · ' + g.note));
+        var wrap = el('div', 'tok-wrap');
+        var table = el('table');
+        var thead = el('thead'), hr = el('tr');
+        ['token', 'used for', 'light', 'dark'].forEach(function (h) { var th = el('th', null, h); th.scope = 'col'; hr.appendChild(th); });
+        thead.appendChild(hr);
+        table.appendChild(thead);
+        var tb = el('tbody');
+        g.tokens.forEach(function (tok) {
+          var tr = el('tr');
+          var td = el('td', 'tok');
+          td.appendChild(el('code', null, tok.name));
+          tr.appendChild(td);
+          tr.appendChild(el('td', 'note', tok.note));
+          ['light', 'dark'].forEach(function (mode) {
+            var cell = el('td');
+            var box = el('div', 'val');
+            var value = Theme.palette(mode)[tok.name];
+            var colorish = Theme.isColor(tok.light) && Theme.isColor(tok.dark);
+            var text = el('input');
+            text.type = 'text';
+            text.value = value;
+            text.setAttribute('aria-label', tok.name + ', ' + mode);
+            var color = null, chip = null;
+            if (colorish) {
+              chip = el('span', 'chip');
+              chip.style.background = value;
+              color = el('input');
+              color.type = 'color';
+              color.value = Theme.hex(value);
+              color.setAttribute('aria-label', tok.name + ', ' + mode + ', colour picker');
+              box.appendChild(chip);
+              box.appendChild(color);
+              color.addEventListener('input', function () {
+                var a = Theme.parse(Theme.palette(mode)[tok.name])[3];
+                var c = Theme.parse(color.value);
+                edit(tok, mode, a < 1 ? 'rgba(' + c[0] + ', ' + c[1] + ', ' + c[2] + ', ' + +a.toFixed(3) + ')' : color.value);
+              });
+            }
+            box.appendChild(text);
+            text.addEventListener('change', function () {
+              var v = text.value.trim();
+              if (colorish && v && !Theme.isColor(v)) { text.value = Theme.palette(mode)[tok.name]; return; }
+              edit(tok, mode, v);
+            });
+            cell.appendChild(box);
+            tr.appendChild(cell);
+            tokenInputs.push({ name: tok.name, mode: mode, text: text, color: color, chip: chip, row: tr });
+          });
+          tb.appendChild(tr);
+        });
+        table.appendChild(tb);
+        wrap.appendChild(table);
+        root.appendChild(wrap);
+      });
+      syncTokens();
+    }
+    function edit(tok, mode, v) {
+      var o = {};
+      o[mode] = {};
+      // back to the built-in value: drop the override
+      o[mode][tok.name] = !v || v === tok[mode] ? null : v;
+      Theme.set(o);
+    }
+    function syncTokens() {
+      var ov = Theme.overrides();
+      tokenInputs.forEach(function (t) {
+        var v = Theme.palette(t.mode)[t.name];
+        if (document.activeElement !== t.text) t.text.value = v;
+        if (t.color && document.activeElement !== t.color) t.color.value = Theme.hex(v);
+        if (t.chip) t.chip.style.background = v;
+      });
+      tokenInputs.forEach(function (t) {
+        t.row.classList.toggle('is-changed', ov.light[t.name] != null || ov.dark[t.name] != null);
+      });
+    }
+    function themeText() {
+      var ov = Theme.overrides();
+      function block(m) {
+        var keys = Object.keys(ov[m]);
+        if (!keys.length) return '{}';
+        return '{\n' + keys.map(function (k) { return "      '" + k + "': '" + ov[m][k] + "'"; }).join(',\n') + '\n    }';
+      }
+      return '  theme: {\n    light: ' + block('light') + ',\n    dark: ' + block('dark') + '\n  },';
+    }
+
+    // ---------------------------------------------------------------- art in use
+
+    function buildStatus() {
+      var root = $('art-status');
+      root.textContent = '';
+      var cur = SPR.current();
+      var p = el('p');
+      p.appendChild(document.createTextNode('Manifest: '));
+      p.appendChild(el('code', null, cur ? cur.file : '(none)'));
+      if (cur && cur.note) p.appendChild(document.createTextNode(' — ' + cur.note));
+      root.appendChild(p);
+      var rows = SPR.status().filter(function (s) { return s.art !== 'built-in'; });
+      var tex = SPR.textureNames.map(function (n) { return { name: n, t: SPR.textureInfo(n) }; }).filter(function (x) { return x.t; });
+      var ov = Theme.overrides();
+      var nTok = Object.keys(ov.light).length + Object.keys(ov.dark).length;
+      root.appendChild(el('p', 'muted', rows.length + ' sprite override' + (rows.length === 1 ? '' : 's') + ', ' + tex.length + ' texture' + (tex.length === 1 ? '' : 's') + ', ' + nTok + ' token value' + (nTok === 1 ? '' : 's') + ' changed.'));
+      if (rows.length || tex.length) {
+        var wrap = el('div', 'tok-wrap');
+        var table = el('table', 'status');
+        var hr = el('tr');
+        ['what', 'kind', 'files', 'status'].forEach(function (h) { var th = el('th', null, h); th.scope = 'col'; hr.appendChild(th); });
+        var thead = el('thead'); thead.appendChild(hr); table.appendChild(thead);
+        var tb = el('tbody');
+        rows.forEach(function (s) {
+          var tr = el('tr');
+          var c = el('td'); c.appendChild(el('code', null, s.name)); tr.appendChild(c);
+          tr.appendChild(el('td', null, s.art));
+          tr.appendChild(el('td', 'note', s.files.join(', ') || '—'));
+          tr.appendChild(el('td', s.state === 'error' ? 'err' : null, s.state === 'error' ? s.error : s.state));
+          tb.appendChild(tr);
+        });
+        tex.forEach(function (x) {
+          var tr = el('tr');
+          var c = el('td'); c.appendChild(el('code', null, 'texture ' + x.name)); tr.appendChild(c);
+          tr.appendChild(el('td', null, 'texture, every ' + x.t.tiles + ' tile' + (x.t.tiles === 1 ? '' : 's') + (x.t.alpha < 1 ? ', alpha ' + x.t.alpha : '')));
+          tr.appendChild(el('td', 'note', x.t.src));
+          tr.appendChild(el('td', x.t.error ? 'err' : null, x.t.error || (x.t.loaded ? 'ready' : 'loading')));
+          tb.appendChild(tr);
+        });
+        table.appendChild(tb);
+        wrap.appendChild(table);
+        root.appendChild(wrap);
+      }
+      var missing = Theme.missing();
+      if (missing.length) root.appendChild(el('p', 'err', 'Unknown tokens asked for: ' + missing.join(', ')));
+    }
+
+    // ---------------------------------------------------------------- wiring
+
+    function refreshArt() {
+      boards.forEach(function (b) { inMode(b.mode, function () { b.board.refreshPalette(); }); });
+      boardsDirty = true;
+      buildSprites();
+      buildStatus();
+      syncTokens();
+    }
+    Theme.onChange(function () { refreshArt(); });
+    SPR.onChange(function () { refreshArt(); });
+
+    $('mode').value = ui.mode;
+    $('size').value = ui.size;
+    $('size-out').value = ui.size;
+    $('motion').checked = ui.motion;
+    $('art').value = params.get('art') === 'examples' ? 'examples' : '';
+    function applyMode() { Theme.setMode(ui.mode === 'both' ? null : ui.mode); }
+    applyMode();
+    $('mode').addEventListener('change', function () {
+      ui.mode = $('mode').value; save();
+      applyMode();
+      buildSprites(); buildBoards();
+    });
+    $('size').addEventListener('input', function () {
+      ui.size = +$('size').value; $('size-out').value = ui.size; save();
+      buildSprites();
+    });
+    $('motion').addEventListener('change', function () { ui.motion = $('motion').checked; save(); paintAll(true); boardsDirty = true; });
+    $('art').addEventListener('change', function () {
+      var v = $('art').value;
+      location.search = v ? '?art=' + encodeURIComponent(v) : '';
+    });
+    rooms.forEach(function (r) { var o = el('option', null, r.label); o.value = r.key; $('room').appendChild(o); });
+    $('room').addEventListener('change', buildBoards);
+    $('solved').addEventListener('change', buildBoards);
+    $('copy-theme').addEventListener('click', function () {
+      var out = $('theme-out'), txt = themeText();
+      out.value = txt;
+      out.hidden = false;
+      var note = $('copy-note');
+      try {
+        navigator.clipboard.writeText(txt).then(function () { note.textContent = 'Copied.'; }, function () { note.textContent = 'Select the text below and copy it.'; });
+      } catch (e) { note.textContent = 'Select the text below and copy it.'; }
+    });
+    $('reset-theme').addEventListener('click', function () {
+      var cur = SPR.current();
+      Theme.reset(true);
+      Theme.set(cur && cur.theme ? cur.theme : {});
+    });
+    var resizeT = 0;
+    window.addEventListener('resize', function () { clearTimeout(resizeT); resizeT = setTimeout(layoutBoards, 100); });
+
+    buildSprites();
+    buildBoards();
+    buildTokens();
+    buildStatus();
+    var last = 0;
+    (function loop(now) {
+      if (ui.motion && now - last > 30) {
+        last = now;
+        paintAll(false);
+      }
+      drawBoards(now);
+      requestAnimationFrame(loop);
+    })(performance.now());
+  })();
+  </script>
+</body>
+</html>

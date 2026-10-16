@@ -3,54 +3,135 @@
   "title": "Storm Season",
   "levels": [
     {
-      "name": "Gale Warning",
-      "tip": "Storm season: a gale of 3 rattles every room it reaches.",
-      "wind": { "from": "W", "strength": 3 },
+      "name": "Dinner Rush",
+      "tip": "Storm season: gales of 3 blow through these houses. Halve them, soften them or steer them away.",
+      "wind": {
+        "from": "W",
+        "strength": 3
+      },
       "map": [
         "###########",
-        "#oo.f..oo.#",
+        "#n.s....f.#",
         "#.........#",
-        "####.###.##",
-        "#...l....o#",
-        "#.........#",
+        "#.#########",
+        "#.l.soooo.#",
+        "#....oooo.#",
         "###########"
       ],
       "fixed": [
-        { "type": "window", "x": 0, "y": 2 },
-        { "type": "window", "x": 4, "y": 0 }
+        {
+          "type": "window",
+          "x": 0,
+          "y": 1
+        },
+        {
+          "type": "window",
+          "x": 0,
+          "y": 4
+        }
       ],
-      "inventory": { "deflector": 4, "curtain": 1 },
+      "inventory": {
+        "deflector": 1,
+        "vent": 1,
+        "splitter": 1,
+        "filter": 1,
+        "skylight": 1
+      },
       "solution": [
-        { "type": "deflector", "x": 8, "y": 2, "d": 1 },
-        { "type": "deflector", "x": 8, "y": 5, "d": 0 },
-        { "type": "deflector", "x": 4, "y": 5, "d": 1 },
-        { "type": "curtain", "x": 4, "y": 2 }
+        {
+          "type": "deflector",
+          "x": 9,
+          "y": 1,
+          "d": 1
+        },
+        {
+          "type": "vent",
+          "x": 9,
+          "y": 3
+        },
+        {
+          "type": "splitter",
+          "x": 9,
+          "y": 4
+        },
+        {
+          "type": "skylight",
+          "x": 9,
+          "y": 5
+        },
+        {
+          "type": "filter",
+          "x": 2,
+          "y": 1
+        }
       ]
     },
     {
-      "name": "Stormy Hearth",
-      "wind": { "from": "E", "strength": 3 },
+      "name": "Three Sheets",
+      "wind": {
+        "from": "E",
+        "strength": 3
+      },
       "map": [
-        "#########",
-        "#c..#.oo#",
-        "#.......#",
-        "#.sl....#",
-        "#.......%",
-        "#f..#o..%",
-        "%%%######"
+        "~#######~",
+        "~#ll.ll#~",
+        "~#.....#~",
+        "~###n###~",
+        "~~~#..#~~",
+        "~###.###~",
+        "##.....##",
+        "#.ll....#",
+        "#########"
       ],
-      "fixed": [],
-      "inventory": { "window": 2, "splitter": 1, "skylight": 1, "filter": 1, "curtain": 1 },
+      "fixed": [
+        {
+          "type": "window",
+          "x": 6,
+          "y": 4
+        },
+        {
+          "type": "splitter",
+          "x": 4,
+          "y": 4
+        }
+      ],
+      "inventory": {
+        "fan": 1,
+        "deflector": 1,
+        "splitter": 1,
+        "extractor": 1
+      },
       "solution": [
-        { "type": "window", "x": 8, "y": 3 },
-        { "type": "splitter", "x": 1, "y": 3 },
-        { "type": "skylight", "x": 1, "y": 2 },
-        { "type": "filter", "x": 1, "y": 4 }
+        {
+          "type": "fan",
+          "x": 4,
+          "y": 2,
+          "d": 0
+        },
+        {
+          "type": "splitter",
+          "x": 4,
+          "y": 1
+        },
+        {
+          "type": "deflector",
+          "x": 4,
+          "y": 7,
+          "d": 0
+        },
+        {
+          "type": "extractor",
+          "x": 0,
+          "y": 7
+        }
       ]
     },
     {
       "name": "Storm Shutters",
-      "wind": { "from": "W", "strength": 3 },
+      "wind": {
+        "from": "W",
+        "strength": 3
+      },
       "map": [
         "#############",
         "#...#.......#",
@@ -62,19 +143,48 @@
         "#####%%%%%%%#"
       ],
       "fixed": [
-        { "type": "window", "x": 0, "y": 2 },
-        { "type": "window", "x": 0, "y": 5 }
+        {
+          "type": "window",
+          "x": 0,
+          "y": 2
+        },
+        {
+          "type": "window",
+          "x": 0,
+          "y": 5
+        }
       ],
-      "inventory": { "splitter": 1, "deflector": 1, "window": 1, "curtain": 1 },
+      "inventory": {
+        "splitter": 1,
+        "deflector": 1,
+        "window": 1,
+        "curtain": 1
+      },
       "solution": [
-        { "type": "splitter", "x": 7, "y": 5 },
-        { "type": "deflector", "x": 7, "y": 2, "d": 0 },
-        { "type": "window", "x": 12, "y": 2 }
+        {
+          "type": "splitter",
+          "x": 7,
+          "y": 5
+        },
+        {
+          "type": "deflector",
+          "x": 7,
+          "y": 2,
+          "d": 0
+        },
+        {
+          "type": "window",
+          "x": 12,
+          "y": 2
+        }
       ]
     },
     {
       "name": "Clothes Horse",
-      "wind": { "from": "W", "strength": 3 },
+      "wind": {
+        "from": "W",
+        "strength": 3
+      },
       "map": [
         "#####%#####",
         "#....f#...%",
@@ -86,18 +196,49 @@
         "~~~~~~#.l.%",
         "~~~~~~#%%%#"
       ],
-      "fixed": [{ "type": "window", "x": 0, "y": 2 }],
-      "inventory": { "splitter": 2, "fan": 1, "deflector": 1, "window": 1 },
+      "fixed": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 2
+        }
+      ],
+      "inventory": {
+        "splitter": 2,
+        "fan": 1,
+        "deflector": 1,
+        "window": 1
+      },
       "solution": [
-        { "type": "splitter", "x": 5, "y": 2 },
-        { "type": "fan", "x": 5, "y": 5, "d": 1 },
-        { "type": "splitter", "x": 8, "y": 5 },
-        { "type": "window", "x": 8, "y": 0 }
+        {
+          "type": "splitter",
+          "x": 5,
+          "y": 2
+        },
+        {
+          "type": "fan",
+          "x": 5,
+          "y": 5,
+          "d": 1
+        },
+        {
+          "type": "splitter",
+          "x": 8,
+          "y": 5
+        },
+        {
+          "type": "window",
+          "x": 8,
+          "y": 0
+        }
       ]
     },
     {
       "name": "Squall Line",
-      "wind": { "from": "N", "strength": 3 },
+      "wind": {
+        "from": "N",
+        "strength": 3
+      },
       "map": [
         "%%%#%%#%%#%%%",
         "#...#...#...#",
@@ -107,17 +248,53 @@
         "####%%#%#####"
       ],
       "fixed": [
-        { "type": "window", "x": 3, "y": 0 },
-        { "type": "window", "x": 6, "y": 0 },
-        { "type": "window", "x": 9, "y": 0 }
+        {
+          "type": "window",
+          "x": 3,
+          "y": 0
+        },
+        {
+          "type": "window",
+          "x": 6,
+          "y": 0
+        },
+        {
+          "type": "window",
+          "x": 9,
+          "y": 0
+        }
       ],
-      "inventory": { "splitter": 2, "curtain": 2, "window": 2 },
+      "inventory": {
+        "splitter": 2,
+        "curtain": 2,
+        "window": 2
+      },
       "solution": [
-        { "type": "splitter", "x": 3, "y": 2 },
-        { "type": "splitter", "x": 9, "y": 2 },
-        { "type": "curtain", "x": 3, "y": 3 },
-        { "type": "window", "x": 9, "y": 5 },
-        { "type": "window", "x": 12, "y": 2 }
+        {
+          "type": "splitter",
+          "x": 3,
+          "y": 2
+        },
+        {
+          "type": "splitter",
+          "x": 9,
+          "y": 2
+        },
+        {
+          "type": "curtain",
+          "x": 3,
+          "y": 3
+        },
+        {
+          "type": "window",
+          "x": 9,
+          "y": 5
+        },
+        {
+          "type": "window",
+          "x": 12,
+          "y": 2
+        }
       ]
     }
   ]

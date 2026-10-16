@@ -1,90 +1,227 @@
 {
   "chapter": 14,
-  "title": "Kitchen Rush",
+  "title": "Air Filters",
   "levels": [
     {
-      "name": "Back to Back",
-      "tip": "Bread in the oven, the copper on the boil, stew on the range, and each back room has just one door.",
-      "wind": {"from": "W", "strength": 1},
+      "name": "Clean Air",
+      "tip": "Smoky air must never hit a wall. An air filter cleans the smoke out of any air passing through it.",
+      "wind": {
+        "from": "W",
+        "strength": 0
+      },
       "map": [
-        "%#########%",
-        "%..#..#oo.#",
-        "%s.#.s#...#",
-        "%.#%#.%...#",
-        "#........s#",
-        "%..ooo....#",
-        "%..ooo....#",
-        "%#########%"
+        "#########",
+        "#.......#",
+        "#....s.p#",
+        "#.......#",
+        "#########"
       ],
-      "fixed": [{"type": "window", "x": 0, "y": 4}],
-      "inventory": {"deflector": 4, "vent": 1, "window": 1},
-      "solution": [{"type": "deflector", "x": 1, "y": 4, "d": 0}, {"type": "deflector", "x": 1, "y": 1, "d": 0}, {"type": "vent", "x": 3, "y": 1}, {"type": "deflector", "x": 5, "y": 1, "d": 1}, {"type": "deflector", "x": 5, "y": 4, "d": 1}, {"type": "window", "x": 10, "y": 4}]
+      "fixed": [
+        {
+          "type": "fan",
+          "x": 1,
+          "y": 2,
+          "d": 1
+        }
+      ],
+      "inventory": {
+        "filter": 1
+      },
+      "solution": [
+        {
+          "type": "filter",
+          "x": 6,
+          "y": 2
+        }
+      ]
     },
     {
-      "name": "Hot Plates",
-      "wind": {"from": "W", "strength": 0},
+      "name": "Two Burners",
+      "wind": {
+        "from": "W",
+        "strength": 0
+      },
       "map": [
-        "###########",
-        "#....s....#",
-        "#.........#",
-        "#.s......s#",
-        "#.........#",
-        "#...ooo...#",
-        "#...oco...#",
-        "###########"
+        "#########",
+        "#...c...#",
+        "#.s.....#",
+        "####.####",
+        "#.......#",
+        "#.....s.#",
+        "#########"
       ],
-      "fixed": [],
-      "inventory": {"ceilingfan": 1, "curtain": 1, "window": 2, "filter": 1},
-      "solution": [{"type": "ceilingfan", "x": 5, "y": 3}, {"type": "curtain", "x": 5, "y": 4}, {"type": "window", "x": 5, "y": 0}, {"type": "window", "x": 10, "y": 3}, {"type": "filter", "x": 1, "y": 3}]
+      "fixed": [
+        {
+          "type": "fan",
+          "x": 1,
+          "y": 2,
+          "d": 1
+        },
+        {
+          "type": "fan",
+          "x": 7,
+          "y": 5,
+          "d": 3
+        }
+      ],
+      "inventory": {
+        "filter": 1,
+        "deflector": 1
+      },
+      "solution": [
+        {
+          "type": "deflector",
+          "x": 4,
+          "y": 2,
+          "d": 1
+        },
+        {
+          "type": "filter",
+          "x": 4,
+          "y": 5
+        }
+      ]
     },
     {
-      "name": "Round Trip",
-      "wind": {"from": "W", "strength": 0},
+      "name": "Galley Kitchen",
+      "wind": {
+        "from": "W",
+        "strength": 1
+      },
       "map": [
-        "%%%%%%%%%",
-        "%co.s.l.%",
-        "%oo%....%",
-        "%%%%...l%",
-        "~~~%%%%.%",
-        "~~~%.ooc%",
-        "~~~%.oo.%",
-        "~~~%%%%%%"
+        "#########",
+        "#...#...#",
+        "#...#.s.#",
+        "#..s....#",
+        "#...#...#",
+        "#...#.s.#",
+        "#########"
       ],
-      "fixed": [],
-      "inventory": {"fan": 2, "deflector": 1, "filter": 1},
-      "solution": [{"type": "fan", "x": 3, "y": 1, "d": 1}, {"type": "deflector", "x": 7, "y": 1, "d": 1}, {"type": "fan", "x": 7, "y": 4, "d": 0}, {"type": "filter", "x": 5, "y": 1}]
+      "fixed": [
+        {
+          "type": "window",
+          "x": 0,
+          "y": 3
+        }
+      ],
+      "inventory": {
+        "splitter": 1,
+        "filter": 1,
+        "window": 1
+      },
+      "solution": [
+        {
+          "type": "splitter",
+          "x": 6,
+          "y": 3
+        },
+        {
+          "type": "window",
+          "x": 6,
+          "y": 6
+        },
+        {
+          "type": "filter",
+          "x": 6,
+          "y": 1
+        }
+      ]
     },
     {
-      "name": "Tea Towels",
-      "wind": {"from": "N", "strength": 1},
+      "name": "Supper Smoke",
+      "wind": {
+        "from": "N",
+        "strength": 2
+      },
       "map": [
-        "###########",
-        "#...#.....#",
-        "#s........#",
-        "#...#..l.o#",
-        "#...#..s.c#",
-        "#...#....o#",
-        "###########"
+        "#########",
+        "#.l.#...#",
+        "#...#.o.#",
+        "#..s..c.#",
+        "#.n.#.o.#",
+        "#########"
       ],
-      "fixed": [{"type": "window", "x": 2, "y": 0}],
-      "inventory": {"deflector": 1, "splitter": 1, "window": 1, "extractor": 1},
-      "solution": [{"type": "splitter", "x": 2, "y": 2}, {"type": "window", "x": 0, "y": 2}, {"type": "deflector", "x": 7, "y": 2, "d": 1}, {"type": "extractor", "x": 7, "y": 6}]
+      "fixed": [
+        {
+          "type": "window",
+          "x": 2,
+          "y": 0
+        }
+      ],
+      "inventory": {
+        "window": 1,
+        "splitter": 1,
+        "filter": 1,
+        "curtain": 1
+      },
+      "solution": [
+        {
+          "type": "splitter",
+          "x": 2,
+          "y": 3
+        },
+        {
+          "type": "window",
+          "x": 0,
+          "y": 3
+        },
+        {
+          "type": "filter",
+          "x": 4,
+          "y": 3
+        },
+        {
+          "type": "curtain",
+          "x": 5,
+          "y": 3
+        }
+      ]
     },
     {
-      "name": "Dinner Rush",
-      "wind": {"from": "W", "strength": 3},
+      "name": "Hood and Hearth",
+      "wind": {
+        "from": "W",
+        "strength": 0
+      },
       "map": [
-        "###########",
-        "#n.s....f.#",
-        "#.........#",
-        "#.#########",
-        "#.l.soooo.#",
-        "#....oooo.#",
-        "###########"
+        "#########",
+        "#...#p..#",
+        "#c.....s#",
+        "#...#...#",
+        "#.s.....#",
+        "#########"
       ],
-      "fixed": [{"type": "window", "x": 0, "y": 1}, {"type": "window", "x": 0, "y": 4}],
-      "inventory": {"deflector": 1, "vent": 1, "splitter": 1, "filter": 1, "skylight": 1},
-      "solution": [{"type": "deflector", "x": 9, "y": 1, "d": 1}, {"type": "vent", "x": 9, "y": 3}, {"type": "splitter", "x": 9, "y": 4}, {"type": "skylight", "x": 9, "y": 5}, {"type": "filter", "x": 2, "y": 1}]
+      "fixed": [
+        {
+          "type": "extractor",
+          "x": 8,
+          "y": 2
+        }
+      ],
+      "inventory": {
+        "fan": 1,
+        "deflector": 1,
+        "filter": 1
+      },
+      "solution": [
+        {
+          "type": "fan",
+          "x": 1,
+          "y": 4,
+          "d": 1
+        },
+        {
+          "type": "deflector",
+          "x": 5,
+          "y": 4,
+          "d": 0
+        },
+        {
+          "type": "filter",
+          "x": 5,
+          "y": 2
+        }
+      ]
     }
   ]
 }
