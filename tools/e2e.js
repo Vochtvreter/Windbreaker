@@ -359,7 +359,11 @@ function levelGuides(data) {
 }
 // The level's tip as the guidance line says it (screen words, not compass words).
 const SIDE = { north: 'top', east: 'right', south: 'bottom', west: 'left' };
-function plainTip(t) { return String(t || '').replace(/\bfrom the (north|east|south|west)\b/gi, (m, d) => 'from the ' + SIDE[d.toLowerCase()]); }
+// (the walk plays with a mouse, so "tap" reads "click")
+function plainTip(t) {
+  return String(t || '').replace(/\bfrom the (north|east|south|west)\b/gi, (m, d) => 'from the ' + SIDE[d.toLowerCase()])
+    .replace(/\bTap\b/g, 'Click').replace(/\btap\b/g, 'click');
+}
 async function guideUi(page) {
   return page.evaluate(() => {
     const g = document.getElementById('guide'), line = document.getElementById('guide-line');
@@ -540,6 +544,7 @@ async function sectionWalk() {
         eq(ui.goals, new Set(L.objects.map((o) => o.type)).size, title + ': goals strip has one entry per object type');
         const ch = chapterOf(lv.id);
         const card = cards[lv.id] && guides[cards[lv.id]];
+        eq((await state(page)).levelGuide, cards[lv.id] || null, title + ': the card this level brings');
         let gu = await guideUi(page);
         if (card && !unlocked) {
           // one voice: the card, and no tip line beside it

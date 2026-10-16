@@ -180,9 +180,14 @@
   function isDone(id) { return store.completed.indexOf(id) >= 0; }
   function markDone(id) { if (!isDone(id)) store.completed.push(id); }
   // The furthest solved level, as an index into LEVELS (-1: none).
+  var furthestMemo = { list: null, n: -1, f: -1 };
   function furthestDone() {
+    var c = store.completed;
+    // progress only grows by push (or is replaced): the list and its length say whether it changed
+    if (furthestMemo.list === c && furthestMemo.n === c.length) return furthestMemo.f;
     var f = -1;
-    store.completed.forEach(function (id) { var i = levelIndex(id); if (i > f) f = i; });
+    c.forEach(function (id) { var i = levelIndex(id); if (i > f) f = i; });
+    furthestMemo = { list: c, n: c.length, f: f };
     return f;
   }
   // Level n is playable when it is the first level, is solved, or the level
@@ -1066,7 +1071,7 @@
   function openGuide(id, opts) {
     opts = opts || {};
     var card = guideFor(id);
-    if (!card || G.screen !== 'game') return;
+    if (!card || G.screen !== 'game' || boardLocked()) return;
     closeGuide({ silent: true, keep: true });
     hideTooltip();
     if (!dom.toast.hidden && dom.toast.getAttribute('data-kind') !== 'reset') hideToast();
@@ -1110,7 +1115,10 @@
     dom.guide.textContent = '';
     dom.game.classList.remove('is-guiding');
     if (opts.keep) return; // replaced, or the level is left: not read yet
-    if (g.id === G.levelGuide) markGuideSeen(g.id);
+    if (g.id === G.levelGuide) {
+      markGuideSeen(g.id);
+      if (G.newTool) { G.newTool = null; updateTray(); }
+    }
     // the board takes the freed space: let it settle in softly
     dom.canvas.classList.remove('is-settling');
     void dom.canvas.offsetWidth;
@@ -1151,7 +1159,7 @@
   function updateGuideLine() {
     if (!G.def) return;
     var gid = G.levelGuide;
-    var text = G.coachGoal || (G.def.tip ? plainTip(G.def.tip) : '');
+    var text = G.coachGoal || (G.def.tip ? tapWords(plainTip(G.def.tip)) : '');
     if (gid && !text) text = tapWords(guideFor(gid).oneLiner);
     if (dom.tip.textContent !== text) dom.tip.textContent = text;
     dom.tipIcon.hidden = !gid;
@@ -1252,10 +1260,7 @@
   }
   function stalledInlets(sim) { return sim.trees.filter(function (t) { return t.kind === 'inlet' && !t.active; }); }
   // the wall cell where a stalled breeze stops (its red ×)
-  function stallCell(sim) {
-    var e = R.analyze(sim, G.L).stallEnds[0];
-    return e ? { x: Math.floor(e.x + e.dx * 0.32), y: Math.floor(e.y + e.dy * 0.32) } : null;
-  }
+  function stallCell(sim) { return stallInfo(sim).first; }
   function goalLine() {
     var objs = G.L.objects;
     if (!objs.length || !objs.every(function (o) { return o.type === 'pinwheel'; })) return null;
@@ -1639,8 +1644,8 @@
   function place(type, x, y, d) {
     if (remaining(type) <= 0 || !WB.canPlace(G.L, allPieces(), type, x, y)) { nope(x, y); return false; }
     // placed right on the hint ghost: take the hinted rotation too
-    if (G.hint && G.hint.x === x && G.hint.y === y && G.hint.type === type) d = G.hint.d;
     var onHint = !!(G.hint && G.hint.x === x && G.hint.y === y && G.hint.type === type);
+    if (onHint) d = G.hint.d;
     var p = { type: type, x: x, y: y, d: rotations(type) > 1 ? (d | 0) % rotations(type) : 0 };
     var first = G.pieces.length === 0;
     var stalledBefore = stalledInlets(G.sim).length;
@@ -1745,7 +1750,8 @@
     if (G.sim.solved || G.c1) return;
     var touch = usingTouch();
     var msg = null, key = null;
-    if (type === 'window' && !seenTip('offpath') && stalledBefore > 0 && stalledInlets(G.sim).length >= stalledBefore) {
+    var wp = type === 'window' ? playerAt(x, y) : null;
+    if (wp && WB.windowRole(G.L, wp) === 'outlet' && !seenTip('offpath') && stalledBefore > 0 && stalledInlets(G.sim).length >= stalledBefore) {
       key = 'offpath';
       msg = C1_TEXT.offpath;
     } else if (rotations(type) > 1 && !seenTip('turn') && !onHint) {
@@ -1806,7 +1812,6 @@
     if (c1) {
       clearTimeout(G.c1Timer);
       G.c1 = null;
-      G.coachGoal = null;
       store.seenTips.push('coach1');
       saveStore();
       var ob = G.L.objects[0];
@@ -2007,12 +2012,17 @@
   // (its red ×), cached on the simulation result.
   function stallInfo(sim) {
     if (sim._wbStall) return sim._wbStall;
-    var out = { path: {}, end: {} };
+    var out = { path: {}, end: {}, first: null };
     var A = R.analyze(sim, G.L);
     A.stalled.forEach(function (st) {
       out.path[Math.floor((st.hx + WB.DX[st.d] * 0.5) / 2) + ',' + Math.floor((st.hy + WB.DY[st.d] * 0.5) / 2)] = true;
     });
-    A.stallEnds.forEach(function (e) { out.end[Math.floor(e.x + e.dx * 0.32) + ',' + Math.floor(e.y + e.dy * 0.32)] = true; });
+    // the red × sits just inside the wall (or window) that stops the breeze (see render.js)
+    A.stallEnds.forEach(function (e) {
+      var c = { x: Math.floor(e.x + e.dx * 0.32), y: Math.floor(e.y + e.dy * 0.32) };
+      out.end[c.x + ',' + c.y] = true;
+      if (!out.first) out.first = c;
+    });
     sim._wbStall = out;
     return out;
   }
@@ -2603,7 +2613,7 @@
     // have opened right under the finger)
     if (I.chipLong === e.pointerId) {
       I.chipLong = null;
-      I.swallowClick = performance.now() + 500;
+      I.swallowClick = performance.now() + 150; // a real next tap takes longer than this
     }
   });
   window.addEventListener('click', function (e) {
@@ -2780,6 +2790,10 @@
     dialogStack.push({ d: d, prev: document.activeElement });
     d.hidden = false;
     hideTooltip();
+    if (d === dom.helpDlg) {
+      renderCoach();
+      if (G.guide && G.guide.built.demo) G.guide.built.demo.stop();
+    }
     setTimeout(function () { if (!d.hidden) (focusEl || d.querySelector('button')).focus(); }, 30);
   }
   function closeDialog(d, silent) {
@@ -2793,7 +2807,11 @@
         break;
       }
     }
-    if (d === dom.helpDlg) { stopHelpGuide(); renderCoach(); }
+    if (d === dom.helpDlg) {
+      stopHelpGuide();
+      renderCoach();
+      if (G.guide && G.guide.built.demo) G.guide.built.demo.start();
+    }
     if (d === dom.win && G.screen === 'game') {
       closeGuide({ silent: true });
       updateButtons();
