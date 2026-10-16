@@ -627,11 +627,11 @@ button {
   line-height: 1.38;
   animation: toast-in .2s ease-out;
 }
-.toast { flex-wrap: wrap; row-gap: 2px; }
+/* a long message puts its action on a line of its own; the close button stays top right */
+.toast { flex-wrap: wrap; row-gap: 2px; padding-right: 48px; }
 .toast > span { flex: 1 1 200px; min-width: 0; padding: 4px 0; }
-/* the close button stays on the first line; a long message puts its action below */
-.toast .icon-btn-small { order: 1; min-width: 40px; height: 40px; }
-.toast #toast-action { order: 2; margin-left: auto; }
+.toast .icon-btn-small { position: absolute; top: 4px; right: 4px; min-width: 40px; height: 40px; }
+.toast #toast-action { margin-left: auto; }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 6px); } }
 .toast.at-top { top: 12px; bottom: auto; }
 
@@ -717,7 +717,7 @@ button {
   box-shadow: none;
   color: var(--accent-text);
 }
-.goal.is-bad { color: var(--bad-text); box-shadow: inset 0 0 0 1.5px var(--bad); }
+.goal.is-bad { color: var(--bad-text); box-shadow: inset 0 0 0 1px var(--line); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--bad) 55%, transparent); }
 .goal .check { width: 15px; height: 15px; stroke-width: 2.6; }
 /* a new thing in the house: its goal chip says hello once */
 .goal.is-hello { animation: goal-hello 1.2s ease-in-out 2; }
@@ -833,9 +833,8 @@ button {
 .chip.is-new::after {
   content: "New";
   position: absolute;
-  top: -7px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: -8px;
+  left: -6px;
   padding: 1px 7px;
   border-radius: 999px;
   background: var(--accent-fill);

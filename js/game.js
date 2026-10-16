@@ -2071,7 +2071,7 @@
 
   // what a tool can do, said as an idea (step 1)
   var TOOL_IDEA = {
-    window: 'it lets a breeze in on the windy side, and out anywhere else',
+    window: 'it lets the wind in on the windy side',
     fan: 'it makes its own breeze, the way it points',
     deflector: 'it turns a breeze round a corner',
     curtain: 'it makes a breeze 1 weaker',
