@@ -326,7 +326,7 @@
     ghost: null, hint: null, conflicts: null, lifted: null,
     previewSim: null, previewKey: null, dragBaseSim: null,
     // all pointer state lives here and is cleared by resetInput()
-    input: { press: null, drag: null, tray: null, suppressClick: false, cancelledPointer: null, chipLong: null, infoDown: null },
+    input: { press: null, drag: null, tray: null, suppressClick: false, cancelledPointer: null, chipLong: null, infoDown: null, swallowClick: 0 },
     pops: {}, shake: null, flash: null, pulse: null, focus: null,
     won: false, winAt: null, winTimer: 0, winCardTimer: 0, chapterDoneBefore: false,
     newTool: null, newToolUsed: false, lastPtr: null, sawKeys: false,
@@ -525,7 +525,7 @@
         row.setAttribute('aria-label', label + ', locked');
         row.appendChild(ic);
         var tt = el('div', 'ch-fold-title');
-        tt.innerHTML = '<span>' + ch.n + ' · </span>' + esc(ch.title);
+        tt.innerHTML = '<span>' + ch.n + ' · </span>' + esc(ch.title) + (tag ? '<small class="ch-new" aria-hidden="true">' + tag + '</small>' : '');
         row.appendChild(tt);
         var meta = el('div', 'ch-fold-meta');
         meta.innerHTML = LOCK_SVG + ids.length + ' levels';
@@ -1083,10 +1083,15 @@
     dom.guide.setAttribute('data-kind', card.kind);
     dom.guide.hidden = false;
     dom.game.classList.add('is-guiding');
-    G.guide = { id: id, intro: !!opts.intro, at: at, built: built };
+    // more to read below? the last lines fade out
+    var main = built.el.querySelector('.gcard-main');
+    var fade = function () { main.classList.toggle('can-scroll', main.scrollHeight - main.scrollTop - main.clientHeight > 6); };
+    main.addEventListener('scroll', fade, { passive: true });
+    G.guide = { id: id, intro: !!opts.intro, at: at, built: built, fade: fade };
     renderCoach();
     updateGuideLine();
     if (built.demo) built.demo.start();
+    fade();
     if (opts.focus) { var go = $('guide-go'); if (go) go.focus({ preventScroll: true }); }
     announce((opts.intro ? 'Meet the ' + card.title.toLowerCase() : card.title) + '. ' + tapWords(card.oneLiner));
   }
@@ -1105,6 +1110,10 @@
     dom.game.classList.remove('is-guiding');
     if (g.id === G.levelGuide) markGuideSeen(g.id);
     if (opts.keep) return;
+    // the board takes the freed space: let it settle in softly
+    dom.canvas.classList.remove('is-settling');
+    void dom.canvas.offsetWidth;
+    dom.canvas.classList.add('is-settling');
     updateGuideLine();
     if (opts.how === 'show') showMe(g.id);
     if (hadFocus && !opts.silent) {
@@ -1171,11 +1180,12 @@
   // that cell: the first level's steps, and one-time tips (turning a fan,
   // moving pieces, a window off the breeze's path, smoky laundry). It waits
   // while a card, a toast or the help is open, and no tooltip shows with it.
+  // Taps go through it to the board; it moves on or fades by itself.
 
   function showCoach(x, y, text, opts) {
     opts = opts || {};
     clearTimeout(G.coachHide);
-    var c = G.coach = { x: x, y: y, text: text, key: opts.key || null, t0: performance.now(), tap: opts.tap || null };
+    var c = G.coach = { x: x, y: y, text: text, key: opts.key || null, t0: performance.now() };
     if (opts.ms) G.coachHide = setTimeout(function () { if (G.coach === c) hideCoach(); }, opts.ms);
     renderCoach();
   }
@@ -1212,11 +1222,6 @@
     if (p.side === 'above' || p.side === 'below') a.left = clamp(p.cx - p.l - 6, 12, p.w - 24) + 'px';
     else a.top = clamp(p.cy - p.t - 6, 10, p.h - 22) + 'px';
   }
-  dom.coach.addEventListener('click', function () {
-    var c = G.coach;
-    if (!c) return;
-    if (c.tap) c.tap(); else hideCoach();
-  });
   // a tray chip that softly calls for a tap
   function markChipCoach(type) {
     G.chipCoach = type;
@@ -1234,6 +1239,7 @@
   var C1_TEXT = {
     in: 'The wind blows in here. The dashed line shows where it wants to go.',
     out: 'But it stops at this wall, at the red ×: no way out yet. Put a window here!',
+    move: 'But it stops at this wall, at the red \u00d7: no way out yet. Drag your window here!',
     offpath: 'Breezes blow in straight lines. Try where the dashed line ends.',
     flow: 'The breeze flows! Now let it reach the pinwheel.',
     done: 'In one window, out the other: that’s a breeze! The pinwheel is happy.'
@@ -1268,15 +1274,16 @@
     c1.step = step;
     markChipCoach(null);
     if (step === 'in') {
-      showCoach(c1.inlet.x, c1.inlet.y, C1_TEXT.in, { tap: function () { c1Step('out'); } });
+      showCoach(c1.inlet.x, c1.inlet.y, C1_TEXT.in);
       G.c1Timer = setTimeout(function () { if (G.c1 === c1 && c1.step === 'in') c1Step('out'); }, 4200);
     } else if (step === 'out') {
       var sc = stallCell(G.sim);
       if (!sc) { hideCoach(); return; }
-      showCoach(sc.x, sc.y, C1_TEXT.out);
+      // no window left in the tray: the one on the board has to move
+      showCoach(sc.x, sc.y, remaining('window') > 0 ? C1_TEXT.out : C1_TEXT.move);
       if (G.sel !== 'window' && remaining('window') > 0) markChipCoach('window');
     } else if (step === 'offpath') {
-      showCoach(c1.placed.x, c1.placed.y, C1_TEXT.offpath, { tap: function () { c1Step('out'); } });
+      showCoach(c1.placed.x, c1.placed.y, C1_TEXT.offpath);
       G.c1Timer = setTimeout(function () { if (G.c1 === c1 && c1.step === 'offpath') c1Step('out'); }, 4500);
     } else if (step === 'flow') {
       var g = null;
@@ -1889,6 +1896,8 @@
     if (dom.hint.disabled || dom.hint.hidden) return;
     var sol = (G.def.solution || []).map(norm);
     hideTooltip();
+    hideCoachTip();
+    closeGuide({ silent: true }); // one voice: the hint speaks now
     if (!sol.length) { showToast('No hint for this one — experiment!'); return; }
     if (G.sim.solved) { showToast('Everything is already happy.'); return; }
     function same(a, b) {
@@ -2102,7 +2111,7 @@
       var cost = (c.t >= 4 && c.t + h <= sh - 4 ? 0 : 1000) + i * 0.5;
       // a box beside the cell must not slide over it
       if ((c.s === 'right' && c.l < ox + rect.left + T) || (c.s === 'left' && c.l + w > ox + rect.left)) cost += 500;
-      if (avoid) cost += coverCost(c.l - ox, c.t - oy, w, h);
+      if (avoid) cost += coverCost(c.l - ox, c.t - oy, w, h, box === dom.coach);
       if (!best || cost < best.cost) best = { l: c.l, t: c.t, s: c.s, cost: cost };
     }
     var t = Math.max(4, Math.min(sh - h - 4, best.t));
@@ -2123,8 +2132,11 @@
   }
   // How much of the board a box (canvas px) hides: objects matter most, then
   // pieces, then cells with air moving through them.
-  function coverCost(l, t, w, h) {
+  // A coach bubble also keeps off the house where it can, and off the spots
+  // where the selected tool could go.
+  function coverCost(l, t, w, h, coach) {
     var L = G.L, T = board.T, sim = G.sim, cost = 0;
+    var valid = coach && (I.drag ? I.drag.valid : G.valid);
     var x0 = Math.floor((l - board.ox) / T), x1 = Math.floor((l + w - board.ox) / T);
     var y0 = Math.floor((t - board.oy) / T), y1 = Math.floor((t + h - board.oy) / T);
     for (var y = Math.max(0, y0); y <= Math.min(L.h - 1, y1); y++) {
@@ -2137,6 +2149,7 @@
         if (objectAt(x, y) >= 0) cost += 12 + 24 * frac;
         else if (playerAt(x, y) || fixedAt(x, y)) cost += 6 * frac;
         else if (WB.isFloorish(WB.cellAt(L, x, y)) && sim.flow[y * L.w + x] > 0) cost += 2 * frac;
+        if (coach) cost += (isValidCell(valid, x, y) ? 5 : 1) * frac;
       }
     }
     return cost;
@@ -2156,6 +2169,7 @@
     var t = WB.TOOLS[G.sel];
     if (!t) return;
     G.pulse = performance.now();
+    if (G.guide) return; // the card beside the board already explains it
     showToast(t.name + ' ' + MOUNT_HELP[t.mount] + ' — try a highlighted spot.', null, null, { ms: 2600, kind: 'mount' });
   }
 
@@ -2168,6 +2182,7 @@
   function onBoardDown(e) {
     if (boardLocked() || !e.isPrimary) return;
     Sound.unlock();
+    if (G.c1 && G.c1.step === 'in') c1Step('out');
     G.cursor = null;
     var c = board.pick(e.clientX, e.clientY);
     if (e.button === 2) {
@@ -2583,13 +2598,17 @@
       setTimeout(function () { I.suppressClick = false; }, 0);
     }
     if (I.tray && I.tray.pointerId === e.pointerId) I.tray = null;
-    // the click that ends a long-press on a chip is not a tap
+    // the click that ends a long-press on a chip is not a tap (the card may
+    // have opened right under the finger)
     if (I.chipLong === e.pointerId) {
       I.chipLong = null;
-      I.suppressClick = true;
-      setTimeout(function () { I.suppressClick = false; }, 0);
+      I.swallowClick = performance.now() + 500;
     }
   });
+  window.addEventListener('click', function (e) {
+    if (I.swallowClick && performance.now() < I.swallowClick) { e.stopPropagation(); e.preventDefault(); }
+    I.swallowClick = 0;
+  }, true);
   window.addEventListener('pointercancel', function (e) {
     if (I.chipLong === e.pointerId) I.chipLong = null;
     if (I.drag && e.pointerId === I.drag.pointerId) cancelDrag();
@@ -2895,6 +2914,7 @@
     var before = board.T + ',' + board.ox + ',' + board.oy;
     board.layout(w, h, 0);
     if (before !== board.T + ',' + board.ox + ',' + board.oy) { hideTooltip(); positionCoach(); }
+    if (G.guide) G.guide.fade();
   }
 
   function drawSig() {

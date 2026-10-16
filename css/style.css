@@ -387,6 +387,8 @@ button {
 .chapter.is-folded .ch-icon { width: 30px; height: 30px; border-radius: 9px; opacity: 0.7; }
 .chapter.is-folded .ch-fold-title { flex: 1; min-width: 0; font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chapter.is-folded .ch-fold-title span { font-weight: 500; color: var(--muted); }
+.chapter.is-folded .ch-new { display: block; margin-top: 0; font-size: 12.5px; font-weight: 500; color: var(--muted); }
+.chapter.is-folded .ch-new b { color: var(--muted); font-weight: 600; }
 .chapter.is-folded .ch-fold-meta { font-size: 12.5px; display: inline-flex; align-items: center; gap: 5px; flex: none; }
 .chapter.is-folded .ico { width: 15px; height: 15px; stroke-width: 2; }
 
@@ -905,6 +907,14 @@ button {
   padding: 8px 18px 4px;
 }
 .help-guide .gcard-main { padding: 8px 0 0; overflow: visible; }
+/* more to read below: the last lines fade out */
+.gcard-main.can-scroll {
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 30px), transparent);
+  mask-image: linear-gradient(180deg, #000 calc(100% - 30px), transparent);
+}
+/* the board settles in softly when the card folds away */
+.board.is-settling { animation: board-settle .45s ease-out; }
+@keyframes board-settle { from { opacity: 0.35; } }
 .gcard-one { font-size: 16px; line-height: 1.4; color: var(--ink); }
 .gcard-status {
   margin-top: 8px;
@@ -1008,7 +1018,8 @@ button {
   font-weight: 600;
   line-height: 1.35;
   box-shadow: var(--shadow-lg);
-  cursor: pointer;
+  /* taps go through to the board: the bubble never swallows a move */
+  pointer-events: none;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -1059,6 +1070,9 @@ button {
 .help-back { margin: 0 0 4px -10px; padding: 0 12px 0 6px; gap: 2px; }
 .help-back .ico { width: 18px; height: 18px; }
 .help-guide .gdemo { max-width: 320px; }
+.help-body .help-guide p { margin-bottom: 0; }
+.help-body .help-guide .gcard-one { color: var(--ink); }
+.help-body .help-guide .gcard-kicker { color: var(--accent-text); }
 
 /* ------------------------------------------------------------------ overlays */
 
@@ -1253,8 +1267,8 @@ button {
 .gloss-name { font-weight: 600; }
 .gloss-desc { color: var(--ink-soft); font-size: 13.5px; line-height: 1.35; }
 .help-body .keys + h3 { margin-top: 18px; }
-.keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; color: var(--ink-soft); font-size: 13.5px; }
-.keys dt { font-weight: 600; color: var(--ink); white-space: nowrap; }
+.keys { display: grid; grid-template-columns: fit-content(46%) 1fr; gap: 6px 12px; margin: 0; color: var(--ink-soft); font-size: 13.5px; }
+.keys dt { font-weight: 600; color: var(--ink); }
 .keys dd { margin: 0; }
 kbd {
   font-family: inherit;
@@ -1303,6 +1317,10 @@ kbd {
   .board { border-radius: 0; box-shadow: none; }
   .hud { padding-left: 12px; padding-right: 6px; padding-top: 4px; }
   .tray { padding-left: 12px; padding-right: 12px; min-height: 88px; }
+  .guide { max-height: min(66vh, 620px); max-height: min(66dvh, 620px); }
+  .gdemo { max-width: 250px; }
+  .gcard-head { padding-left: 16px; }
+  .gcard-main { padding-left: 16px; padding-right: 16px; }
 }
 
 @media (max-width: 420px) {
