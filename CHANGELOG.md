@@ -4,6 +4,27 @@ Every release is merged to `main` with a version bump; work in progress lives
 on the `dev` branch. The version is shown at the bottom of the level-select
 screen.
 
+## v1.0 — Windbreaker 1.0
+
+* Release-candidate review fixes: progress is no longer lost when the game
+  is open in two tabs; a board saved for an older version of a level is not
+  restored onto the new design (boards saved before v1.0 are dropped once,
+  solved levels are kept); the hint spots a wrongly turned piece anywhere in
+  the solution; undo, redo and R are safe in the middle of a press or drag
+  (R turns the piece being dragged); dirty laundry has its own grey smoke
+  badge and a one-time note; a stove's tooltip says why its smoke is
+  trapped; smoke clouds no longer cover objects; the "no way out" mark turns
+  grey on a solved board; focus stays on the board after "Next level"; the
+  keyboard cursor is announced to screen readers.
+* Level 48 Backdraft gets a tip: a window facing the wind pushes air back.
+* Docs brought in line with the code: README controls (tap turns fans and
+  deflectors, other pieces go back to the tray; keyboard shortcuts), the
+  project layout, the full engine API and the level checks.
+* Final verification: 211 unit tests, every level check on all 100 levels,
+  levels 96-100 proven to have exactly one solution, and the end-to-end
+  suite (159 checks across mouse, touch, keyboard, phone to desktop sizes,
+  storage disabled and file://) all green.
+
 ## v0.8 — Clean laundry, level redesigns, final UI polish
 
 * New rule (from playtest feedback on levels 48 and 51): laundry needs
@@ -22,16 +43,6 @@ screen.
   stream-end markers stay off objects, hint ghosts place the hinted piece,
   intro cards for new objects and tables, mute button in help, bigger
   board on large screens, locked levels explain how to unlock them.
-* Release-candidate review fixes: progress is no longer lost when the game
-  is open in two tabs; a board saved for an older version of a level is not
-  restored onto the new design (boards saved before v0.8 are dropped once,
-  solved levels are kept); the hint spots a wrongly turned piece anywhere in
-  the solution; undo, redo and R are safe in the middle of a press or drag
-  (R turns the piece being dragged); dirty laundry has its own grey smoke
-  badge and a one-time note; a stove's tooltip says why its smoke is
-  trapped; smoke clouds no longer cover objects; the "no way out" mark turns
-  grey on a solved board; focus stays on the board after "Next level"; the
-  keyboard cursor is announced to screen readers.
 * All 100 levels pass every check; levels 96-100 proven unique by
   exhaustive search; full end-to-end suite green (159 checks).
 

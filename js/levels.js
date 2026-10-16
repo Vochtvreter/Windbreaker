@@ -858,6 +858,7 @@
     },
     {
       "id": 48, "chapter": 10, "name": "Backdraft",
+      "tip": "A window facing the wind pushes air back, just like a wall.",
       "wind": { "from": "W", "strength": 1 },
       "map": [
         "###########",
