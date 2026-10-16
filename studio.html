@@ -475,6 +475,14 @@
           var k = size * 0.86;
           ctx.scale(k, k);
           SPR.draw(s.name, ctx, o, tt);
+        } else if (s.name === 'ui.wind') {
+          // in tile units: on the lawn (the garden's mark) or on a wall slot
+          ctx.fillStyle = P(o.kind === 'cue' ? 'garden' : 'wall');
+          ctx.fillRect(-size / 2, -size / 2, size, size);
+          if (o.kind !== 'cue') { ctx.fillStyle = P('hl-wall'); ctx.fillRect(-size * 0.37, -size * 0.37, size * 0.74, size * 0.74); }
+          ctx.scale(size, size);
+          o.px = 1 / size;
+          SPR.draw(s.name, ctx, o, tt);
         } else {
           ctx.fillStyle = P('floor');
           ctx.fillRect(-size / 2, -size / 2, size, size);

@@ -719,6 +719,7 @@ button {
   line-height: 1.25;
   padding-left: 2px;
 }
+.goals-say { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 .goals-say.is-almost, .goals-say.is-done { color: var(--accent-text); }
 .goals-say.is-bad { color: var(--bad-text); }
 .goals {
@@ -1078,30 +1079,9 @@ button {
   font-size: 0.9375rem;
   line-height: 1.4;
 }
-/* more to read below: a small "More" over the fading last lines */
-.gcard { position: relative; }
-.gcard-more {
-  position: relative;
-  z-index: 1;
-  flex: none;
-  align-self: center;
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  margin: -36px auto 6px;
-  min-height: 32px;
-  padding: 0 10px 0 14px;
-  border: none;
-  border-radius: 999px;
-  background: var(--surface);
-  box-shadow: var(--shadow);
-  color: var(--accent-text);
-  font-size: 0.8125rem;
-  font-weight: 700;
-  cursor: pointer;
-  animation: fade-in .3s ease-out;
-}
-.gcard-more .ico { width: 17px; height: 17px; stroke-width: 2.2; }
+/* more to read above the buttons: a quiet "More" at the start of the button row */
+.gcard-buttons .gcard-more { margin-right: auto; gap: 2px; padding: 0 8px 0 10px; color: var(--accent-text); font-weight: 600; animation: fade-in .3s ease-out; }
+.gcard-more .ico { width: 18px; height: 18px; stroke-width: 2.2; }
 .gcard-controls .ico { width: 20px; height: 20px; margin-top: 1px; color: var(--accent-text); }
 .gcard-buttons {
   flex: none;
@@ -1546,7 +1526,7 @@ kbd {
   .game.is-guiding .tray-wrap { display: block; }
   .guide { align-self: start; justify-self: stretch; width: auto; max-height: 100%; margin: 6px 16px 16px 4px; border-radius: 24px; }
   /* a short panel (a laptop at 125%): a smaller demo, so the points show too */
-  .guide .gdemo-box { max-height: min(32vh, 230px); max-height: min(32dvh, 230px); }
+  .guide .gdemo-box { max-height: min(28vh, 230px); max-height: min(28dvh, 230px); }
 }
 
 /* Settings sit in the top bar where there is room; on phones they are in Help */
@@ -1571,7 +1551,12 @@ kbd {
   .level-title { font-size: 0.96875rem; }
   .tip-line { padding: 0 12px 4px; }
   .tip { font-size: 0.9375rem; }
-  .tip-line.has-guide .tip { font-size: 1rem; }
+  /* two lines at most above the board; a tap shows the rest */
+  .tip { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+  .tip-line.is-open .tip { display: block; -webkit-line-clamp: none; line-clamp: none; }
+  .tip-line.is-clamped { cursor: pointer; }
+  .tip-line.has-guide .tip { font-size: 0.9375rem; }
+  .tip-line.has-guide .tip-icon { display: none; }
   /* full-bleed garden on phones */
   .stage { padding: 0; }
   .board { border-radius: 0; box-shadow: none; }
@@ -1584,6 +1569,11 @@ kbd {
   .gdemo-cap { min-height: 2.6em; margin-top: 6px; }
   .gcard-head { padding-left: 16px; }
   .gcard-main { padding-left: 16px; padding-right: 16px; }
+}
+
+/* a short phone (the address bar showing): a smaller demo still */
+@media (max-width: 560px) and (max-height: 700px) {
+  .guide .gdemo-box { max-height: 18vh; max-height: 18dvh; }
 }
 
 @media (max-width: 420px) {
@@ -1645,7 +1635,7 @@ kbd {
     background: linear-gradient(transparent, var(--bg));
     pointer-events: none;
   }
-  .goals-say { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.75rem; }
+  .goals-say { -webkit-line-clamp: 1; line-clamp: 1; font-size: 0.75rem; }
   .goal { height: 34px; }
   .icon-btn.act { height: 46px; min-width: 44px; }
   .icon-btn.act .ico { width: 19px; height: 19px; }
@@ -1689,8 +1679,7 @@ kbd {
   .gcard-one { font-size: 0.9375rem; }
   .gcard-buttons { padding: 8px 10px; }
   .gdemo { max-width: 240px; margin-top: 8px; }
-  .guide .gdemo-box { max-height: 34vh; max-height: 34dvh; }
-  .gcard-more { margin-top: -32px; }
+  .guide .gdemo-box { max-height: 25vh; max-height: 25dvh; }
   .coach { max-width: min(220px, calc(100% - 16px)); font-size: 0.84375rem; }
   /* toasts float in the top bar, over the level title, never over the house */
   .toast, .toast.at-top {

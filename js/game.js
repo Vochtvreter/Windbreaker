@@ -934,6 +934,7 @@
     // the card this level introduces: shown by itself the first time, then
     // folded into the guidance line above the board
     G.levelGuide = levelGuideId(id);
+    dom.guideLine.classList.remove('is-open');
     var autoGuide = !!G.levelGuide && store.seenTools.indexOf(G.levelGuide) < 0;
     var intro = chapterIntro(G.chapter);
     G.newTool = autoGuide && intro && intro.kind === 'tool' && intro.id === G.levelGuide ? intro.id : null;
@@ -1261,19 +1262,17 @@
       main.appendChild(ul);
     }
     root.appendChild(main);
-    // more to read below: a small "More" that scrolls to it
     var more = null;
-    if (opts.buttons) {
-      more = el('button', 'gcard-more');
+    if (opts.buttons && opts.buttons.length) {
+      var bar = el('div', 'gcard-buttons');
+      // more to read below: a small "More" that scrolls to it
+      more = el('button', 'btn btn-quiet gcard-more');
       more.type = 'button';
       more.hidden = true;
       more.innerHTML = '<span>More</span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 9.5L12 15l5.5-5.5"/></svg>';
       more.setAttribute('aria-label', 'Show more of this card');
       more.addEventListener('click', function () { main.scrollBy({ top: Math.max(80, main.clientHeight * 0.7), behavior: reducedMotion() ? 'auto' : 'smooth' }); });
-      root.appendChild(more);
-    }
-    if (opts.buttons && opts.buttons.length) {
-      var bar = el('div', 'gcard-buttons');
+      bar.appendChild(more);
       opts.buttons.forEach(function (b) {
         var btn = el('button', b.cls, b.label);
         btn.type = 'button';
@@ -1413,9 +1412,24 @@
     }
     // one voice: while the card is open, it says it all
     dom.guideLine.hidden = !text || !!G.guide;
+    markClamped();
   }
-  dom.guideLine.addEventListener('click', function () {
-    if (G.screen === 'game' && G.levelGuide && !G.guide) openGuide(G.levelGuide);
+  // On a phone the line shows two lines at most; a longer tip ends in "…" and
+  // a tap shows all of it (the (i) still opens the card).
+  function markClamped() {
+    if (dom.guideLine.hidden) return;
+    var open = dom.guideLine.classList.contains('is-open');
+    dom.guideLine.classList.toggle('is-clamped', !open && dom.tip.scrollHeight > dom.tip.clientHeight + 2);
+  }
+  dom.guideLine.addEventListener('click', function (e) {
+    if (G.screen !== 'game' || G.guide) return;
+    var onMore = dom.tipMore.contains(e.target);
+    if (!onMore && dom.guideLine.classList.contains('is-clamped')) {
+      dom.guideLine.classList.add('is-open');
+      dom.guideLine.classList.remove('is-clamped');
+      return;
+    }
+    if (G.levelGuide) openGuide(G.levelGuide);
   });
 
   onMQ(landscapeMQ, function () {
@@ -1822,7 +1836,7 @@
   var WANT_SHORT = {
     pinwheel: ['spin the pinwheel', 'spin the pinwheels'], candle: ['keep the candle lit', 'keep the candles lit'],
     stove: ['clear the smoke', 'clear the smoke'], laundry: ['dry the laundry', 'dry the laundry'],
-    papers: ['keep the papers still', 'keep the papers still'], fern: ['a gentle breeze for the fern', 'a gentle breeze for the ferns']
+    papers: ['keep the papers still', 'keep the papers still'], fern: ['give the fern a gentle breeze', 'give the ferns a gentle breeze']
   };
   function wantLine(goals) {
     var count = {}, kinds = [];
@@ -1830,7 +1844,8 @@
     if (!kinds.length || kinds.length > 2) return 'Make everyone happy';
     kinds.sort(function (a, b) { return WB.OBJECT_ORDER.indexOf(a) - WB.OBJECT_ORDER.indexOf(b); });
     var s = kinds.map(function (t) { return WANT_SHORT[t] ? WANT_SHORT[t][count[t] > 1 ? 1 : 0] : ''; }).join(' and ');
-    return s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Make everyone happy';
+    // short enough for two lines beside the buttons on a phone
+    return s && s.length <= 44 ? s.charAt(0).toUpperCase() + s.slice(1) : 'Make everyone happy';
   }
   // a goal chip says hello once (a new thing in the house)
   function helloGoal(type) {
@@ -3661,6 +3676,7 @@
       if (G.pmenu) placeNear(dom.pmenu, G.pmenu.x, G.pmenu.y, true, 8);
     }
     if (G.guide) G.guide.fade();
+    markClamped();
   }
 
   function drawSig() {

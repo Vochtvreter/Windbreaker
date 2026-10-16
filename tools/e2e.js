@@ -14,7 +14,7 @@
  *   node tools/e2e.js --full-motion          walk all levels without reduced motion (slower)
  *   node tools/e2e.js --headed               watch it
  *
- * Sections: home, walk, interact, touch, friendly, mobile, storage, file.
+ * Sections: home, walk, interact, touch, friendly, mobile, storage, returning, file.
  * It starts its own static server (Node http, no dependencies) on a free port
  * and mounts the site under /windbreaker/, like GitHub Pages does, so any
  * absolute path in the game would 404 and fail the run. Needs Playwright with
@@ -52,7 +52,7 @@ const OPTS = {
   headed: flag('headed'),
   shots: !flag('no-shots'),
 };
-const SECTIONS = ['home', 'walk', 'interact', 'touch', 'friendly', 'mobile', 'storage', 'file'];
+const SECTIONS = ['home', 'walk', 'interact', 'touch', 'friendly', 'mobile', 'storage', 'returning', 'file'];
 if (OPTS.only) {
   const bad = OPTS.only.filter((s) => !SECTIONS.includes(s));
   if (bad.length) { console.error('Unknown section(s): ' + bad.join(', ') + '. Known: ' + SECTIONS.join(', ')); process.exit(2); }
@@ -553,6 +553,9 @@ async function sectionWalk() {
         eq(ui.chips, inv, title + ': tray chips and counts');
         const L = WB.parseLevel(lv);
         eq(ui.goals, new Set(L.objects.map((o) => o.type)).size, title + ': goals strip has one entry per object type');
+        // no praise before the first move (a candle that starts lit is not "Almost!")
+        const say0 = (await page.textContent('#goals-say')).trim();
+        assert(!/Almost|happy!/i.test(say0), title + ': the goals bar at the start says what to do, not "' + say0 + '"');
         const ch = chapterOf(lv.id);
         const card = cards[lv.id] && guides[cards[lv.id]];
         eq((await state(page)).levelGuide, cards[lv.id] || null, title + ': the card this level brings');
@@ -742,9 +745,19 @@ async function sectionInteract() {
       await page.click('#guide-go');
       await page.waitForSelector('#guide', { state: 'hidden' });
       await settle(page);
+      // a click on a thing in the house: how it is doing, in plain words, and a way to its card
       await clickCell(page, 4, 2);
-      eq((await guideUi(page)).card, 'Pinwheel', 'clicking an object opens its card');
+      await page.waitForSelector('#pmenu:not([hidden])');
+      const say = await page.textContent('#pmenu-text');
+      assert(/Pinwheel/.test(say) && /still|spinning/.test(say) && !/breeze \d/.test(say), 'the pinwheel says how it is doing, in words: ' + say);
+      eq((await page.textContent('#pmenu-about')).trim(), 'About pinwheels', 'with a way to its card');
+      eq((await guideUi(page)).card, null, 'no card yet: the board stays in view');
+      await page.mouse.move(2, 2);
+      await shot(page, 'interact-object-menu');
+      await page.click('#pmenu-about');
+      eq((await guideUi(page)).card, 'Pinwheel', '"About pinwheels" opens its card');
       assert(/Pinwheel/.test(await page.textContent('#guide .gcard-status')), 'with how this one is doing');
+      eq(await page.$$eval('#guide .gcard-buttons button:not([hidden])', (b) => b.map((x) => x.textContent.trim())), ['Got it'], 'opened mid-level, the card just says "Got it"');
       await shot(page, 'interact-object-card');
       await page.click('#guide .gcard-close');
       await page.waitForSelector('#guide', { state: 'hidden' });
@@ -756,7 +769,8 @@ async function sectionInteract() {
       await piecesAre([{ type: 'fan', x: 1, y: 4, d: 1 }], 'fan dropped at 1,4 facing the wind (east)');
       eq((await state(page)).sel, null, 'dragging does not leave the tool selected');
       eq(await page.textContent('.chip[data-tool="fan"] .chip-count'), '\u00d70', 'tray count drops to 0');
-      assert(await page.$eval('.chip[data-tool="fan"]', (b) => b.disabled), 'empty chip is disabled');
+      assert(await page.$eval('.chip[data-tool="fan"]', (b) => b.getAttribute('aria-disabled') === 'true' && b.classList.contains('is-used') && !b.disabled),
+        'an empty chip says so (aria-disabled), but can still be pressed');
     });
     await step('drag a placed piece to move it', async () => {
       await mouseDrag(page, await at(1, 4), await at(3, 4));
@@ -857,7 +871,7 @@ async function sectionInteract() {
       await page.click('#btn-hint'); // a second press: the next step
       const s = await expectState(page, (st) => !!st.conflicts, 'conflicting pieces flagged');
       eq(s.conflicts, [{ x: 2, y: 0 }], 'the wrong window is flagged');
-      eq((await page.textContent('#toast-action')).trim(), 'Put it back', 'toast offers to put it back');
+      eq((await page.textContent('#toast-action')).trim(), 'Put back', 'toast offers to put it back (the same words as the piece menu)');
       await shot(page, 'interact-hint-conflict');
       await page.click('#toast-action');
       const h = await expectState(page, (st) => !!st.hint, 'then the hint shows the next piece');
@@ -973,6 +987,14 @@ async function sectionInteract() {
       const txt = await page.textContent('#help-body');
       assert(/way out/.test(txt) && /Fan/.test(txt) && /Pinwheel/.test(txt), 'help explains the rules and lists tools and objects');
       assert(/Field guide/.test(txt), 'help has the field guide');
+      // Tab goes past the last field-guide entry to the folded sections, and Enter opens one
+      await page.evaluate(() => { const b = document.querySelectorAll('#help-body .fg-item'); b[b.length - 1].focus(); });
+      await page.keyboard.press('Tab');
+      eq(await page.evaluate(() => document.activeElement && document.activeElement.tagName === 'SUMMARY' ? document.activeElement.textContent.trim() : null),
+        await page.evaluate(() => document.querySelector('#help-body summary').textContent.trim()), 'Tab reaches the first folded section');
+      await page.keyboard.press('Enter');
+      assert(await page.evaluate(() => document.querySelector('#help-body details').open), 'Enter opens it');
+      await page.keyboard.press('Enter');
       await shot(page, 'interact-help');
       await page.click('#help-body [data-guide="fan"]');
       await page.waitForSelector('#help-body .help-guide .gdemo canvas');
@@ -1075,10 +1097,26 @@ async function sectionTouch() {
       await page.waitForSelector('#guide', { state: 'hidden' });
       await settle(page);
     });
-    // While dragging on touch the piece floats above the finger, so the finger
-    // aims a little below the target cell, as a player's would.
+    // While dragging on touch the piece floats above the finger. A player may
+    // aim with the finger itself, or with the floating piece (the finger then a
+    // little below the target cell): both land on the target.
     const lift = () => Math.min(40, T * 0.9);
-    await step('drag a window from the tray onto a wall', async () => {
+    await step('drag a window from the tray with the finger right on the target', async () => {
+      const from = await center(page, '.chip[data-tool="window"]');
+      const to = await at(6, 0);
+      await touch(page, 'touchStart', from);
+      for (let i = 1; i <= 14; i++) { const k = 0.5 - Math.cos(Math.PI * i / 14) / 2; await touch(page, 'touchMove', { x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k }); await sleep(12); }
+      for (let i = 0; i < 4; i++) { await touch(page, 'touchMove', to); await sleep(25); }
+      const mid = await state(page);
+      await shot(page, 'touch-drag-finger-on-target');
+      await touch(page, 'touchEnd', null);
+      await sleep(120);
+      assert(mid.dragging, 'still dragging before the finger lifts');
+      await piecesAre([{ type: 'window', x: 6, y: 0 }], 'the window lands under the finger');
+      await page.tap('#btn-undo');
+      await piecesAre([], 'undo');
+    });
+    await step('drag a window from the tray onto a wall (aiming with the floating piece)', async () => {
       const from = await center(page, '.chip[data-tool="window"]');
       const to = await at(2, 0);
       await touchDrag(page, from, { x: to.x, y: to.y + lift() });
@@ -1103,6 +1141,31 @@ async function sectionTouch() {
       await shot(page, 'touch-win');
       await page.tap('#win-next');
       await expectState(page, (s) => s.screen === 'game' && s.id === 2, 'level 2 opens');
+    });
+    await step('only one kind of tool: a tap on a spot where it fits places it', async () => {
+      if (await page.isVisible('#guide-go')) { await page.tap('#guide-go'); await page.waitForSelector('#guide', { state: 'hidden' }); }
+      await settle(page);
+      eq((await state(page)).sel, null, 'nothing picked up');
+      const p = await at(5, 3);
+      await assertBoardAt(page, p);
+      await page.touchscreen.tap(p.x, p.y);
+      await piecesAre([{ type: 'fan', x: 5, y: 3, d: 1 }], 'the fan goes right there');
+    });
+    await step('press and hold a used-up tool: its card still opens; a tap says where it is', async () => {
+      await settle(page);
+      assert(await page.$eval('.chip[data-tool="fan"]', (b) => b.getAttribute('aria-disabled') === 'true'), 'all fans are on the board');
+      await longPress(page, await center(page, '.chip[data-tool="fan"]'), 750);
+      await sleep(150);
+      eq((await guideUi(page)).card, 'Fan', 'the fan\'s card');
+      await page.tap('#guide-go');
+      await page.waitForSelector('#guide', { state: 'hidden' });
+      await settle(page);
+      // (a real tap: Playwright's own tap() waits for aria-disabled to go away)
+      const c = await center(page, '.chip[data-tool="fan"]');
+      await page.touchscreen.tap(c.x, c.y);
+      await page.waitForSelector('#toast:not([hidden])');
+      assert(/on the board/.test(await page.textContent('#toast-text')), 'a tap says it is on the board: ' + await page.textContent('#toast-text'));
+      eq((await state(page)).sel, null, 'and picks nothing up');
     });
     await page.context().close();
   });
@@ -1298,8 +1361,35 @@ async function sectionMobile() {
           }
           inView('');
           assert(r.chips.every((c) => c >= 44), 'tray chips at least 44 px (' + r.chips.map(Math.round).join(', ') + ')');
+          // Undo, Redo, Clear and Hint always in view (on a landscape phone they stay pinned under the tray)
+          const hb = await page.evaluate(() => { const b = document.getElementById('btn-hint').getBoundingClientRect(); return { top: b.top, bottom: b.bottom, ih: innerHeight }; });
+          assert(hb.top >= 0 && hb.bottom <= hb.ih + 0.5, 'Hint is in view (' + Math.round(hb.top) + '..' + Math.round(hb.bottom) + ' of ' + hb.ih + ')');
           await shot(page, file + '-level-' + lv.id);
         });
+      }
+      if (h < 600) {
+        // the smallest landscape phones, also with Large text: Hint stays in view
+        for (const [lw, lh] of [[667, 375], [740, 360]]) {
+          await step(lw + 'x' + lh + ': Undo, Redo, Clear and Hint stay in view on levels 1, 97 and 100, also with Large text', async () => {
+            await page.setViewportSize({ width: lw, height: lh });
+            const bad = [];
+            for (const large of [false, true]) {
+              for (const id of [1, 97, 100].filter((n) => data.levels.some((l) => l.id === n))) {
+                await page.goto(BASE + '?unlock#' + id);
+                await expectState(page, (s) => s.screen === 'game' && s.id === id, 'level ' + id);
+                await page.evaluate((lg) => { document.documentElement.classList.toggle('is-large-text', lg); }, large);
+                if (await page.isVisible('#guide-go')) { await page.tap('#guide-go'); await page.waitForSelector('#guide', { state: 'hidden' }); }
+                await settle(page);
+                const b = await page.evaluate(() => { const r = document.getElementById('btn-hint').getBoundingClientRect(); return { top: r.top, bottom: r.bottom, ih: innerHeight }; });
+                if (b.top < 0 || b.bottom > b.ih + 0.5) bad.push('level ' + id + (large ? ' (large text)' : '') + ': Hint at ' + Math.round(b.top) + '..' + Math.round(b.bottom) + ' of ' + b.ih);
+              }
+            }
+            await page.evaluate(() => document.documentElement.classList.remove('is-large-text'));
+            await shot(page, 'mobile-' + lw + 'x' + lh + '-level-100');
+            await page.setViewportSize({ width: w, height: h });
+            eq(bad, [], 'Hint button in view');
+          });
+        }
       }
       for (const lv of [data.levels[0], intro, big].filter((l, i, arr) => l && arr.indexOf(l) === i)) {
         await step(tag + ': play level ' + lv.id + ' with touch taps', async () => {
@@ -1354,6 +1444,49 @@ async function sectionStorage() {
   });
 }
 
+// A player coming back with progress saved by v1.0 (levels numbered the old
+// way): it is carried over by level key (js/migrate.js), with a note once,
+// Continue after the furthest solved level, and the gaps offered as "Catch up".
+async function sectionReturning() {
+  await section('returning', async (step) => {
+    const page = await newPage({ label: 'returning', reduced: true, w: 390, h: 844, touch: true, mobile: true });
+    await step('v1.0 progress: a welcome-back note, Continue after the furthest solved level, Catch up', async () => {
+      await page.goto(BASE + '?seed');
+      await page.evaluate(() => {
+        localStorage.clear();
+        localStorage.setItem('windbreaker.v1', JSON.stringify({ completed: Array.from({ length: 23 }, (_, i) => i + 1) }));
+      });
+      await openHome(page);
+      const r = await page.evaluate(() => ({
+        play: document.getElementById('btn-play').textContent.trim(),
+        note: document.getElementById('home-note').hidden ? null : document.getElementById('home-note-text').textContent,
+        catchup: document.getElementById('btn-catchup').hidden ? null : document.getElementById('btn-catchup').textContent.trim(),
+        done: Array.from(document.querySelectorAll('.lvl.is-done')).map((b) => +b.getAttribute('data-level')),
+        ticks: document.querySelectorAll('.lvl.is-done .lvl-tick').length,
+        mark: localStorage.getItem('windbreaker.levelset'),
+      }));
+      eq(r.done.length, 23, '23 solved levels carried over');
+      eq(r.ticks, 23, 'each solved level shows a tick, not just a colour');
+      eq(r.mark, '2', 'marked as migrated');
+      const furthest = Math.max(...r.done);
+      eq(r.play, 'Continue · Level ' + (furthest + 1), 'Continue goes on after the furthest solved level');
+      assert(r.note && /Welcome back/.test(r.note) && /23 solved/.test(r.note) && new RegExp('1\u2013' + (furthest + 1)).test(r.note), 'the note: ' + r.note);
+      eq(r.catchup, 'Catch up: ' + (furthest - 23) + ' open levels', 'the gaps, offered quietly');
+      await shot(page, 'returning-home');
+      // replaying an old level does not bring its "Meet the …" card back
+      await page.tap('#btn-catchup');
+      await expectState(page, (s) => s.screen === 'game', 'catch up opens a level');
+      const s1 = await state(page);
+      assert(!r.done.includes(s1.id) && s1.id < furthest, 'it opens the first gap (' + s1.id + ')');
+      eq(s1.guide, null, 'no "Meet the …" card on a level whose things were met in v1.0');
+      await page.click('#btn-back');
+      await page.waitForSelector('#home:not([hidden])');
+      assert(await page.isHidden('#home-note'), 'the note shows once');
+    });
+    await page.context().close();
+  });
+}
+
 // Opened straight from disk.
 async function sectionFile() {
   await section('file', async (step) => {
@@ -1387,6 +1520,7 @@ async function sectionFile() {
     await sectionFriendly();
     await sectionMobile();
     await sectionStorage();
+    await sectionReturning();
     await sectionFile();
   } finally {
     await browser.close();
