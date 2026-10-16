@@ -17,6 +17,9 @@
   <!-- ============================== HOME ============================== -->
   <div id="home" class="screen home">
     <header class="hero">
+      <button id="btn-settings-home" class="icon-btn hero-gear" type="button" aria-label="Settings" title="Settings">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><g transform="translate(2.4 2.4) scale(.8)" stroke-width="2.25"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></g></svg>
+      </button>
       <svg class="hero-wind" viewBox="0 0 320 70" aria-hidden="true" focusable="false">
         <path class="hw-base" d="M10 34 C 70 34, 112 18, 172 26 S 262 46, 282 28 a13 13 0 0 0 -26 0 a9 9 0 0 0 18 0 a5 5 0 0 0 -10 0"/>
         <path class="hw-gust hw-1" pathLength="100" d="M10 34 C 70 34, 112 18, 172 26 S 262 46, 282 28 a13 13 0 0 0 -26 0 a9 9 0 0 0 18 0 a5 5 0 0 0 -10 0"/>
@@ -26,6 +29,7 @@
       <h1 id="home-title">Windbreaker</h1>
       <p class="tagline">a little game about fresh air</p>
       <button id="btn-play" class="btn btn-primary btn-big" type="button">Play</button>
+      <button id="btn-howto" class="btn btn-quiet btn-small howto" type="button">How to play</button>
       <p id="home-progress" class="home-progress" aria-live="polite"></p>
     </header>
 
@@ -33,13 +37,9 @@
     <div id="home-toast" class="home-toast" role="status" aria-live="polite" hidden></div>
 
     <footer class="home-foot">
-      <button id="btn-sound" class="btn btn-quiet snd-toggle" type="button" aria-pressed="true" aria-label="Sound on">
-        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path class="snd-body" d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z"/><path class="snd-on" d="M15.5 9a4.5 4.5 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/><path class="snd-off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
-        <span id="sound-label">Sound on</span>
-      </button>
-      <button id="btn-reset-progress" class="btn btn-quiet" type="button">
-        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12a7 7 0 1 0 2.2-5.1"/><path d="M5 4.5v3.6h3.6"/></svg>
-        <span>Reset progress</span>
+      <button id="btn-settings-foot" class="btn btn-quiet" type="button">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><g transform="translate(2.4 2.4) scale(.8)" stroke-width="2.25"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></g></svg>
+        <span>Settings</span>
       </button>
     </footer>
   </div>
@@ -52,11 +52,15 @@
       </button>
       <h2 class="level-title"><span id="lvl-num" class="lvl-num">1</span><span class="dot" aria-hidden="true">·</span><span id="lvl-name" class="lvl-name">Level</span><span id="lvl-done" class="lvl-done" title="Solved" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span class="sr-only">solved</span></span></h2>
       <button id="wind" class="wind" type="button" aria-label="Wind">
-        <svg class="wind-glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5l5 5.5-5 5.5"/><path d="M9.5 6.5l5 5.5-5 5.5"/><path d="M15.5 6.5l5 5.5-5 5.5"/></svg>
+        <span class="wind-label" aria-hidden="true">Wind</span>
+        <svg class="wind-glyph" viewBox="0 0 24 24" aria-hidden="true"><path class="wl wl-1" d="M3 12h14"/><path class="wl wl-2" d="M3 8.2h11.5M3 15.8h11.5"/><path class="wl wl-3" d="M3 5.4h9.5M3 12h14M3 18.6h9.5"/><path class="wh" d="M14.5 6.5L20 12l-5.5 5.5"/></svg>
         <span class="wind-word" aria-hidden="true">calm</span>
       </button>
-      <button id="btn-help" class="icon-btn" type="button" aria-label="How to play" title="How to play">
+      <button id="btn-help" class="icon-btn" type="button" aria-label="How to play and settings" title="How to play">
         <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.6a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.4"/><path class="fill" d="M12 16.4v.2"/></svg>
+      </button>
+      <button id="btn-settings" class="icon-btn top-gear" type="button" aria-label="Settings" title="Settings">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><g transform="translate(2.4 2.4) scale(.8)" stroke-width="2.25"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></g></svg>
       </button>
     </header>
 
@@ -66,6 +70,18 @@
       <div id="tooltip" class="tooltip" hidden></div>
       <!-- a coach bubble pinned to the board: first steps and one-time tips -->
       <div id="coach" class="coach" role="status" aria-live="polite" hidden><span id="coach-text"></span><i class="coach-arrow" aria-hidden="true"></i></div>
+      <!-- a placed piece that was tapped: what it is, and a way to put it back -->
+      <div id="pmenu" class="pmenu" role="group" aria-label="Piece" hidden>
+        <span id="pmenu-text" class="pmenu-text"></span>
+        <button id="pmenu-turn" class="btn btn-small pmenu-btn" type="button" hidden>
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.5 9.5A7 7 0 1 0 19 13"/><path d="M19 4.8v4.9h-4.9"/></svg>
+          <span>Turn</span>
+        </button>
+        <button id="pmenu-remove" class="btn btn-small pmenu-btn" type="button">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5v10M7.5 10l4.5 4.5 4.5-4.5"/><path d="M5 19.5h14"/></svg>
+          <span>Put back</span>
+        </button>
+      </div>
       <div id="toast" class="toast" role="status" aria-live="polite" hidden>
         <span id="toast-text"></span>
         <button id="toast-action" class="btn btn-small" type="button" hidden>Undo</button>
@@ -89,17 +105,24 @@
       </div>
 
       <div class="hud">
-        <ul id="goals" class="goals" aria-label="Goals"></ul>
+        <div class="goals-wrap">
+          <p id="goals-say" class="goals-say">Make everyone happy</p>
+          <ul id="goals" class="goals" aria-label="Goals"></ul>
+        </div>
         <div class="actions">
-          <button id="btn-undo" class="icon-btn" type="button" aria-label="Undo" title="Undo (Ctrl+Z)">
+          <button id="btn-undo" class="icon-btn act" type="button" aria-label="Undo" title="Undo (Ctrl+Z)">
             <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5L4.5 11 9 15.5"/><path d="M5 11h9.5a5 5 0 0 1 0 10H12"/></svg>
             <span class="btn-label">Undo</span>
           </button>
-          <button id="btn-reset" class="icon-btn" type="button" aria-label="Clear the board" title="Clear the board">
-            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.2 9.6A7.6 7.6 0 1 0 19.6 13"/><path d="M19.6 4.8v4.9h-4.9"/><circle class="solid" cx="12" cy="12" r="2"/></svg>
-            <span class="btn-label">Reset</span>
+          <button id="btn-redo" class="icon-btn act" type="button" aria-label="Redo" title="Redo (Ctrl+Shift+Z)">
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6.5l4.5 4.5-4.5 4.5"/><path d="M19 11H9.5a5 5 0 0 0 0 10H12"/></svg>
+            <span class="btn-label">Redo</span>
           </button>
-          <button id="btn-hint" class="icon-btn" type="button" aria-label="Hint" title="Hint (H)">
+          <button id="btn-reset" class="icon-btn act" type="button" aria-label="Clear the board" title="Clear the board">
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.6 5.2l5.2 5.2a1.6 1.6 0 0 1 0 2.3L12.6 18.9H8.4l-3.2-3.2a1.6 1.6 0 0 1 0-2.3l6.1-6.1"/><path d="M8.7 9.4l6 6"/><path d="M12.6 18.9H19"/></svg>
+            <span class="btn-label">Clear</span>
+          </button>
+          <button id="btn-hint" class="icon-btn act" type="button" aria-label="Hint" title="Hint (H)">
             <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17.5h6M10 20.5h4"/><path d="M8.6 14.6A6 6 0 1 1 15.4 14.6c-.6.5-.9 1.1-.9 1.9h-5c0-.8-.3-1.4-.9-1.9z"/></svg>
             <span class="btn-label">Hint</span>
           </button>
@@ -145,14 +168,55 @@
     <div class="card help-card" role="dialog" aria-modal="true" aria-labelledby="help-title">
       <div class="help-head">
         <h2 id="help-title">How to play</h2>
-        <button id="help-sound" class="icon-btn snd-toggle" type="button" aria-pressed="true" aria-label="Sound on" title="Sound on">
-          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path class="snd-body" d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z"/><path class="snd-on" d="M15.5 9a4.5 4.5 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/><path class="snd-off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
+        <button id="help-settings" class="btn btn-quiet btn-small help-gear" type="button">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><g transform="translate(2.4 2.4) scale(.8)" stroke-width="2.25"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></g></svg>
+          <span>Settings</span>
         </button>
         <button id="help-close" class="icon-btn" type="button" aria-label="Close">
           <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>
         </button>
       </div>
       <div class="help-body" id="help-body"></div>
+    </div>
+  </div>
+
+  <div id="settings" class="overlay" hidden>
+    <div class="card settings-card" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <div class="help-head">
+        <h2 id="settings-title">Settings</h2>
+        <button id="settings-close" class="icon-btn" type="button" aria-label="Close">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>
+        </button>
+      </div>
+      <div class="settings-body">
+        <div class="set-row">
+          <span class="set-name" id="set-sound-name">Sound</span>
+          <button id="set-sound" class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="set-sound-name">
+            <span class="switch-word" id="sound-label">On</span><span class="switch-track" aria-hidden="true"><i></i></span>
+          </button>
+        </div>
+        <div class="set-row">
+          <span class="set-name" id="set-text-name">Text size</span>
+          <div class="seg" role="radiogroup" aria-labelledby="set-text-name">
+            <button class="seg-btn" type="button" role="radio" data-text="normal" aria-checked="true">Normal</button>
+            <button class="seg-btn seg-big" type="button" role="radio" data-text="large" aria-checked="false">Large</button>
+          </div>
+        </div>
+        <div class="set-row">
+          <span class="set-name"><span id="set-motion-name">Less motion</span><small id="set-motion-note" class="set-note">Less spinning and moving on the screen.</small></span>
+          <button id="set-motion" class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="set-motion-name">
+            <span class="switch-word">Off</span><span class="switch-track" aria-hidden="true"><i></i></span>
+          </button>
+        </div>
+        <div class="set-row">
+          <span class="set-name">Guide cards<small class="set-note">The "Meet the …" cards and first-time tips show up again.</small></span>
+          <button id="set-guides" class="btn btn-small" type="button">Show again</button>
+        </div>
+        <div class="set-row set-danger">
+          <span class="set-name">Progress<small class="set-note" id="set-progress-note">Forget every solved level.</small></span>
+          <button id="btn-reset-progress" class="btn btn-small btn-quiet-danger" type="button">Reset progress</button>
+        </div>
+      </div>
     </div>
   </div>
 

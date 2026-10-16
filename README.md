@@ -10,6 +10,9 @@ the laundry dry, keep the candles lit and get the kitchen smoke outside.
 * new things arrive one at a time: each chapter introduces a single tool or
   object with a friendly "Meet the …" card and a little animated demo, then
   gives you four more puzzles with what you know
+* friendly for every player: plain words (no compass directions), gentle
+  step-by-step hints, labelled buttons, and settings for larger text and less
+  motion
 * restyle it yourself: colours, sizes, speeds and your own drawings (see
   `GRAPHICS.md` and `studio.html`)
 * plays with mouse or touch, on phones and desktops, in light or dark mode
@@ -38,18 +41,23 @@ the laundry dry, keep the candles lit and get the kitchen smoke outside.
   deflector, curtain, wall vent, splitter, extractor, skylight, air filter and
   ceiling fan.
 
-**Controls:** tap a tool, then a highlighted cell (or drag it onto the board).
-Press and hold a tool (right-click with a mouse), or tap a thing in the house,
-to see its card again; Help has a Field guide of everything you have met.
-Tap a placed fan or deflector to turn it; tapping any other piece puts it back
-in the tray. Drag a piece to move it; drag it off the board, right-click or
-long-press to remove it. The Undo, Reset and Hint buttons are always there
-(undo is also Ctrl/Cmd+Z; redo is Ctrl/Cmd+Shift+Z or Ctrl+Y), and the **?**
-button at the top opens the rules. With a keyboard: 1–9 and 0 pick a tool, R
-turns the piece under the pointer, H shows a hint, I opens the card of the
-selected tool (or of what the level brings), the arrow keys and Enter
-move around the board and place or turn pieces, Delete removes one, Esc
-deselects. Progress is saved in your browser.
+**Controls:** tap a tool, then a glowing spot (or drag it onto the board).
+Tapping the tool again keeps it picked up; tap the garden (or press Esc) to
+put it down. Press and hold a tool (right-click with a mouse), or tap a thing
+in the house, to see its card again; Help has a Field guide of everything you
+have met. Tap a placed fan or deflector to turn it; tapping any other piece
+says what it does, with a **Put back** button. Drag a piece to move it; drag it
+off the board, right-click or long-press to put it back. The labelled Undo,
+Redo, Clear and Hint buttons are always there (undo is also Ctrl/Cmd+Z; redo
+is Ctrl/Cmd+Shift+Z or Ctrl+Y). Hints are free and gentle: the first press
+gives an idea in words, the second ("Show me") shows one piece; after a while
+without progress the Hint button glows softly. The **?** button opens How to
+play, and the gear opens **Settings**: sound, larger text, less motion, the
+guide cards again, and reset progress. With a keyboard: 1–9 and 0 pick a tool,
+R turns the piece under the pointer, H shows a hint, I opens the card of the
+selected tool (or of what the level brings), the arrow keys and Enter move
+around the board and place or turn pieces, Delete puts one back, Esc puts the
+tool down. Progress and settings are saved in your browser.
 
 ## Play
 

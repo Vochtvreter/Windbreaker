@@ -318,7 +318,7 @@ cached, so big SVGs cost nothing per frame.
 | `object.stove` | `clear` (happy) / `smoky` (unhappy) · `icon` | — | its rising smoke is drawn by the board |
 | `icon.<tool>` | — | — | tray and help icons. They follow your `tool.*` pictures, except `icon.window`, a front view of its own. |
 | `ui.pip` | `happy` `bad` `dirty` `idle` | — | the status pip on each object |
-| `ui.stall` | `stalled` `quiet` | — | the "no way out" cross where a stalled stream meets a wall |
+| `ui.stall` | `stalled` `quiet` | — | the "no way out" cross where a stalled stream meets a wall; quiet (grey) also where a stream bumps into the wall right at a piece |
 
 `icon` is what the goal strip and the help sheet show. Without a picture for
 it, the happy state is used: `spinning`, `lit`, `dry`, `calm`, `swaying`, `clear`.
@@ -446,11 +446,12 @@ listener and a check at `load`.
 ### The visual check: `tools/visual.js`
 
 A graphics change should change exactly what you meant it to. The visual
-check renders 76 pictures (light and dark, phone and desktop) of the home
-screen, levels, the gallery rooms, a hint, the help sheet, a win, reduced
-motion, the example art and the field guide (a "Meet the …" card with its
-demo, the guidance line, the first level's coach, a card in Help), and
-compares them pixel by pixel with a baseline.
+check renders 90 pictures (light and dark, phone and desktop) of the home
+screen, levels, the gallery rooms, a hint (the idea in words, then the
+piece), the help sheet, a win, reduced motion, the example art, the field
+guide (a "Meet the …" card with its demo, the guidance line, the first
+level's coach, a card in Help), Settings, a tapped piece's menu and large
+text, and compares them pixel by pixel with a baseline.
 
 ```sh
 node tools/visual.js --baseline               # the reference: the game as it is now

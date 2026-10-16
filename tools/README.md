@@ -297,17 +297,26 @@ GitHub Pages, so an absolute path would 404. The game is only read through
 
 * `home`: level select, locked levels not clickable or deep-linkable, `?unlock`.
 * `walk`: every level in `js/levels.js` (or `--levels`): checks the top bar,
-  tray, goals, tip and "New" card, asks for a hint (must be the first
-  reference piece), places the reference solution by tapping chips and cells
+  tray, goals, tip and "Meet the …" card, asks for a hint twice (first an idea
+  in words with no piece and no compass words, then "Show me": a piece of the
+  reference solution), places the reference solution by tapping chips and cells
   and turning pieces, waits for the win card, clicks Next. Then progress after
   a reload. Reduced motion for speed unless `--full-motion` (~1.2 s a level).
 * `interact` (two fixture levels inside the script): tray drag, move by drag,
   turn by click and `R`, right-click remove, drag off the board and onto the
   tray, undo/redo (button, Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y), reset + Undo, number
-  keys, Esc, keyboard-only placement, hint conflicts and "Remove it", saved
-  board after reload, win card, Next pill, Continue, last level, help, sound
-  setting, reset progress.
+  keys, a second tap on the selected tool keeps it, Esc, a missed drop says
+  where the piece goes, keyboard-only placement, hints in two steps (idea,
+  then conflicts and "Put it back"), saved board after reload, win card, Next
+  pill, Continue, last level, help, Settings (sound, text size, less motion,
+  kept after a reload), reset progress.
 * `touch` (390x844): taps, long-press remove, drags from the tray and of pieces.
+* `friendly` (390x844, touch): "How to play" on the home screen and Help in
+  layers, labelled Undo/Redo/Clear/Hint, tool names in the tray, the goals bar
+  in words, "pick the window first", tooltips that stay on touch and close on
+  a second tap, the piece menu ("Put back" instead of a silent removal), the
+  on-screen Redo, a fan blowing into a wall, the "Stuck? A hint is free"
+  offer after 8 moves, Settings from Help.
 * `mobile`: 360x740, 768x1024, 844x390 (dark): no horizontal scroll, house in
   view and clear of the "New" card, chips >= 44 px, levels played by touch.
 * `storage`: `localStorage` throws on every access; still playable.
@@ -325,7 +334,7 @@ node tools/visual.js --perf                      # board drawing time (ms per fr
 node tools/visual.js --list | --help
 ```
 
-Renders 58 pictures (scenes x light/dark x phone/desktop) at a frozen moment,
+Renders 90 pictures (scenes x light/dark x phone/desktop) at a frozen moment,
 so the same code always gives the same pixels, and compares them with the
 baseline in `screenshots/gfx/` (git-ignored; changed pixels in `diff/`). The
 baseline pins its own copy of the rules and levels, so level edits never show

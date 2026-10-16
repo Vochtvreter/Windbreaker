@@ -407,10 +407,15 @@ it works under `https://<user>.github.io/<repo>/`.
 Minimalist and calm. Soft warm floor (`#f6f1e7`‑ish), slate walls, a pale
 sage garden with drifting wind lines outside that show the wind direction,
 airflow drawn as soft sky‑blue moving streaks, one parallel lane per point of
-strength (up to 4) so strength can be counted, moving faster when stronger; a
+strength (up to 4) so strength can be counted, moving faster when stronger
+(with less motion: solid lanes with arrowheads); a
 stalled inlet's path as a faint dashed line ending in a red × (grey once the
-level is solved); smoke as grey puffs, and laundry reached by smoky air turns
+level is solved), and a stream stopped right where a piece stands (a fan
+blowing into the wall next to it) as ripples and a quiet grey × on the wall; smoke as grey puffs, and laundry reached by smoky air turns
 sooty grey with a grey smoke badge. Rounded shapes, gentle animations
 (pinwheels spin, candle flames flicker, laundry sways). System font stack.
 Works with mouse and touch, scales from phone to desktop, supports dark mode.
+Player-facing text uses screen words ("up", "from the left"), never compass
+words or inlet/outlet; hints go one step at a time (an idea, then one piece);
+Settings offer larger text and less motion.
 All of it is tunable without touching game code — see GRAPHICS.md.
