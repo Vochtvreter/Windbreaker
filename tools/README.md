@@ -10,6 +10,8 @@ npm run solve -- 12            # find all solutions
 npm run check                  # all section-6 checks + stats table for every level
 npm run build                  # levels/src/ch*.json -> js/levels.js
 npm test                       # node --test tests/*.test.js
+npm run e2e                    # node tools/e2e.js: the browser end-to-end test (needs Playwright)
+npm run serve                  # serve the game at http://localhost:8080 (fetches http-server via npx)
 ```
 
 Level sources live in `levels/src/chNN.json` (format: DESIGN.md section 6). Level
@@ -47,6 +49,7 @@ node tools/show.js <level | file.json [--index k]> [--fixed-only] [--pieces '<JS
 ```
 #1 "First Breeze"  ch1[0]  9x5 rooms 1  wind from W, strength 1
 inv: window 1
+tip: Wind is blowing from the west. Open a window on the far side so the breeze has somewhere to go.
    map            flow
    012345678      012345678
  0 #########    0 #########
@@ -67,7 +70,7 @@ Left grid: the map with pieces. Right grid: **total flow** per floor cell
 (`.` = 0, `,` = no flow but a stalled inlet's would-be path passes here,
 digits = flow, `a`+ for 10+); walls and wall pieces are repeated for
 orientation. Then pieces (fixed / placed), every object with its flow and
-state (`ok`, `IDLE` = needs more air, `BAD` = harmed; stoves add
+state (`ok`, `IDLE` = needs more air, `BAD` = harmed; laundry with enough flow is `BAD` when smoky air reaches it (dirty); stoves add
 `smoke cleared` / `smoke TRAPPED` / `no air`), every airflow tree (kind,
 source glyph and cell, `active` / `STALLED`, max strength, where its branches
 end: `out x,y` = outlet cell, `blk x,y` = wall / inlet / curtain cell where it
@@ -213,10 +216,9 @@ targets (inventory / objects / rooms per level range).
 
 ```
    #  name                   map   rm inv ref obj hz wind  w/o  solver sols min    space     ms  diff
-   1  First Breeze           9x5    1   1   1   1  0 W1    ok   exh       1   1        4      1   4.5
-   2  Two Pinwheels          9x5    1   2   2   2  0 W1    -    exh       1   2        8      4   8.0
-warn  ch01.json: partial chapter (2/5 levels)
-OK: 2 levels, 0 failures, 1 warning (0.1 s, solver 3000 ms/search, intro proofs up to 60000 ms)
+   1  First Breeze           9x5    1   1   1   1  0 W1    ok   exh       1   1        4      5   4.5
+   2  Wind Shift             5x7    1   2   2   1  0 S1    -    exh       1   2       10      1   7.8
+OK: 2 levels, 0 failures, 0 warnings (0.0 s, solver 3000 ms/search, intro proofs up to 60000 ms)
 ```
 
 Columns: `rm` rooms (connected floor areas), `inv` inventory pieces, `ref`

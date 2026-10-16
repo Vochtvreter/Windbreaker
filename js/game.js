@@ -999,7 +999,7 @@
 
   var DIRTY = 'dirty: smoky air is blowing through it (filter the smoke or keep it away)';
   function stoveWord(g, sim) {
-    return g.state === 'happy' ? 'smoke is cleared' : g.state === 'bad' ? 'smoke is trapped — ' + trapReason(g, sim) : 'smoke needs a way out';
+    return g.state === 'happy' ? 'smoke is cleared' : g.state === 'bad' ? 'smoke is trapped: ' + trapReason(g, sim) : 'smoke needs a way out';
   }
   // Why a stove's smoke counts as trapped: where its smoky air is stopped.
   function trapReason(g, sim) {
@@ -1017,7 +1017,7 @@
         var atCentre = e.x % 1 !== 0 && e.y % 1 !== 0;
         var wx = Math.floor(atCentre ? e.x : e.x + 0.5 * sx), wy = Math.floor(atCentre ? e.y : e.y + 0.5 * sy);
         var p = playerAt(wx, wy) || fixedAt(wx, wy);
-        if (p && p.type === 'window') why = 'it is blown into a window facing the wind, which pushes air back';
+        if (p && p.type === 'window') why = 'it is blown into a window facing the wind, which pushes it back';
         else if (p && p.type === 'curtain') why = 'a curtain stops it';
         else why = 'it is blown into a wall';
       });
@@ -1099,6 +1099,19 @@
     updateGoals();
     updateButtons();
     checkWin();
+    noteDirty();
+  }
+
+  // Once ever: the first time a move leaves laundry dirty, say why.
+  function noteDirty() {
+    if (seenTip('dirty') || G.sim.solved) return;
+    var g = null;
+    G.sim.goals.forEach(function (x) { if (!g && x.smoky) g = x; });
+    if (!g || (!dom.toast.hidden && dom.toast.getAttribute('data-kind') !== 'coach')) return;
+    clearTimeout(G.coachTimer);
+    store.seenTips.push('dirty');
+    saveStore();
+    showToast('Smoky air made the laundry dirty — send the smoke another way, or through a filter.', null, null, { ms: 6000, kind: 'coach', near: g });
   }
 
   function goalSummary() {
@@ -1415,6 +1428,17 @@
     return G.sim;
   }
 
+  // How strong a fan's own stream is when it loops back into the fan's cell
+  // (0 when it never comes back).
+  function ownFlowAt(sim, p) {
+    var own = 0, cx = p.x + 0.5, cy = p.y + 0.5;
+    sim.trees.forEach(function (t) {
+      if (t.kind !== 'fan' || t.source.x !== p.x || t.source.y !== p.y) return;
+      t.segments.forEach(function (s) { if (s.bx === cx && s.by === cy && s.s > own) own = s.s; });
+    });
+    return own;
+  }
+
   // What is at (x,y), and how much air reaches it. withActions adds a dim
   // line telling a mouse user what they can do with their own pieces.
   function describe(x, y, withActions) {
@@ -1435,8 +1459,9 @@
             s = 'inlet, facing the wind' + (tr && !tr.active ? ' <span class="tt-dim">· no way out yet</span>' : '');
           } else s = 'outlet, lets air out';
           break;
-        // a source reports what it sends out (its own 1, plus any air it pushes on)
-        case 'fan': s = 'blowing ' + DIR_WORD[p.d] + ' <span class="tt-dim">· pushes a breeze of ' + (f + 1) + '</span>'; break;
+        // a source reports what it sends out: its own 1, plus the air of other
+        // sources it pushes on (its own stream coming round again adds nothing)
+        case 'fan': s = 'blowing ' + DIR_WORD[p.d] + ' <span class="tt-dim">· pushes a breeze of ' + (f - ownFlowAt(sim, p) + 1) + '</span>'; break;
         case 'deflector': s = 'turns air 90°' + flowBit(); break;
         case 'curtain': s = 'softens air by 1' + flowBit(); break;
         case 'vent': s = 'air passes through'; break;
@@ -1492,6 +1517,9 @@
       cands.push({ l: ox + rect.left - w - 6, t: top + T / 2 - h / 2 });
       cands.push({ l: cx - w / 2, t: top - T - h - 6 });
       cands.push({ l: cx - w / 2, t: top + 2 * T + 6 });
+      // last resort: just outside the house, above or below it
+      cands.push({ l: cx - w / 2, t: oy + board.oy - h - 6 });
+      cands.push({ l: cx - w / 2, t: oy + board.oy + G.L.h * T + 6 });
     }
     var best = null;
     for (var i = 0; i < cands.length; i++) {
@@ -1518,11 +1546,10 @@
         var ow = Math.min(cl + T, l + w) - Math.max(cl, l), oh = Math.min(ct + T, t + h) - Math.max(ct, t);
         if (ow <= 0 || oh <= 0) continue;
         var frac = (ow * oh) / (T * T);
-        var wgt = 0;
-        if (objectAt(x, y) >= 0) wgt = 12;
-        else if (playerAt(x, y) || fixedAt(x, y)) wgt = 6;
-        else if (WB.isFloorish(WB.cellAt(L, x, y)) && sim.flow[y * L.w + x] > 0) wgt = 2;
-        cost += wgt * frac;
+        // hiding any part of an object (its sprite, dot or meter) is the worst
+        if (objectAt(x, y) >= 0) cost += 12 + 24 * frac;
+        else if (playerAt(x, y) || fixedAt(x, y)) cost += 6 * frac;
+        else if (WB.isFloorish(WB.cellAt(L, x, y)) && sim.flow[y * L.w + x] > 0) cost += 2 * frac;
       }
     }
     return cost;
@@ -2001,11 +2028,12 @@
     h.push('<p>Make <b>every object</b> in the house happy at the same time by placing the tools from your tray. Tap or hover anything to see how much air reaches it.</p>');
     h.push('<ul class="help-rules">');
     h.push('<li><span class="rule-ico">' + cv('swirl', 'w', 28) + '</span><span><b>Wind</b> blows across the garden. The badge at the top shows which way it blows and how strong it is.</span></li>');
-    h.push('<li><span class="rule-ico">' + cv('ui', 'inlet', 34) + '</span><span>A <b>window facing the wind</b> is an inlet: a bright pane with arrows pointing in. Every other window is an <b>outlet</b> ' + cv('ui', 'outlet', 22, 'inl') + ' that lets air out.</span></li>');
+    h.push('<li><span class="rule-ico">' + cv('ui', 'inlet', 34) + '</span><span>A <b>window facing the wind</b> is an inlet: a bright pane with arrows pointing in. Every other window is an <b>outlet</b> ' + cv('ui', 'outlet', 22, 'inl') + ' that lets air out. Air blown back into a window that faces the wind is pushed back, just like a wall.</span></li>');
     h.push('<li><span class="rule-ico">' + cv('ui', 'stall', 34) + '</span><span><b>A breeze only flows if it has a way out.</b> An inlet with no outlet stays still: its path is a faint dashed line ending in a red ×.</span></li>');
     h.push('<li><span class="rule-ico">' + cv('ui', 'lanes-2', 34) + '</span><span><b>Strength</b> is the number of lines in a stream: one is a gentle breeze, two is strong, three is a gale. Where breezes from different sources meet on the same spot, from any direction, they add up (a breeze crossing its own path does not add to itself).</span></li>');
-    if (n >= WB.OBJECTS.stove.intro || inLevel.stove) h.push('<li><span class="rule-ico">' + cv('object', 'stove', 30) + '</span><span><b>Smoke</b> from a stove must be carried outside (or through a filter), never blown into a wall, and never across the laundry.</span></li>');
-    h.push('<li><span class="rule-ico">' + cv('ui', 'pip-happy', 30) + '</span><span>The dot on each object shows how it feels: ' + cv('ui', 'pip-idle', 18, 'inl') + ' wants air, ' + cv('ui', 'pip-happy', 18, 'inl') + ' happy, ' + cv('ui', 'pip-bad', 18, 'inl') + ' unhappy.</span></li>');
+    if (n >= WB.OBJECTS.stove.intro || inLevel.stove) h.push('<li><span class="rule-ico">' + cv('object', 'stove', 30) + '</span><span><b>Smoke</b> from a stove must be carried outside or through a filter, never blown into a wall.' + (has('laundry') ? ' Smoky air also makes laundry dirty.' : '') + '</span></li>');
+    h.push('<li><span class="rule-ico">' + cv('ui', 'pip-happy', 30) + '</span><span>The dot on each object shows how it feels: ' + cv('ui', 'pip-idle', 18, 'inl') + ' wants air, ' + cv('ui', 'pip-happy', 18, 'inl') + ' happy, ' + cv('ui', 'pip-bad', 18, 'inl') + ' unhappy' +
+      (has('laundry') && (n >= WB.OBJECTS.stove.intro || inLevel.stove) ? ', ' + cv('ui', 'pip-dirty', 18, 'inl') + ' dirty from smoke' : '') + '.</span></li>');
     if (has('laundry') || has('papers') || has('fern')) {
       var ms = [];
       if (has('laundry')) ms.push(cv('ui', 'meter-laundry-1-idle', 34, 'inl') + ' laundry wants two or more, of clean air');

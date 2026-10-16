@@ -34,10 +34,14 @@ the laundry dry, keep the candles lit and get the kitchen smoke outside.
   splitter, extractor, skylight, air filter and ceiling fan.
 
 **Controls:** tap a tool, then a highlighted cell (or drag it onto the board).
-Tap a placed piece to turn it, drag it to move it, drag it off the board,
-right-click or long-press to remove it. Undo (Ctrl/Cmd+Z), redo
-(Ctrl/Cmd+Shift+Z), reset and a hint button are always there; `?` opens the
-rules. Progress is saved in your browser.
+Tap a placed fan or deflector to turn it; tapping any other piece puts it back
+in the tray. Drag a piece to move it; drag it off the board, right-click or
+long-press to remove it. The Undo, Reset and Hint buttons are always there
+(undo is also Ctrl/Cmd+Z; redo is Ctrl/Cmd+Shift+Z or Ctrl+Y), and the **?**
+button at the top opens the rules. With a keyboard: 1–9 and 0 pick a tool, R
+turns the piece under the pointer, H shows a hint, the arrow keys and Enter
+move around the board and place or turn pieces, Delete removes one, Esc
+deselects. Progress is saved in your browser.
 
 ## Play
 
@@ -62,6 +66,8 @@ All paths are relative, so it works from any sub-path.
 
 * `DESIGN.md` — the rules, level format and engine API (the source of truth).
 * `js/engine.js` — the airflow simulation (shared by the game and the tools).
+* `js/version.js` — the version shown on the level-select screen, bumped with
+  every release.
 * `js/render.js`, `js/game.js`, `css/style.css`, `index.html` — the game.
 * `levels/src/chNN.json` — level sources, one file per chapter of 5 levels.
 * `js/levels.js` — generated from the sources with `npm run build`.
@@ -75,7 +81,10 @@ All paths are relative, so it works from any sub-path.
 npm test             # engine + tooling unit tests
 npm run check        # validate every level and verify it is solvable
 npm run build        # regenerate js/levels.js from levels/src
-node tools/e2e.js    # play every level through the real UI (needs Playwright)
+npm run e2e          # play every level through the real UI (needs Playwright + Chromium)
 ```
 
-No packages need to be installed; everything uses Node's standard library.
+The game, the unit tests and the level tools need nothing installed (Node's
+standard library only). `npm run serve` fetches `http-server` through `npx`
+(any static file server works), and the end-to-end test needs Playwright with
+Chromium.

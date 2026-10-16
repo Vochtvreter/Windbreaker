@@ -89,7 +89,7 @@ A new tool is introduced every 5 levels; from level 46 on, all tools exist.
 ### Behaviour
 
 Airflow is made of **streams**. A stream has a direction and an integer
-**strength** `s ≥ 1` (1 = gentle breeze, 2 = wind, 3+ = strong wind).
+**strength** `s ≥ 1` (1 = gentle breeze, 2 = strong, 3+ = gale — the words the game uses).
 
 * **Window** — its role depends on the wind:
   * *Inlet* if `strength > 0` and the window's outward direction faces the wind
@@ -243,10 +243,12 @@ Source files live in `levels/src/chNN.json` (one per chapter of 5 levels):
 
 ### Level checks (enforced by `tools/check-levels.js`)
 
-1. Map is rectangular, uses only known characters, is sealed, ≤ 13×10.
+1. Map is rectangular, uses only known characters, is sealed, ≤ 13×10, and
+   holds at least one object.
 2. Fixed and solution pieces are on valid cells, don't overlap, and the
    solution fits the inventory.
-3. Only tools and objects already introduced by that level number appear.
+3. Only tools, objects and wind strengths already introduced by that level
+   number appear (section 5).
 4. The level is **not** solved before the player places anything.
 5. The reference solution solves it.
 6. On a tool's intro level, that tool is in the inventory and the level is
@@ -268,7 +270,16 @@ Source files live in `levels/src/chNN.json` (one per chapter of 5 levels):
 | 8  | 36–40  | skylight   | Skylights |
 | 9  | 41–45  | filter     | Filters |
 | 10 | 46–50  | ceilingfan | Ceiling Fans |
-| 11–20 | 51–100 | — (all tools) | mastery chapters |
+| 11 | 51–55  | — (all tools) | Drafts |
+| 12 | 56–60  | — | Greenhouse |
+| 13 | 61–65  | — | Library |
+| 14 | 66–70  | — | Kitchen Rush |
+| 15 | 71–75  | — | Laundry Day |
+| 16 | 76–80  | — | Old Manor |
+| 17 | 81–85  | — | Still Air |
+| 18 | 86–90  | — | Storm Season |
+| 19 | 91–95  | — | Crosswinds |
+| 20 | 96–100 | — | Fresh Air |
 
 Rough targets (player pieces in the inventory / objects / rooms):
 
@@ -292,12 +303,17 @@ WB.TOOLS        // { [id]: { id, name, desc, mount: 'floor'|'exterior'|'interior
 WB.TOOL_ORDER   // ['window','fan',...]
 WB.OBJECTS      // { [id]: { id, char, name, desc, intro } }
 WB.OBJECT_ORDER // ['pinwheel','candle','stove','laundry','papers','fern']
+WB.OBJECT_BY_CHAR      // { p: 'pinwheel', ... }
+WB.MAX_W, WB.MAX_H     // 13, 10
+WB.CALM_INTRO, WB.WIND2_INTRO, WB.WIND3_INTRO   // 6, 13, 26
+WB.VERSION             // set by js/version.js (browser)
 
 WB.parseLevel(def) -> Level
 //   Level = { def, w, h, cells: string[] (one char per cell, row-major),
-//             objects: [{ id, type, x, y }], fixed: Piece[], wind: { from, dir, strength },
-//             inventory: {type: n}, name, tip }
+//             objects: [{ id, type, x, y }], stoves: (the stove objects), fixed: Piece[],
+//             wind: { from: 0..3, dir: 0..3, strength }, inventory: {type: n}, name, tip }
 WB.validateLevel(def) -> string[]                 // structural errors (empty = OK)
+WB.introErrors(def, n) -> string[]                // tools/objects/wind strengths used before level n introduces them
 WB.cellAt(L, x, y) -> char                        // '~' when out of bounds
 WB.isFloorish(ch), WB.isWall(ch), WB.isOutside(ch)
 WB.outwardDir(L, x, y) -> 0..3 | -1               // exterior mount direction
@@ -335,14 +351,19 @@ WB.isSolved(L, pieces) -> boolean
 
 ```
 index.html            entry point (GitHub Pages serves the repo root)
+.nojekyll             serve the files as they are on GitHub Pages
 css/style.css
+js/version.js         version shown on the level-select screen (bumped per release)
 js/engine.js          rules + simulation (UMD, shared with Node tools)
 js/levels.js          generated from levels/src by tools/build-levels.js
 js/render.js          canvas drawing
 js/game.js            UI, input, progress, screens
 levels/src/chNN.json  level sources
-tools/                build, check, solve, show (Node, no deps)
-tests/                node:test unit tests
+tools/                build, check, solve, show + shared lib.js (Node, no deps)
+tools/e2e.js          browser end-to-end test (needs Playwright + Chromium)
+tests/                node:test unit tests (fixtures in tests/fixtures/)
+package.json          npm scripts only, no dependencies
+README.md, CHANGELOG.md, tools/README.md
 ```
 
 Plain classic `<script>` tags (no modules, no build step at runtime), so the
@@ -353,7 +374,10 @@ it works under `https://<user>.github.io/<repo>/`.
 
 Minimalist and calm. Soft warm floor (`#f6f1e7`‑ish), slate walls, a pale
 sage garden with drifting wind lines outside that show the wind direction,
-airflow drawn as soft sky‑blue moving dashes whose thickness and speed grow
-with strength; smoke as grey puffs. Rounded shapes, gentle animations
+airflow drawn as soft sky‑blue moving streaks, one parallel lane per point of
+strength (up to 4) so strength can be counted, moving faster when stronger; a
+stalled inlet's path as a faint dashed line ending in a red × (grey once the
+level is solved); smoke as grey puffs, and laundry reached by smoky air turns
+sooty grey with a grey smoke badge. Rounded shapes, gentle animations
 (pinwheels spin, candle flames flicker, laundry sways). System font stack.
 Works with mouse and touch, scales from phone to desktop, supports dark mode.

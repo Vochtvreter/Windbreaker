@@ -896,6 +896,17 @@
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = Math.max(1.3, r * 0.3);
       ctx.stroke();
+    } else if (state === 'dirty') {
+      // laundry reached by smoky air: a soot-grey badge with a little puff
+      ctx.fillStyle = darker(P('smoke'), 0.3); ctx.fill();
+      ctx.beginPath();
+      circle(ctx, -r * 0.3, r * 0.1, r * 0.27);
+      circle(ctx, r * 0.02, -r * 0.14, r * 0.33);
+      circle(ctx, r * 0.33, r * 0.12, r * 0.25);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.beginPath(); rr(ctx, -r * 0.55, r * 0.08, r * 1.1, r * 0.3, r * 0.15);
+      ctx.fill();
     } else if (state === 'bad') {
       ctx.fillStyle = P('bad'); ctx.fill();
       ctx.beginPath();
@@ -973,7 +984,7 @@
 
   // "No way out": a bare red x (no ring, so it never reads as an unhappy
   // status pip), drawn inside the wall the stalled stream runs into.
-  function stallMarker(ctx, x, y, r) {
+  function stallMarker(ctx, x, y, r, col) {
     var k = r * 0.62;
     ctx.save();
     ctx.lineCap = 'round';
@@ -983,7 +994,7 @@
     ctx.strokeStyle = P('surface');
     ctx.lineWidth = Math.max(3.6, r * 0.8);
     ctx.stroke();
-    ctx.strokeStyle = P('bad');
+    ctx.strokeStyle = col || P('bad');
     ctx.lineWidth = Math.max(1.9, r * 0.4);
     ctx.stroke();
     ctx.restore();
@@ -1783,6 +1794,9 @@
 
     // ---------------- airflow
     this.drawFlows(ctx, A, T, flowT, motion, t, boostK);
+    // smoke collecting where smoky air hits a wall: under pieces and objects,
+    // so an object next to that wall stays readable
+    this.drawSmokeEnds(ctx, A, T, flowT);
 
     // ---------------- pieces
     for (i = 0; i < pieces.length; i++) {
@@ -1815,7 +1829,7 @@
       ctx.save(); pieceTransform(p); GLYPHS[p.type](ctx, o); ctx.restore();
     }
 
-    this.drawStallMarkers(ctx, A, T);
+    this.drawStallMarkers(ctx, A, T, sim.solved, S.valid);
 
     // ---------------- objects
     var goals = sim.goals || [];
@@ -1868,9 +1882,6 @@
       ctx.restore();
     }
 
-    // smoke collecting where smoky air hits a wall
-    this.drawSmokeEnds(ctx, A, T, flowT);
-
     // goal focus rings (tapping a goal in the strip)
     if (S.focus) {
       var fa = (now - S.focus.t0) / 1800;
@@ -1896,8 +1907,10 @@
       var g2 = goals[i] || NO_GOAL;
       var a2 = this.anim['o' + obj.x + ',' + obj.y];
       var wa = winAge >= 0 && motion ? winAge - i * 0.08 : -1;
-      this.drawMeter(ctx, obj, g2, T);
-      this.drawPip(ctx, obj, g2.state, a2 && motion ? (now - a2.stateT) / 1000 : 9, T, small, wa);
+      // on tiny tiles a happy object's meter would spill onto the next tile;
+      // its green tick already says enough
+      if (!(small && g2.state === 'happy')) this.drawMeter(ctx, obj, g2, T);
+      this.drawPip(ctx, obj, g2.smoky && g2.state === 'bad' ? 'dirty' : g2.state, a2 && motion ? (now - a2.stateT) / 1000 : 9, T, small, wa);
     }
 
     // ---------------- conflicting pieces (hint)
@@ -2239,10 +2252,20 @@
 
   // "No way out" markers of stalled inlets: inside the wall (or window) that
   // stops the stream, drawn over pieces but under objects and their pips.
-  Board.prototype.drawStallMarkers = function (ctx, A, T) {
+  // On a solved board an inlet left stalled is fine: the mark turns a quiet
+  // grey. Over a highlighted placement slot it fades, so the slot shows.
+  Board.prototype.drawStallMarkers = function (ctx, A, T, solved, valid) {
     for (var i = 0; i < A.stallEnds.length; i++) {
       var e = A.stallEnds[i];
-      stallMarker(ctx, (e.x + e.dx * 0.32) * T, (e.y + e.dy * 0.32) * T, Math.max(5.5, T * 0.13));
+      var mx = e.x + e.dx * 0.32, my = e.y + e.dy * 0.32;
+      var onSlot = false;
+      if (valid) {
+        for (var k = 0; k < valid.length; k++) if (valid[k].x === Math.floor(mx) && valid[k].y === Math.floor(my)) { onSlot = true; break; }
+      }
+      ctx.save();
+      if (onSlot) ctx.globalAlpha = 0.35;
+      stallMarker(ctx, mx * T, my * T, Math.max(5.5, T * 0.13), solved ? P('pip-idle') : null);
+      ctx.restore();
     }
   };
 

@@ -9,9 +9,12 @@ screen.
 * New rule (from playtest feedback on levels 48 and 51): laundry needs
   clean air. Smoky air passing through it makes it dirty, shown as sooty
   grey washing with a red mark. Help, tooltips and the laundry card say so.
-* The 15 levels whose solutions blew smoke through laundry were repaired
-  and independently reviewed; several now use the rule as their puzzle
-  (15 Crossroads, 34 Wash House, 48 Backdraft, 92 Trading Places).
+* The 17 levels whose solutions blew smoke through laundry were fixed: 15
+  were repaired and independently reviewed (among them 48 Backdraft and
+  51 Tailwind, where the playtest found it), and 66 and 93 were replaced by
+  the redesigns below. In 15 Crossroads, 34 Wash House, 68 Round Trip and
+  80 Chandelier the rule is now part of the puzzle: without it they would
+  have extra or shorter solutions.
 * Three levels that repeated earlier ideas were redesigned: 56 Eddy,
   66 Back to Back, 93 Broadside.
 * 31 UI fixes from a new-player playthrough and a device audit: tooltips
@@ -19,6 +22,16 @@ screen.
   stream-end markers stay off objects, hint ghosts place the hinted piece,
   intro cards for new objects and tables, mute button in help, bigger
   board on large screens, locked levels explain how to unlock them.
+* Release-candidate review fixes: progress is no longer lost when the game
+  is open in two tabs; a board saved for an older version of a level is not
+  restored onto the new design (boards saved before v0.8 are dropped once,
+  solved levels are kept); the hint spots a wrongly turned piece anywhere in
+  the solution; undo, redo and R are safe in the middle of a press or drag
+  (R turns the piece being dragged); dirty laundry has its own grey smoke
+  badge and a one-time note; a stove's tooltip says why its smoke is
+  trapped; smoke clouds no longer cover objects; the "no way out" mark turns
+  grey on a solved board; focus stays on the board after "Next level"; the
+  keyboard cursor is announced to screen readers.
 * All 100 levels pass every check; levels 96-100 proven unique by
   exhaustive search; full end-to-end suite green (159 checks).
 
