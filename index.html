@@ -31,6 +31,13 @@
       <button id="btn-play" class="btn btn-primary btn-big" type="button">Play</button>
       <button id="btn-howto" class="btn btn-quiet btn-small howto" type="button">How to play</button>
       <p id="home-progress" class="home-progress" aria-live="polite"></p>
+      <!-- levels skipped here and there (progress carried over from an older version) -->
+      <button id="btn-catchup" class="btn btn-quiet btn-small catchup" type="button" hidden></button>
+      <!-- once, after progress from an older version was carried over -->
+      <div id="home-note" class="home-note" role="status" hidden>
+        <p id="home-note-text"></p>
+        <button id="home-note-ok" class="btn btn-small" type="button">Got it</button>
+      </div>
     </header>
 
     <main id="chapters" class="chapters" aria-label="Levels"></main>
@@ -70,7 +77,7 @@
       <div id="tooltip" class="tooltip" hidden></div>
       <!-- a coach bubble pinned to the board: first steps and one-time tips -->
       <div id="coach" class="coach" role="status" aria-live="polite" hidden><span id="coach-text"></span><i class="coach-arrow" aria-hidden="true"></i></div>
-      <!-- a placed piece that was tapped: what it is, and a way to put it back -->
+      <!-- a placed piece (or a thing in the house) that was tapped: what it is, and what you can do -->
       <div id="pmenu" class="pmenu" role="group" aria-label="Piece" hidden>
         <span id="pmenu-text" class="pmenu-text"></span>
         <button id="pmenu-turn" class="btn btn-small pmenu-btn" type="button" hidden>
@@ -80,6 +87,11 @@
         <button id="pmenu-remove" class="btn btn-small pmenu-btn" type="button">
           <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5v10M7.5 10l4.5 4.5 4.5-4.5"/><path d="M5 19.5h14"/></svg>
           <span>Put back</span>
+        </button>
+        <!-- a tapped thing in the house: how it is doing, and its card -->
+        <button id="pmenu-about" class="btn btn-small pmenu-btn pmenu-about" type="button" hidden>
+          <span id="pmenu-about-label">About it</span>
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5L16 12l-6.5 6.5"/></svg>
         </button>
       </div>
       <div id="toast" class="toast" role="status" aria-live="polite" hidden>
@@ -234,6 +246,7 @@
   <script src="js/version.js"></script>
   <script src="js/engine.js"></script>
   <script src="js/levels.js"></script>
+  <script src="js/hints.js"></script>
   <script src="js/migrate.js"></script>
   <script src="js/guides.js"></script>
   <script src="js/sprites.js"></script>

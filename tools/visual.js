@@ -32,7 +32,8 @@
  * animations are settled and all "random" wind streaks come from a fixed seed, so
  * the same code always draws the same pixels; CSS transitions are off and CSS
  * animations are run to their end before each picture. Each scene is taken in light and dark
- * mode, on a phone (390x844) and a desktop (1280x800).
+ * mode, on a phone (390x844) and a desktop (1280x800); a few also on a laptop zoomed in
+ * (1024x560, and 1093x518).
  *
  * The baseline also keeps a copy of the rules (js/engine.js) and levels
  * (js/levels.js), and --compare plays those copies, so level edits never show up
@@ -183,14 +184,16 @@ const SCENES = [
   // the field guide (js/guides.js): a "Meet the …" card with its demo (drawn at the
   // frozen moment: always the "after" scene), the same still and side by side with
   // reduced motion, the guidance line it folds into, the first level's coach, a card in Help
-  { name: 'guide-card', url: '?unlock#21', needs: 'js/guides.js' },
+  // (also on a laptop zoomed to 125%: 1024x560, where the card is a panel beside the board)
+  { name: 'guide-card', url: '?unlock#21', needs: 'js/guides.js', sizes: ['phone', 'desktop', 'laptop'] },
   { name: 'guide-card-reduced', url: '?unlock#21', reduced: true, sizes: ['phone'], needs: 'js/guides.js' },
   {
     name: 'guide-line', url: '?unlock#21', needs: 'js/guides.js',
     setup: async (page) => { await page.click('#guide-go'); await page.waitForSelector('#guide', { state: 'hidden' }); },
   },
   {
-    name: 'first-steps', url: '?unlock#1', needs: 'js/guides.js',
+    // (also on a short laptop screen with a mouse: 1093x518, the column beside the board)
+    name: 'first-steps', url: '?unlock#1', needs: 'js/guides.js', sizes: ['phone', 'desktop', 'laptop-short'],
     setup: async (page) => {
       await page.click('#guide-go');
       await waitFor(page, () => !document.getElementById('coach').hidden, 'the first coach bubble');
@@ -229,6 +232,38 @@ const SCENES = [
       if (await page.isVisible('#guide')) { await page.click('#guide-go'); await page.waitForSelector('#guide', { state: 'hidden' }); }
     },
   },
+  // the hint for a piece that is needed somewhere else: a ghost and an arrow from where it is
+  {
+    name: 'hint-move', url: '?unlock#14', needs: 'js/hints.js',
+    setup: async (page) => {
+      await page.evaluate(() => {
+        const G = window.WBGame.state, p = G.def.solution[0];
+        const cells = window.WB.placementCells(G.L, G.fixed, p.type).filter((c) => !G.def.solution.some((q) => q.x === c.x && q.y === c.y));
+        const happy = cells.find((c) => window.WB.simulate(G.L, G.fixed.concat([{ type: p.type, x: c.x, y: c.y, d: p.d | 0 }])).goals.some((g) => g.ok)) || cells[0];
+        if (!document.getElementById('guide').hidden) window.WBGame.closeGuide();
+        window.WBGame.setPieces([{ type: p.type, x: happy.x, y: happy.y, d: p.d | 0 }]);
+        window.WBGame.hint();
+        window.WBGame.hint();
+      });
+      await waitFor(page, () => !!window.__wb.state().hintFrom, 'the hinted move');
+    },
+  },
+  // a thing in the house, tapped: how it is doing, in words, and a way to its card
+  {
+    name: 'object-menu', url: '?unlock#6', needs: 'js/hints.js',
+    setup: async (page) => {
+      if (await page.isVisible('#guide-go')) { await page.click('#guide-go'); await page.waitForSelector('#guide', { state: 'hidden' }); }
+      const c = await page.evaluate(() => { const o = window.WBGame.state.L.objects.find((x) => x.type === 'candle'); return window.__wb.cell(o.x, o.y); });
+      await page.mouse.click(c.x, c.y);
+      await page.mouse.move(2, 2);
+      await waitFor(page, () => !document.getElementById('pmenu').hidden, 'the menu of the candle');
+    },
+  },
+  // a player coming back with progress from v1.0: a note, Continue after the furthest solved level, "Catch up"
+  {
+    name: 'returning-home', url: '', needs: 'js/hints.js',
+    store: { 'windbreaker.v1': JSON.stringify({ completed: Array.from({ length: 23 }, (_, i) => i + 1) }) },
+  },
   // the example art manifest (art/examples/art.js): images, layers, states, code, texture, tokens
   { name: 'art-examples', url: '?unlock&art=examples#901', pieces: 'solution', closeWin: true, sizes: ['desktop'], needs: 'art/examples/art.js' },
   { name: 'art-examples-trouble', url: '?unlock&art=examples#902', pieces: 'solution', sizes: ['phone'], needs: 'art/examples/art.js' },
@@ -237,7 +272,11 @@ const SCENES = [
 const SIZES = {
   phone: { w: 390, h: 844, dpr: 2, touch: true, mobile: true },
   desktop: { w: 1280, h: 800, dpr: 1 },
+  // only for the scenes that name them
+  laptop: { w: 1024, h: 560, dpr: 1 },
+  'laptop-short': { w: 1093, h: 518, dpr: 1 },
 };
+const DEFAULT_SIZES = ['phone', 'desktop'];
 const MODES = ['light', 'dark'];
 
 function shots() {
@@ -245,7 +284,7 @@ function shots() {
   for (const sc of SCENES) {
     if (OPTS.only && !OPTS.only.some((o) => sc.name.includes(o))) continue;
     for (const mode of MODES) {
-      for (const size of sc.sizes || Object.keys(SIZES)) list.push({ scene: sc, mode, size, file: sc.name + '.' + mode + '.' + size + '.png' });
+      for (const size of sc.sizes || DEFAULT_SIZES) list.push({ scene: sc, mode, size, file: sc.name + '.' + mode + '.' + size + '.png' });
     }
   }
   return list;
@@ -346,7 +385,11 @@ async function newContext(browser, mode, sizeName, reduced) {
   });
   await ctx.addInitScript((freeze) => {
     window.__wbFreezeTime = freeze;
-    try { localStorage.clear(); } catch (e) { /* no storage */ }
+    // a fresh start every time, except right after a scene seeded its own saved progress
+    try {
+      if (sessionStorage.getItem('wbVisualKeep') === '1') sessionStorage.removeItem('wbVisualKeep');
+      else localStorage.clear();
+    } catch (e) { /* no storage */ }
     // No CSS transitions: an element that just transitioned can stay on its
     // own compositor layer for a while and be rasterised a shade differently.
     document.addEventListener('DOMContentLoaded', () => {
@@ -378,6 +421,15 @@ async function waitFor(page, fn, what, timeout) {
 
 async function renderShot(page, shot, base) {
   const sc = shot.scene;
+  if (sc.store) {
+    // saved progress for this scene (kept by the init script for one load)
+    await page.goto(base + '?seed');
+    await page.evaluate((st) => {
+      localStorage.clear();
+      Object.keys(st).forEach((k) => localStorage.setItem(k, st[k]));
+      sessionStorage.setItem('wbVisualKeep', '1');
+    }, sc.store);
+  }
   await page.goto(base + sc.url);
   await page.evaluate(() => document.fonts && document.fonts.ready);
   if (/[?&]art=/.test(sc.url)) await waitFor(page, () => window.WBSprites && window.WBSprites.ready(), 'the art manifest and its images');

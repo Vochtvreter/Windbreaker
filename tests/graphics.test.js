@@ -309,7 +309,9 @@ test('tools/visual.js lists its scenes without a browser', () => {
   const files = r.stdout.trim().split('\n');
   assert.ok(files.length >= 40);
   assert.ok(files.includes('gallery-tools.dark.phone.png'));
-  assert.ok(files.every((f) => /^[a-z0-9-]+\.(light|dark)\.(phone|desktop)\.png$/.test(f)));
+  assert.ok(files.every((f) => /^[a-z0-9-]+\.(light|dark)\.(phone|desktop|laptop|laptop-short)\.png$/.test(f)));
+  // the short wide screens of a zoomed-in laptop are covered too
+  assert.ok(files.includes('guide-card.light.laptop.png') && files.includes('first-steps.light.laptop-short.png'));
 });
 
 // ------------------------------------------------------------------ art mistakes (the studio's "Art in use")

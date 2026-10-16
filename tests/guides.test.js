@@ -101,14 +101,18 @@ test('guides: a demo shows its own thing and nothing the player has not met yet'
 
 // ------------------------------------------------------------------ js/migrate.js
 
-function runMigrate(store) {
+// Runs js/migrate.js on a pretend localStorage; opts.readOnly: setItem throws.
+// Returns the storage afterwards (and, as .win, what it left on window).
+function runMigrate(store, opts) {
+  opts = opts || {};
   const ls = {
     data: Object.assign({}, store),
     getItem(k) { return Object.prototype.hasOwnProperty.call(this.data, k) ? this.data[k] : null; },
-    setItem(k, v) { this.data[k] = String(v); },
+    setItem(k, v) { if (opts.readOnly) throw new Error('QuotaExceededError'); this.data[k] = String(v); },
   };
-  const win = { localStorage: ls, WB: { LEVELS } };
+  const win = { localStorage: ls, WB: Object.assign({}, WB, { LEVELS }) };
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/migrate.js'), 'utf8'), { window: win });
+  Object.defineProperty(ls.data, 'win', { value: win, enumerable: false });
   return ls.data;
 }
 
@@ -126,6 +130,46 @@ test('migrate: v1.0 progress is translated by level key, once per browser', () =
   // a second run leaves the (already migrated) progress alone
   const again = runMigrate(out);
   assert.equal(again['windbreaker.v1'], out['windbreaker.v1']);
+});
+
+test('migrate: it says what it did (for the "welcome back" note), and a bare save gets the cards it has met', () => {
+  const out = runMigrate({ 'windbreaker.v1': JSON.stringify({ completed: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] }) });
+  const d = JSON.parse(out['windbreaker.v1']);
+  const info = JSON.parse(out['windbreaker.migrated']);
+  const furthest = Math.max(...d.completed);
+  assert.deepEqual(info, { from: '1.0', solved: d.completed.length, furthest });
+  // no seenTools in the save: everything met by the furthest solved level counts as seen
+  assert.ok(Array.isArray(d.seenTools) && d.seenTools.includes('window') && d.seenTools.includes('pinwheel'), 'the first cards are seen');
+  for (const id of GUIDE_ORDER) {
+    assert.equal(d.seenTools.includes(id), firstLevel(GUIDES[id]) <= furthest, id + ' (first on level ' + firstLevel(GUIDES[id]) + ', furthest ' + furthest + ')');
+  }
+  // a real v1.0 save keeps its own list
+  const kept = JSON.parse(runMigrate({ 'windbreaker.v1': JSON.stringify({ completed: [1, 2], seenTools: ['fan'] }) })['windbreaker.v1']);
+  assert.deepEqual(kept.seenTools, ['fan']);
+});
+
+test('migrate: unreadable progress still marks the browser, so the next load never translates new progress', () => {
+  for (const bad of ['{"completed":[1,2,3', '', 'null', '{"completed":"1,2,3"}']) {
+    const out = runMigrate({ 'windbreaker.v1': bad });
+    assert.equal(out['windbreaker.levelset'], '2', JSON.stringify(bad) + ' is marked');
+    assert.equal(out['windbreaker.v1'], bad, JSON.stringify(bad) + ' is left for the game (which starts afresh)');
+    // the game saves today's numbers; a reload must leave them alone
+    const later = Object.assign({}, out, { 'windbreaker.v1': JSON.stringify({ completed: [1, 2] }) });
+    assert.deepEqual(JSON.parse(runMigrate(later)['windbreaker.v1']).completed, [1, 2], JSON.stringify(bad) + ': new progress is not translated again');
+  }
+});
+
+test('migrate: storage that reads but cannot write: the translated progress is handed to the game', () => {
+  const out = runMigrate({ 'windbreaker.v1': JSON.stringify({ completed: [1, 2, 3] }) }, { readOnly: true });
+  const byKey = {};
+  LEVELS.forEach((l) => { byKey[l.key] = l.id; });
+  assert.deepEqual(JSON.parse(JSON.stringify(out.win.WB.migratedStore.completed)), [byKey['first-breeze'], byKey['wind-shift'], byKey.candlelight].sort((a, b) => a - b));
+  assert.equal(out.win.WB.migratedInfo.solved, 3);
+  assert.equal(out.win.WB.LEVELSET, '2', 'the game marks its saves with it');
+  // and the game prefers it
+  const game = fs.readFileSync(path.join(ROOT, 'js/game.js'), 'utf8');
+  assert.match(game, /if \(WB\.migratedStore && !UNLOCK_ALL\) return parseStore\(JSON\.stringify\(WB\.migratedStore\)\)/, 'loadStore() prefers WB.migratedStore');
+  assert.match(game, /setItem\('windbreaker\.levelset', WB\.LEVELSET\)/, 'saveStore() marks every save');
 });
 
 test('migrate: a fresh browser is only marked', () => {

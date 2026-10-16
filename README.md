@@ -41,16 +41,21 @@ the laundry dry, keep the candles lit and get the kitchen smoke outside.
   deflector, curtain, wall vent, splitter, extractor, skylight, air filter and
   ceiling fan.
 
-**Controls:** tap a tool, then a glowing spot (or drag it onto the board).
-Tapping the tool again keeps it picked up; tap the garden (or press Esc) to
-put it down. Press and hold a tool (right-click with a mouse), or tap a thing
-in the house, to see its card again; Help has a Field guide of everything you
-have met. Tap a placed fan or deflector to turn it; tapping any other piece
+**Controls:** tap a tool, then a glowing spot (or drag it onto the board;
+with a finger, it lands where your finger is). With only one kind of tool in
+the tray, just tap the spot. Tapping the tool again keeps it picked up; tap
+the garden (or press Esc) to put it down. Picking up a window marks each spot:
+chevrons pointing in where it would let the wind in, an arrow out where it
+would let air out (the garden's chevrons show the windy side). Press and hold
+a tool (right-click with a mouse) to see its card again; tap a thing in the
+house to see how it is doing, with a link to its card; Help has a Field guide
+of everything you have met. Tap a placed fan or deflector to turn it; tapping any other piece
 says what it does, with a **Put back** button. Drag a piece to move it; drag it
 off the board, right-click or long-press to put it back. The labelled Undo,
 Redo, Clear and Hint buttons are always there (undo is also Ctrl/Cmd+Z; redo
 is Ctrl/Cmd+Shift+Z or Ctrl+Y). Hints are free and gentle: the first press
-gives an idea in words, the second ("Show me") shows one piece; after a while
+gives an idea in words, the second ("Show me") shows one piece (or, for a
+piece that is needed somewhere else, where to move it); after a while
 without progress the Hint button glows softly. The **?** button opens How to
 play, and the gear opens **Settings**: sound, larger text, less motion, the
 guide cards again, and reset progress. With a keyboard: 1–9 and 0 pick a tool,

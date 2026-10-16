@@ -56,7 +56,11 @@ test('ui: level tips are shown in screen words', () => {
   for (const lv of DATA.levels) {
     if (!lv.tip) continue;
     assert.doesNotMatch(plainTip(lv.tip), /\b(north|east|south|west)(ern)?\b|far side/i, 'level ' + lv.id + ' tip as shown: "' + plainTip(lv.tip) + '"');
+    // plain words, the way the cards say them
+    assert.doesNotMatch(plainTip(lv.tip), /90 degrees|between \/ and|rounded down|the way it faces|facing the wind|faces the wind/i, 'level ' + lv.id + ' tip as shown: "' + plainTip(lv.tip) + '"');
   }
+  assert.equal(plainTip('A deflector turns the breeze by 90 degrees. Tap it to flip between / and \\.'), 'A deflector turns the breeze round a corner. Tap it to flip it the other way.');
+  assert.equal(plainTip('A window on the side facing the wind lets the breeze in.'), 'A window on the windy side lets the breeze in.');
 });
 
 test('ui: every text size is in rem, so Settings → Large text grows all of it', () => {

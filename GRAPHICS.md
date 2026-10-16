@@ -319,6 +319,7 @@ cached, so big SVGs cost nothing per frame.
 | `icon.<tool>` | — | — | tray and help icons. They follow your `tool.*` pictures, except `icon.window`, a front view of its own. |
 | `ui.pip` | `happy` `bad` `dirty` `idle` | — | the status pip on each object |
 | `ui.stall` | `stalled` `quiet` | — | the "no way out" cross where a stalled stream meets a wall; quiet (grey) also where a stream bumps into the wall right at a piece |
+| `ui.wind` | `cue` `in` `out` | yes | the wind's mark, in tiles, pointing north: soft chevrons in the garden on the windy side (`cue`); on a window spot while a window is picked up, chevrons in where it would let the wind in (`in`), a small arrow out where it would let air out (`out`) |
 
 `icon` is what the goal strip and the help sheet show. Without a picture for
 it, the happy state is used: `spinning`, `lit`, `dry`, `calm`, `swaying`, `clear`.
