@@ -1430,6 +1430,8 @@ kbd {
 .help-gear .ico { width: 19px; height: 19px; }
 
 /* help: the basics first, the rest folded away */
+.help-body .help-lead { font-size: 1.0625rem; color: var(--ink); margin: 2px 0 10px; }
+.help-body .help-lead b { font-weight: 700; }
 .help-goal { list-style: none; margin: 4px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .help-goal li { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; font-size: 0.875rem; line-height: 1.3; color: var(--ink); }
 .help-goal canvas { border-radius: 14px; background: var(--bg-2); display: block; }

@@ -15,13 +15,23 @@
   var LEVELS = WB.LEVELS || [];
   var CHAPTERS = WB.CHAPTERS || [];
   var STORE_KEY = 'windbreaker.v1';
-  var DIR_WORD = ['north', 'east', 'south', 'west'];
+  // Directions the way the board shows them: players read "up" and "from the
+  // left", never compass words (DESIGN.md keeps N/E/S/W for the rules).
+  var DIR_WORD = ['up', 'right', 'down', 'left'];
+  var DIR_ARROW = ['\u2191', '\u2192', '\u2193', '\u2190'];
+  var FROM_SIDE = ['the top', 'the right', 'the bottom', 'the left'];
   var STRENGTH_WORD = ['calm', 'gentle', 'strong', 'gale'];
   var NEED = {
-    pinwheel: 'needs a breeze', candle: 'keep the air away', laundry: 'needs a clean breeze of 2+',
+    pinwheel: 'needs a breeze', candle: 'wants still air', laundry: 'needs a clean breeze of 2 or more',
     papers: 'a breeze of 1 at most', fern: 'wants a breeze of exactly 1', stove: ''
   };
+  // the goals bar, for a house with just one thing in it
+  var WANT_ONE = {
+    pinwheel: 'Make the pinwheel spin', candle: 'Keep the candle lit', stove: 'Get the smoke outside',
+    laundry: 'Dry the laundry', papers: 'Keep the papers in place', fern: 'Give the fern a gentle breeze'
+  };
   function breezeWord(f) { return f > 0 ? 'breeze ' + f : 'still air'; }
+  function dirWords(d) { return DIR_WORD[d] + ' ' + DIR_ARROW[d]; }
 
   // The field guide (js/guides.js): a "Meet the …" card for every tool, object
   // and twist. A card shows by itself on the level that introduces its thing;
@@ -33,10 +43,14 @@
   var KIND_WORD = { tool: 'Tool', object: 'In the house', twist: 'Good to know' };
   var KIND_GROUP = { tool: 'Tools', object: 'Things in the house', twist: 'Weather and rooms' };
   var DEMO_MS = 2600; // each scene of a card's little demo
-  // Compass words in level tips, said the way the board shows them.
+  // Compass words in level tips, said the way the board shows them (the
+  // level files keep their own wording: this happens when the tip is shown).
   var SCREEN_SIDE = { north: 'top', east: 'right', south: 'bottom', west: 'left' };
   function plainTip(s) {
-    return String(s || '').replace(/\bfrom the (north|east|south|west)\b/gi, function (m, d) { return 'from the ' + SCREEN_SIDE[d.toLowerCase()]; });
+    return String(s || '')
+      .replace(/\bfrom the (north|east|south|west)\b/gi, function (m, d) { return 'from the ' + SCREEN_SIDE[d.toLowerCase()]; })
+      .replace(/\bthe far side\b/gi, 'the other side')
+      .replace(/\b(north|east|south|west)(ern)?\b/gi, function (m, d) { return SCREEN_SIDE[d.toLowerCase()]; });
   }
 
   // ================================================================== helpers
@@ -64,6 +78,11 @@
       .replace(/\s+/g, ' ').replace(/\s+([,.])/g, '$1').trim();
   }
   var reducedMQ = mq('(prefers-reduced-motion: reduce)');
+  // Settings → Less motion wins over the device's setting, either way.
+  function reducedMotion() {
+    var m = typeof store === 'object' && store ? store.motion : null;
+    return m === 'calm' ? true : m === 'full' ? false : reducedMQ.matches;
+  }
   var landscapeMQ = mq('(max-height: 520px) and (min-aspect-ratio: 4/3)');
   var coarseMQ = mq('(pointer: coarse)');
 
@@ -76,11 +95,12 @@
 
   // ================================================================== storage
 
-  // { completed, boards: {id: pieces}, boardSigs: {id: level signature}, sound, seenTools, seenTips }
+  // { completed, boards: {id: pieces}, boardSigs: {id: level signature}, sound, seenTools, seenTips,
+  //   textSize: 'normal' | 'large', motion: null (follow the device) | 'calm' | 'full' }
   var store = loadStore();
 
   function parseStore(raw) {
-    var s = { completed: [], boards: {}, boardSigs: {}, sound: true, seenTools: [], seenTips: [] };
+    var s = { completed: [], boards: {}, boardSigs: {}, sound: true, seenTools: [], seenTips: [], textSize: 'normal', motion: null };
     try {
       if (raw) {
         var d = JSON.parse(raw);
@@ -89,6 +109,8 @@
           if (d.boards && typeof d.boards === 'object') s.boards = d.boards;
           if (d.boardSigs && typeof d.boardSigs === 'object') s.boardSigs = d.boardSigs;
           if (typeof d.sound === 'boolean') s.sound = d.sound;
+          if (d.textSize === 'large') s.textSize = 'large';
+          if (d.motion === 'calm' || d.motion === 'full') s.motion = d.motion;
           if (Array.isArray(d.seenTools)) s.seenTools = d.seenTools.filter(function (n) { return typeof n === 'string'; });
           if (Array.isArray(d.seenTips)) s.seenTips = d.seenTips.filter(function (n) { return typeof n === 'string'; });
         }
@@ -143,8 +165,10 @@
     store.seenTools = o.seenTools;
     store.seenTips = o.seenTips;
     store.sound = o.sound;
+    store.textSize = o.textSize;
+    store.motion = o.motion;
     takeBoards(o);
-    updateSoundButton();
+    applySettings();
     if (G.screen === 'home') renderHome();
     else if (G.screen === 'game') updateButtons();
   });
@@ -302,18 +326,22 @@
 
   var dom = {
     home: $('home'), game: $('game'), chapters: $('chapters'), play: $('btn-play'), progress: $('home-progress'),
-    sound: $('btn-sound'), soundLabel: $('sound-label'), resetProgress: $('btn-reset-progress'), homeToast: $('home-toast'),
+    howto: $('btn-howto'), homeGear: $('btn-settings-home'), footGear: $('btn-settings-foot'), resetProgress: $('btn-reset-progress'), homeToast: $('home-toast'),
     back: $('btn-back'), lvlNum: $('lvl-num'), lvlName: $('lvl-name'), lvlDone: $('lvl-done'), wind: $('wind'), help: $('btn-help'),
     tip: $('tip'), guideLine: $('guide-line'), tipIcon: $('tip-icon'), tipMore: $('tip-more'), guide: $('guide'),
     coach: $('coach'), coachText: $('coach-text'), coachArrow: document.querySelector('#coach .coach-arrow'),
     stage: $('stage'), canvas: $('board'), tooltip: $('tooltip'), live: $('sr-live'),
     toast: $('toast'), toastText: $('toast-text'), toastAction: $('toast-action'), toastClose: $('toast-close'),
-    goals: $('goals'), undo: $('btn-undo'), reset: $('btn-reset'), hint: $('btn-hint'), next: $('btn-next'), nextLabel: $('btn-next-label'),
+    goals: $('goals'), goalsSay: $('goals-say'), undo: $('btn-undo'), redo: $('btn-redo'), reset: $('btn-reset'), hint: $('btn-hint'),
+    next: $('btn-next'), nextLabel: $('btn-next-label'), gear: $('btn-settings'),
+    pmenu: $('pmenu'), pmenuText: $('pmenu-text'), pmenuTurn: $('pmenu-turn'), pmenuRemove: $('pmenu-remove'),
     tray: $('tray'), trayWrap: document.querySelector('.tray-wrap'), side: document.querySelector('.side'), avatar: $('drag-avatar'),
     win: $('win'), winTitle: $('win-title'), winSub: $('win-sub'), winDots: $('win-dots'), winTeaser: $('win-teaser'), winTeaserIcon: $('win-teaser-icon'),
     winChapter: $('win-chapter'), winChapterIcon: $('win-chapter-icon'), winChapterName: $('win-chapter-name'), winRecap: $('win-recap'),
     winTeaserText: $('win-teaser-text'), winFinal: $('win-final'), winNext: $('win-next'), winLevels: $('win-levels'),
-    helpDlg: $('help'), helpBody: $('help-body'), helpClose: $('help-close'), helpSound: $('help-sound'),
+    helpDlg: $('help'), helpBody: $('help-body'), helpClose: $('help-close'), helpGear: $('help-settings'),
+    settings: $('settings'), settingsClose: $('settings-close'), setSound: $('set-sound'), setMotion: $('set-motion'),
+    setMotionNote: $('set-motion-note'), setGuides: $('set-guides'), setProgressNote: $('set-progress-note'),
     confirm: $('confirm'), confirmYes: $('confirm-yes'), confirmNo: $('confirm-no')
   };
 
@@ -340,8 +368,15 @@
     levelGuide: null, guide: null, helpGuide: null, coach: null, spot: null, c1: null, c1Timer: 0, coachGoal: null, coachHide: 0, chipCoach: null,
     drawPieces: [], raf: 0, toastTimer: 0, tipTimer: 0, hoverTimer: 0, coachTimer: 0,
     pushedFromHome: false, lastSig: '', settleUntil: 0, paletteVersion: 0,
-    openedAt: -1e9, focusBoardOnOpen: false
+    openedAt: -1e9, focusBoardOnOpen: false,
+    // a tapped piece's little menu; tool spots that stay lit after a missed drop; the tooltip's cell
+    pmenu: null, pmenuTimer: 0, linger: null, lingerTimer: 0, tipAt: null, chipCoachTimer: 0,
+    // hints go one step at a time: words first, then one piece
+    hintStep: 0, hintBoard: null, hintFollowed: false,
+    // "Stuck? A hint is free": progress (most things happy at once), moves and time since
+    best: 0, sinceMoves: 0, sinceAt: 0, offered: false, stuckTimer: 0
   };
+  var sessionOffered = false; // the "a hint is free" toast: once per visit
   var I = G.input;
 
   function norm(p) { return { type: p.type, x: p.x | 0, y: p.y | 0, d: p.d | 0 }; }
@@ -596,7 +631,6 @@
     dom.progress.textContent = solved === 0
       ? LEVELS.length + ' levels · ' + WB.TOOL_ORDER.length + ' tools'
       : (solved === LEVELS.length ? 'All ' + LEVELS.length + ' levels solved — lovely.' : solved + ' of ' + LEVELS.length + ' levels solved');
-    updateSoundButton();
   }
 
   var homeToastTimer = 0;
@@ -615,21 +649,81 @@
     homeToastTimer = setTimeout(function () { dom.homeToast.hidden = true; }, 2400);
   }
 
-  function updateSoundButton() {
-    var on = store.sound, label = on ? 'Sound on' : 'Sound off';
-    [dom.sound, dom.helpSound].forEach(function (b) {
-      b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      b.setAttribute('aria-label', label);
-      b.title = label;
-    });
-    dom.soundLabel.textContent = label;
+  // ---------------------------------------------------------------- settings
+  //
+  // A small sheet, reachable from the home screen (the gear, and the footer)
+  // and in the game (the gear in the top bar on wide screens, and in Help):
+  // sound, text size, less motion, the guide cards again, and, last and quiet,
+  // reset progress.
+
+  var rootEl = document.documentElement;
+  function applySettings() {
+    rootEl.classList.toggle('is-large-text', store.textSize === 'large');
+    rootEl.classList.toggle('motion-calm', store.motion === 'calm');
+    rootEl.classList.toggle('motion-full', store.motion === 'full');
+    renderSettings();
+  }
+  function setSwitch(b, on) {
+    b.setAttribute('aria-checked', on ? 'true' : 'false');
+    b.querySelector('.switch-word').textContent = on ? 'On' : 'Off';
+  }
+  function renderSettings() {
+    setSwitch(dom.setSound, store.sound);
+    setSwitch(dom.setMotion, reducedMotion());
+    dom.setMotionNote.textContent = store.motion == null && reducedMQ.matches
+      ? 'On, because your device asks for less motion.' : 'Less spinning and moving on the screen.';
+    var segs = dom.settings.querySelectorAll('[data-text]');
+    for (var i = 0; i < segs.length; i++) segs[i].setAttribute('aria-checked', segs[i].getAttribute('data-text') === store.textSize ? 'true' : 'false');
+    var solved = store.completed.length;
+    dom.resetProgress.disabled = solved === 0 && !Object.keys(store.boards).length;
+    dom.setProgressNote.textContent = solved ? 'Forget all ' + solved + ' solved level' + (solved === 1 ? '' : 's') + '.' : 'Nothing solved yet.';
+  }
+  function updateSoundButton() { renderSettings(); }
+  function openSettings() {
+    closeDialog(dom.helpDlg, true);
+    renderSettings();
+    dom.setGuides.textContent = 'Show again';
+    dom.setGuides.disabled = false;
+    openDialog(dom.settings, dom.settingsClose);
   }
   function toggleSound() {
     store.sound = !store.sound;
     saveStore();
-    updateSoundButton();
+    renderSettings();
     if (store.sound) Sound.tick();
   }
+  dom.setSound.addEventListener('click', toggleSound);
+  dom.setMotion.addEventListener('click', function () {
+    var calm = !reducedMotion();
+    // back to "follow the device" when that is what the device wants anyway
+    store.motion = calm === reducedMQ.matches ? null : calm ? 'calm' : 'full';
+    saveStore();
+    applySettings();
+    G.lastSig = '';
+  });
+  dom.settings.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest ? e.target.closest('[data-text]') : null;
+    if (b) {
+      store.textSize = b.getAttribute('data-text') === 'large' ? 'large' : 'normal';
+      saveStore();
+      applySettings();
+      layoutBoard();
+      updateTrayFade();
+      return;
+    }
+    if (e.target === dom.settings) closeDialog(dom.settings);
+  });
+  dom.setGuides.addEventListener('click', function () {
+    store.seenTools = [];
+    store.seenTips = [];
+    saveStore(true); // a merge would bring the old ones straight back
+    dom.setGuides.textContent = 'Done';
+    dom.setGuides.disabled = true;
+  });
+  dom.settingsClose.addEventListener('click', function () { closeDialog(dom.settings); });
+  onMQ(reducedMQ, function () { renderSettings(); G.lastSig = ''; });
+  [dom.homeGear, dom.footGear, dom.gear, dom.helpGear].forEach(function (b) { b.addEventListener('click', openSettings); });
+  dom.howto.addEventListener('click', function () { openHelp(); });
 
   dom.play.addEventListener('click', function () {
     Sound.unlock();
@@ -637,8 +731,6 @@
     if (id == null && LEVELS.length) id = LEVELS[0].id;
     if (id != null) navigate(id);
   });
-  dom.sound.addEventListener('click', toggleSound);
-  dom.helpSound.addEventListener('click', toggleSound);
   dom.resetProgress.addEventListener('click', function () { openDialog(dom.confirm, dom.confirmNo); });
   dom.confirmNo.addEventListener('click', function () { closeDialog(dom.confirm); });
   dom.confirmYes.addEventListener('click', function () {
@@ -648,8 +740,10 @@
     store.seenTools = [];
     store.seenTips = [];
     saveStore(true);
-    closeDialog(dom.confirm);
+    closeDialog(dom.confirm, true);
+    closeDialog(dom.settings, true);
     G.lastId = null;
+    if (G.screen === 'game') { G.pushedFromHome = false; navigate(null, true); }
     renderHome();
     dom.play.focus();
   });
@@ -688,10 +782,16 @@
     clearTimeout(G.winTimer); // a cancelled drag re-checks the win
     hideTooltip();
     hideToast();
+    hidePieceMenu();
     closeGuide({ silent: true, keep: true });
     hideCoach();
     clearTimeout(G.c1Timer);
+    clearTimeout(G.stuckTimer);
+    clearTimeout(G.lingerTimer);
+    clearTimeout(G.chipCoachTimer);
+    G.linger = null;
     G.c1 = null;
+    dom.hint.classList.remove('is-offer');
     closeDialog(dom.win, true);
     closeDialog(dom.helpDlg, true);
   }
@@ -714,7 +814,9 @@
     G.hover = null; G.hoverMouse = false; G.cursor = null; G.ghost = null; G.hint = null; G.conflicts = null; G.lifted = null;
     G.previewSim = null; G.previewKey = null; G.dragBaseSim = null;
     G.pops = {}; G.shake = null; G.flash = null; G.pulse = null; G.focus = null; G.winAt = null;
+    G.hintStep = 0; G.hintBoard = null; G.hintFollowed = false; G.tipAt = null;
     G.sim = WB.simulate(G.L, allPieces());
+    G.best = happyCount(G.sim); G.sinceMoves = 0; G.sinceAt = performance.now(); G.offered = false;
     G.won = G.sim.solved && isDone(id);
     G.version++;
     rebuildDrawPieces();
@@ -751,6 +853,7 @@
     if (G.focusBoardOnOpen && !G.guide) dom.canvas.focus({ preventScroll: true });
     G.focusBoardOnOpen = false;
     if (!G.guide) startCoachSoon();
+    armStuck();
     // a saved board that already solves the level (closed mid-celebration, or
     // a redesigned level): let the normal win run so progress is recorded
     if (G.sim.solved && !isDone(id)) checkWin();
@@ -789,29 +892,31 @@
     delete store.boardSigs[id];
   }
 
+  // The wind badge: "Wind", an arrow made of the stream's lanes (one line for
+  // gentle, two strong, three a gale) pointing the way it blows, and a word.
   function renderWind() {
     var w = G.L.wind;
     var calm = w.strength <= 0;
     dom.wind.classList.toggle('is-calm', calm);
+    dom.wind.setAttribute('data-s', String(clamp(w.strength, 0, 3)));
     var glyph = dom.wind.querySelector('.wind-glyph');
     glyph.style.transform = 'rotate(' + ((w.dir - 1) * 90) + 'deg)';
-    var chev = glyph.querySelectorAll('path');
-    // chevrons light up from the front: 1 = gentle, 3 = gale
-    for (var i = 0; i < chev.length; i++) chev[i].classList.toggle('on', i >= chev.length - w.strength);
     dom.wind.querySelector('.wind-word').textContent = STRENGTH_WORD[clamp(w.strength, 0, 3)];
-    dom.wind.setAttribute('aria-label', windText());
-    dom.wind.title = windText();
+    var label = calm ? 'Wind: calm, no wind today' : 'Wind from ' + FROM_SIDE[w.from] + ', ' + STRENGTH_WORD[Math.min(3, w.strength)];
+    dom.wind.setAttribute('aria-label', label);
+    dom.wind.title = label;
   }
   function windText() {
     var w = G.L.wind;
-    if (w.strength <= 0) return 'A calm day: no wind comes in, only fans move the air.';
-    return 'Wind from the ' + DIR_WORD[w.from] + ' · strength ' + w.strength + ' (' + STRENGTH_WORD[Math.min(3, w.strength)] + ')' +
-      ' — windows facing it let air in.';
+    if (w.strength <= 0) return 'A calm day: no wind blows in, so windows only let air out. Fans make the breeze.';
+    var n = Math.min(3, w.strength);
+    return 'The wind blows in from ' + FROM_SIDE[w.from] + '. It is ' + (n === 3 ? 'a gale' : STRENGTH_WORD[n]) + ': ' +
+      ['', 'one line', 'two lines', 'three lines'][n] + ' in the stream. A window on the windy side lets it in.';
   }
   dom.wind.addEventListener('click', function () {
     if (G.screen !== 'game') return;
     if (!dom.toast.hidden && dom.toast.getAttribute('data-kind') === 'wind') { hideToast(); return; }
-    showToast(windText(), null, null, { ms: 4200, kind: 'wind' });
+    showToast(windText(), null, null, { ms: 7000, kind: 'wind' });
   });
 
   // ---------------------------------------------------------------- field guide: data
@@ -893,7 +998,7 @@
     }
     var scenes = [scene(d.before), scene(d.after)];
     var caps = [d.caption_before || '', d.caption_after || ''];
-    var still = reducedMQ.matches;
+    var still = reducedMotion();
     var wrap = el('div', 'gdemo' + (still ? ' is-still' : ''));
     var views = [];
     function view(parent, si) {
@@ -1074,6 +1179,7 @@
     if (!card || G.screen !== 'game' || boardLocked()) return;
     closeGuide({ silent: true, keep: true });
     hideTooltip();
+    hidePieceMenu();
     if (!dom.toast.hidden && dom.toast.getAttribute('data-kind') !== 'reset') hideToast();
     var at = opts.at || null;
     var buttons = [];
@@ -1118,6 +1224,8 @@
     if (g.id === G.levelGuide) {
       markGuideSeen(g.id);
       if (G.newTool) { G.newTool = null; updateTray(); }
+      // a new thing in the house: its goal chip says hello once
+      if (g.intro && WB.OBJECTS[g.id]) helloGoal(g.id);
     }
     // the board takes the freed space: let it settle in softly
     dom.canvas.classList.remove('is-settling');
@@ -1333,7 +1441,7 @@
       R.icon(cv, 'tool', type, 38);
       b.appendChild(cv);
       b.appendChild(el('span', 'chip-name', t.name));
-      b.appendChild(el('span', 'chip-count', '0'));
+      b.appendChild(el('span', 'chip-count', '\u00d70'));
       // on the selected chip: an (i) that opens the tool's card (so does a long-press)
       var info = el('span', 'chip-info', 'i');
       info.setAttribute('aria-hidden', 'true');
@@ -1345,7 +1453,7 @@
         e.preventDefault();
         if (G.lastPtr === 'mouse' && !boardLocked()) openGuide(type);
       });
-      b.addEventListener('animationend', function () { b.classList.remove('is-shake'); });
+      b.addEventListener('animationend', function () { b.classList.remove('is-shake'); b.classList.remove('is-bounce'); });
       dom.tray.appendChild(b);
     });
     updateTray();
@@ -1382,7 +1490,7 @@
     for (var i = 0; i < chips.length; i++) {
       var b = chips[i], type = b.getAttribute('data-tool');
       var n = remaining(type);
-      b.querySelector('.chip-count').textContent = String(n);
+      b.querySelector('.chip-count').textContent = '\u00d7' + n;
       b.disabled = n <= 0 && G.sel !== type;
       b.classList.toggle('is-selected', G.sel === type);
       b.classList.toggle('is-new', G.newTool === type && !G.newToolUsed);
@@ -1403,8 +1511,9 @@
     if (boardLocked()) return;
     if (e.detail > 1 && performance.now() - G.openedAt < 700) return;
     Sound.unlock();
-    if (G.sel === type) { deselect(); return; }
-    select(type);
+    // tapping the selected tool again keeps it (a little bounce, and where it goes)
+    if (G.sel === type && e.detail !== 0) { againChip(this, type); return; }
+    if (G.sel !== type) select(type);
     // keyboard activation: hand focus to the board, on a cell where the tool fits
     if (e.detail === 0 && G.sel === type) {
       var c = nearestValid(G.cursor || { x: (G.L.w - 1) / 2, y: (G.L.h - 1) / 2 });
@@ -1415,6 +1524,15 @@
         showTooltipAt(c.x, c.y, describe(c.x, c.y) + '<span class="tt-act">Arrows to move · Enter to place</span>', 0);
       }
     }
+  }
+
+  // The selected tool, picked again: it stays selected. Say where it goes.
+  function againChip(chip, type) {
+    chip.classList.remove('is-bounce');
+    void chip.offsetWidth;
+    chip.classList.add('is-bounce');
+    G.pulse = performance.now();
+    if (!G.guide) showToast((usingTouch() ? 'Tap' : 'Click') + ' a glowing spot to place the ' + lowerName(type) + '.', null, null, { ms: 3200, kind: 'mount' });
   }
 
   function nearestValid(p) {
@@ -1428,6 +1546,7 @@
 
   function select(type) {
     if (remaining(type) <= 0) return;
+    hidePieceMenu();
     G.sel = type;
     G.valid = WB.placementCells(G.L, allPieces(), type);
     G.validWall = isWallMount(type);
@@ -1488,6 +1607,7 @@
       b.appendChild(cv);
       b.appendChild(el('span', 'goal-count'));
       b.addEventListener('click', function () { focusGoal(type); });
+      b.addEventListener('animationend', function () { b.classList.remove('is-hello'); });
       li.appendChild(b);
       dom.goals.appendChild(li);
     });
@@ -1509,9 +1629,28 @@
       var html = all ? CHECK_SVG + (mine.length > 1 ? mine.length : '') : ok + '/' + mine.length;
       if (span.innerHTML !== html) span.innerHTML = html;
       var name = WB.OBJECTS[type].name;
-      b.setAttribute('aria-label', name + ': ' + ok + ' of ' + mine.length + ' happy. Show on the board');
+      b.setAttribute('aria-label', name + ': ' + ok + ' of ' + mine.length + ' happy' + (bad && !all ? ', ' + (mine.length > 1 ? 'one is unhappy' : 'unhappy') : '') + '. Show on the board');
       b.title = name + ' — ' + WB.OBJECTS[type].desc;
     }
+    // the goals bar says it in words
+    var okAll = goals.filter(function (g) { return g.ok; }).length, n = goals.length;
+    var say, cls = '';
+    if (n && okAll === n) { say = n > 1 ? 'Everyone is happy!' : 'Happy!'; cls = 'is-done'; }
+    else if (n === 1) say = WANT_ONE[goals[0].type] || 'Make it happy';
+    else if (okAll === 0) say = 'Make everyone happy';
+    else if (n - okAll === 1) { say = 'Almost! One more to go'; cls = 'is-almost'; }
+    else say = okAll + ' of ' + n + ' happy';
+    if (dom.goalsSay.textContent !== say) dom.goalsSay.textContent = say;
+    dom.goalsSay.className = 'goals-say' + (cls ? ' ' + cls : '');
+  }
+  function happyCount(sim) { return sim.goals.filter(function (g) { return g.ok; }).length; }
+  // a goal chip says hello once (a new thing in the house)
+  function helloGoal(type) {
+    var b = dom.goals.querySelector('.goal[data-type="' + type + '"]');
+    if (!b || reducedMotion()) return;
+    b.classList.remove('is-hello');
+    void b.offsetWidth;
+    b.classList.add('is-hello');
   }
 
   var DIRTY = 'dirty: smoky air is blowing through it (filter the smoke or keep it away)';
@@ -1534,7 +1673,7 @@
         var atCentre = e.x % 1 !== 0 && e.y % 1 !== 0;
         var wx = Math.floor(atCentre ? e.x : e.x + 0.5 * sx), wy = Math.floor(atCentre ? e.y : e.y + 0.5 * sy);
         var p = playerAt(wx, wy) || fixedAt(wx, wy);
-        if (p && p.type === 'window') why = 'it is blown into a window facing the wind, which pushes it back';
+        if (p && p.type === 'window') why = 'it is blown into a window on the windy side, which pushes it back';
         else if (p && p.type === 'curtain') why = 'a curtain stops it';
         else why = 'it is blown into a wall';
       });
@@ -1555,11 +1694,15 @@
     var txt = goalText(g);
     if (!off.length) txt = (goals.length > 1 ? 'All ' + goals.length + ' ' + WB.OBJECTS[type].name.toLowerCase() + ' are happy' : WB.OBJECTS[type].name + ' is happy') + ' · ' + NEED[type].replace(/^$/, 'smoke is cleared');
     else if (off.length > 1) txt += ' (' + off.length + ' unhappy)';
-    showToast(txt, null, null, { ms: 3200, near: g });
+    // nearly there: say so
+    var left = G.sim.goals.filter(function (x) { return !x.ok; }).length;
+    if (off.length && left === 1 && G.sim.goals.length > 1) txt += '. Close! Just this one to go.';
+    showToast(txt, null, null, { ms: usingTouch() ? 6000 : 4200, near: g });
   }
 
   function updateButtons() {
     dom.undo.disabled = G.history.length === 0;
+    dom.redo.disabled = G.future.length === 0;
     dom.reset.disabled = G.pieces.length === 0;
     var hasSolution = Array.isArray(G.def.solution) && G.def.solution.length > 0;
     dom.hint.disabled = !hasSolution || G.won;
@@ -1597,10 +1740,11 @@
   function afterChange(opts) {
     opts = opts || {};
     G.version++;
+    G.hintFollowed = !!opts.followed;
     G.sim = WB.simulate(G.L, allPieces());
     G.previewSim = null; G.previewKey = null;
     if (!opts.keepHint) {
-      if ((G.hint || G.conflicts) && dom.toast.getAttribute('data-kind') === 'hint') hideToast();
+      if (!dom.toast.hidden && dom.toast.getAttribute('data-kind') === 'hint') hideToast();
       G.hint = null;
       G.conflicts = null;
     }
@@ -1620,6 +1764,15 @@
     // a tip pinned to a piece goes with it
     if (G.coach && /^(turn|move|offpath)$/.test(G.coach.key || '') && !playerAt(G.coach.x, G.coach.y)) hideCoach();
     if (G.c1) c1Update(opts.placed || null);
+    // progress, for the gentle "stuck? a hint is free"
+    var hc = happyCount(G.sim);
+    if (hc > G.best) { G.best = hc; G.sinceMoves = 0; G.sinceAt = performance.now(); }
+    else if (++G.sinceMoves >= 8) maybeOfferHint();
+    // the piece menu stays with its piece
+    if (G.pmenu) {
+      var mp = playerAt(G.pmenu.x, G.pmenu.y);
+      if (!mp || mp.type !== G.pmenu.type) hidePieceMenu(); else refreshPieceMenu();
+    }
     // a card opened from an object says how that object is doing right now
     if (G.guide && G.guide.at && G.guide.built.status) G.guide.built.status.innerHTML = describe(G.guide.at.x, G.guide.at.y);
   }
@@ -1651,7 +1804,8 @@
     var stalledBefore = stalledInlets(G.sim).length;
     if (type === G.newTool) G.newToolUsed = true;
     if (!dom.toast.hidden && dom.toast.getAttribute('data-kind') === 'mount') hideToast();
-    commit(G.pieces.concat([p]), { placed: { type: type, x: x, y: y } });
+    // placed on the hint: the next hint goes straight to the next piece
+    commit(G.pieces.concat([p]), { placed: { type: type, x: x, y: y }, followed: onHint });
     G.pops[x + ',' + y] = performance.now();
     Sound.tick();
     announce(toolName(type) + ' placed. ' + goalSummary());
@@ -1696,8 +1850,9 @@
     var nd = to == null ? WB.rotate(p.type, p.d) : to;
     var np = G.pieces.map(function (q) { return q === p ? { type: q.type, x: q.x, y: q.y, d: nd } : q; });
     G.rot[p.type] = nd;
+    var followed = !!(G.hint && G.hint.x === p.x && G.hint.y === p.y && G.hint.d === nd);
     if (G.coach && G.coach.key === 'turn') hideCoach();
-    commit(np);
+    commit(np, { followed: followed });
     G.pops[p.x + ',' + p.y] = performance.now();
     Sound.turn();
     announce(toolName(p.type) + ' turned. ' + goalSummary());
@@ -1802,8 +1957,10 @@
     deselect();
     hideToast();
     hideTooltip();
+    hidePieceMenu();
     hideCoach();
     clearTimeout(G.coachTimer);
+    dom.hint.classList.remove('is-offer');
     G.hint = null; G.conflicts = null; G.cursor = null;
     Sound.chime();
     announce('Fresh air! Level ' + G.id + ' solved.');
@@ -1823,7 +1980,7 @@
       G.winCardTimer = 0;
       if (G.screen === 'game' && G.id === id && G.won) showWinCard();
       else updateButtons();
-    }, c1 ? (reducedMQ.matches ? 1500 : 2600) : reducedMQ.matches ? 300 : 1250);
+    }, c1 ? (reducedMotion() ? 1500 : 2600) : reducedMotion() ? 300 : 1250);
     updateButtons();
   }
 
@@ -1897,15 +2054,45 @@
   }
 
   // ---------------------------------------------------------------- hint
+  //
+  // A hint goes one small step per press, never the whole answer at once:
+  //   1. an idea, in words, about what is wrong (with "Show me" for step 2);
+  //   2. one piece: where the next one goes (a ghost), the piece in the way,
+  //      or the one that needs a turn.
+  // The steps start again when the player changes the board; after following
+  // a hint (placing or turning the hinted piece), the next press goes straight
+  // to the next piece. Hints are free: nothing counts against the player.
 
-  function hint() {
-    if (dom.hint.disabled || dom.hint.hidden) return;
+  // what a tool can do, said as an idea (step 1)
+  var TOOL_IDEA = {
+    window: 'it lets a breeze in on the windy side, and out anywhere else',
+    fan: 'it makes its own breeze, the way it points',
+    deflector: 'it turns a breeze round a corner',
+    curtain: 'it makes a breeze 1 weaker',
+    vent: 'it lets air through an inside wall',
+    splitter: 'it sends a breeze out to both sides',
+    extractor: 'it lets air out of any outside wall, and pulls a gentle breeze',
+    skylight: 'it lets air out through the roof',
+    filter: 'it cleans the smoke out of the air',
+    ceilingfan: 'it blows a gentle breeze every way at once'
+  };
+  function goalIdea(g) {
+    switch (g.type) {
+      case 'pinwheel': return 'The pinwheel needs a breeze. How can air reach it?';
+      case 'candle': return 'The candle is being blown out. Keep every breeze away from it.';
+      case 'stove': return g.state === 'bad' ? 'The smoke is blown into a wall. It needs a way outside.' : 'The smoke needs a breeze to carry it outside.';
+      case 'laundry': return g.smoky ? 'Smoky air is reaching the laundry. Keep the smoke away from it.' : 'The laundry needs a stronger breeze: 2 or more.';
+      case 'papers': return 'Too much air on the papers: they can only take a breeze of 1.';
+      case 'fern': return g.state === 'bad' ? 'Too much air on the fern: it wants exactly 1.' : 'The fern needs a gentle breeze: exactly 1.';
+    }
+    return 'Something in the house is not happy yet.';
+  }
+  function boardKey() { return G.pieces.map(function (p) { return key4(p); }).sort().join(';'); }
+  function key4(p) { return p.type + '@' + p.x + ',' + p.y + '/' + (p.d | 0); }
+
+  // What the reference solution says about the board right now.
+  function hintPlan() {
     var sol = (G.def.solution || []).map(norm);
-    hideTooltip();
-    hideCoachTip();
-    closeGuide({ silent: true }); // one voice: the hint speaks now
-    if (!sol.length) { showToast('No hint for this one — experiment!'); return; }
-    if (G.sim.solved) { showToast('Everything is already happy.'); return; }
     function same(a, b) {
       return a.type === b.type && a.x === b.x && a.y === b.y && (rotations(a.type) < 2 || a.d === b.d);
     }
@@ -1922,36 +2109,147 @@
       }
       return true;
     });
-    var nextP = missing[0] || null;
-    if (turns.length) {
-      G.hint = turns[0];
+    // The next piece: of those that fit now, the one that leaves the fewest
+    // things unhappy (so following the hints rarely makes something go red);
+    // the solution's order breaks ties.
+    var best = null, here = allPieces();
+    missing.forEach(function (sp, i) {
+      if (remaining(sp.type) <= 0 || !WB.canPlace(G.L, here, sp.type, sp.x, sp.y)) return;
+      var sim = WB.simulate(G.L, here.concat([sp]));
+      var bad = sim.goals.filter(function (g) { return g.state === 'bad'; }).length;
+      var score = bad * 100 - happyCount(sim) * 10 + i * 0.01;
+      if (!best || score < best.score) best = { p: sp, sim: sim, score: score };
+    });
+    return { conflicts: conflicts, missing: missing, turns: turns, next: best ? best.p : missing[0] || null, nextSim: best ? best.sim : null };
+  }
+
+  // Step 1: an idea in words, about what is wrong right now.
+  function hintIdea(plan) {
+    if (plan.conflicts.length) return { text: plan.conflicts.length === 1 ? 'One of your pieces isn\u2019t helping here.' : 'Some of your pieces aren\u2019t helping here.' };
+    if (plan.turns.length) return { text: 'Almost! One of your pieces just needs a turn.' };
+    var sim = G.sim;
+    var stuck = stalledInlets(sim).length > 0 && !sim.trees.some(function (t) { return t.active; });
+    if (stuck) return { text: 'The breeze needs a way out. Follow the dashed line to where it stops.' };
+    // the thing the next piece helps, else the first unhappy one (a harmed one first)
+    var g = null, after = plan.nextSim;
+    if (after) sim.goals.forEach(function (x, i) { if (!g && !x.ok && after.goals[i].ok) g = x; });
+    if (!g) sim.goals.forEach(function (x) { if (!g && x.state === 'bad') g = x; });
+    if (!g) sim.goals.forEach(function (x) { if (!g && !x.ok) g = x; });
+    var text = g ? goalIdea(g) : 'Something in the house is not happy yet.';
+    // a tool the answer uses that has not been tried yet
+    var nx = plan.next;
+    if (nx && TOOL_IDEA[nx.type] && remaining(nx.type) === (G.L.inventory[nx.type] || 0)) {
+      text += ' Try your ' + lowerName(nx.type) + ': ' + TOOL_IDEA[nx.type] + '.';
+    }
+    return { text: text, focus: g };
+  }
+
+  function hint() {
+    if (dom.hint.disabled || dom.hint.hidden) return;
+    var sol = (G.def.solution || []).map(norm);
+    hideTooltip();
+    hidePieceMenu();
+    hideCoachTip();
+    closeGuide({ silent: true }); // one voice: the hint speaks now
+    dom.hint.classList.remove('is-offer');
+    G.offered = true; // asked for help: no need to offer it
+    if (!sol.length) { showToast('No hint for this one. Try things out!'); return; }
+    if (G.sim.solved) { showToast('Everything is already happy.'); return; }
+    var bk = boardKey();
+    if (G.hintBoard !== bk) G.hintStep = G.hintFollowed ? 1 : 0;
+    G.hintBoard = bk;
+    var plan = hintPlan();
+    var tap = usingTouch() ? 'Tap' : 'Click';
+
+    if (G.hintStep === 0) {
+      // step 1: just an idea
+      G.hintStep = 1;
+      G.hint = null;
       G.conflicts = null;
-      showToast((conflicts.length ? 'Try' : 'Almost — try') + ' turning this ' + toolName(turns[0].type).toLowerCase() + '.', null, null, { kind: 'hint', near: turns[0] });
+      var idea = hintIdea(plan);
+      var text = idea.text;
+      if (!seenTip('hintfree')) {
+        store.seenTips.push('hintfree');
+        saveStore();
+        text = 'Hints are free, so ask any time! ' + text;
+      }
+      if (idea.focus) G.focus = { type: idea.focus.type, t0: performance.now() };
+      showToast(text, 'Show me', function () { hint(); }, { kind: 'hint', ms: 14000, near: idea.focus || null });
       return;
     }
-    if (conflicts.length) {
+
+    // step 2: one piece
+    if (plan.turns.length) {
+      var tp = plan.turns[0];
+      G.hint = tp;
+      G.conflicts = null;
+      showToast('Try turning this ' + lowerName(tp.type) + '. ' + tap + ' it to turn it.', null, null, { kind: 'hint', ms: 9000, near: tp });
+      return;
+    }
+    if (plan.conflicts.length) {
+      var conflicts = plan.conflicts;
       G.hint = null;
       G.conflicts = conflicts.map(function (p) { return { x: p.x, y: p.y }; });
       showToast(conflicts.length === 1
-        ? 'This piece isn’t part of the solution I know.'
-        : 'These ' + conflicts.length + ' pieces aren’t part of the solution I know.',
-      conflicts.length === 1 ? 'Remove it' : 'Remove them (' + conflicts.length + ')', function () {
-        commit(G.pieces.filter(function (p) { return conflicts.indexOf(p) < 0; }));
+        ? 'That one isn\u2019t needed here. Put it back?'
+        : 'These ' + conflicts.length + ' aren\u2019t needed here. Put them back?',
+      conflicts.length === 1 ? 'Put it back' : 'Put them back', function () {
+        commit(G.pieces.filter(function (p) { return conflicts.indexOf(p) < 0; }), { followed: true });
         Sound.whoosh();
         hint();
-      }, { kind: 'hint', ms: 10000, near: conflicts[0] });
+      }, { kind: 'hint', ms: 12000, near: conflicts[0] });
       return;
     }
+    var nextP = plan.next;
     if (nextP) {
       G.hint = nextP;
+      G.conflicts = null;
       var how = '';
-      if (nextP.type === 'fan') how = ', blowing ' + DIR_WORD[nextP.d];
+      if (nextP.type === 'fan') how = ', blowing ' + dirWords(nextP.d);
       else if (nextP.type === 'deflector') how = nextP.d === 0 ? ', slanted like /' : ', slanted like \\';
       var canTap = remaining(nextP.type) > 0 && WB.canPlace(G.L, allPieces(), nextP.type, nextP.x, nextP.y);
-      showToast('Try a ' + toolName(nextP.type).toLowerCase() + ' here' + how + '.' + (canTap ? ' ' + (usingTouch() ? 'Tap' : 'Click') + ' it to place it.' : ''),
-        null, null, { kind: 'hint', near: nextP });
+      // following it makes something unhappy for a moment: say so first
+      var worse = plan.nextSim && plan.nextSim.goals.some(function (g, i) { return g.state === 'bad' && G.sim.goals[i].state !== 'bad'; });
+      showToast('Try a ' + lowerName(nextP.type) + ' here' + how + '.' + (canTap ? ' ' + tap + ' it to place it.' : '') +
+        (worse ? ' It may look wrong until the next piece.' : ''), null, null, { kind: 'hint', ms: 9000, near: nextP });
     }
   }
+
+  // ---------------------------------------------------------------- "stuck? a hint is free"
+  //
+  // After about a minute, or 8 moves, with nothing new becoming happy, the Hint
+  // button glows softly (once a level), and the first time in a visit a toast
+  // says hints are free. It never shows the answer by itself.
+
+  function armStuck() {
+    clearTimeout(G.stuckTimer);
+    G.stuckTimer = setTimeout(checkStuck, 5000);
+  }
+  function stuckBusy() {
+    return G.screen !== 'game' || document.hidden || !!G.guide || !!G.c1 || !dom.helpDlg.hidden || !dom.settings.hidden || !!I.drag;
+  }
+  function checkStuck() {
+    if (G.screen !== 'game') return;
+    G.stuckTimer = setTimeout(checkStuck, 5000);
+    if (stuckBusy()) { G.sinceAt += 5000; return; } // time with a card or Help open does not count
+    if (performance.now() - G.sinceAt >= 60000) maybeOfferHint();
+  }
+  function maybeOfferHint() {
+    if (G.offered || G.won || G.sim.solved || dom.hint.disabled || stuckBusy()) return;
+    if (!dom.toast.hidden || coachShowing() || G.hint || G.conflicts) return; // something is already talking: later
+    G.offered = true;
+    dom.hint.classList.remove('is-offer');
+    void dom.hint.offsetWidth;
+    dom.hint.classList.add('is-offer');
+    var once = false;
+    try { once = window.sessionStorage.getItem('windbreaker.hintOffer') === '1'; } catch (e) { once = sessionOffered; }
+    if (!once && !sessionOffered) {
+      sessionOffered = true;
+      try { window.sessionStorage.setItem('windbreaker.hintOffer', '1'); } catch (e) { /* ignore */ }
+      showToast('Stuck? A hint is free, and there is no penalty.', 'Hint', function () { hint(); }, { kind: 'offer', ms: 9000 });
+    }
+  }
+  dom.hint.addEventListener('animationend', function () { dom.hint.classList.remove('is-offer'); });
 
   // ---------------------------------------------------------------- toast / tooltip
 
@@ -1995,6 +2293,16 @@
     if (G.previewSim) return G.previewSim;
     if (I.drag) return G.dragBaseSim || G.sim;
     return G.sim;
+  }
+
+  // A fan pointing straight into the wall next to it: its breeze stops at once.
+  function fanIntoWall(sim, p) {
+    var fx = p.x + 0.5 + WB.DX[p.d] * 0.5, fy = p.y + 0.5 + WB.DY[p.d] * 0.5, hit = false;
+    sim.trees.forEach(function (t) {
+      if (hit || t.kind !== 'fan' || t.source.x !== p.x || t.source.y !== p.y) return;
+      t.ends.forEach(function (e) { if (e.type === 'blocked' && Math.abs(e.x - fx) < 1e-6 && Math.abs(e.y - fy) < 1e-6) hit = true; });
+    });
+    return hit;
   }
 
   // How strong a fan's own stream is when it loops back into the fan's cell
@@ -2044,24 +2352,27 @@
           if (WB.windowRole(L, p) === 'inlet') {
             var tr = null;
             sim.trees.forEach(function (t) { if (t.kind === 'inlet' && t.source.x === p.x && t.source.y === p.y) tr = t; });
-            s = 'on the windy side, lets the wind in' + (tr && !tr.active ? ' <span class="tt-dim">· no way out yet</span>' : '');
+            s = 'on the windy side: lets the wind in' + (tr && !tr.active ? ' <span class="tt-dim">· no way out yet</span>' : '');
           } else s = 'lets air out';
           break;
         // a source reports what it sends out: its own 1, plus the air of other
         // sources it pushes on (its own stream coming round again adds nothing)
-        case 'fan': s = 'blowing ' + DIR_WORD[p.d] + ' <span class="tt-dim">· pushes a breeze of ' + (f - ownFlowAt(sim, p) + 1) + '</span>'; break;
-        case 'deflector': s = 'turns air 90°' + flowBit(); break;
-        case 'curtain': s = 'softens air by 1' + flowBit(); break;
-        case 'vent': s = 'air passes through'; break;
-        case 'splitter': s = 'splits air in two' + flowBit(); break;
-        case 'extractor': s = 'outlet, pulls air'; break;
-        case 'skylight': s = 'outlet through the roof'; break;
-        case 'filter': s = 'cleans smoke' + flowBit(); break;
-        case 'ceilingfan': s = 'a breeze of 1 all four ways' + (f ? ' <span class="tt-dim">· ' + f + ' passes beneath</span>' : ''); break;
+        case 'fan':
+          s = 'blowing ' + dirWords(p.d) + (fanIntoWall(sim, p) ? ' <span class="tt-dim">· straight into the wall, so no breeze</span>'
+            : ' <span class="tt-dim">· pushes a breeze of ' + (f - ownFlowAt(sim, p) + 1) + '</span>');
+          break;
+        case 'deflector': s = 'turns air round a corner' + flowBit(); break;
+        case 'curtain': s = 'makes air 1 weaker' + flowBit(); break;
+        case 'vent': s = 'lets air through the wall'; break;
+        case 'splitter': s = 'splits air out to both sides' + flowBit(); break;
+        case 'extractor': s = 'lets air out, and pulls a gentle breeze'; break;
+        case 'skylight': s = 'lets air out through the roof'; break;
+        case 'filter': s = 'cleans the smoke out of the air' + flowBit(); break;
+        case 'ceilingfan': s = 'a gentle breeze every way' + (f ? ' <span class="tt-dim">· ' + f + ' passes beneath</span>' : ''); break;
       }
-      var html = '<b>' + name + '</b> — ' + s + (fixed ? ' <span class="tt-dim">· fixed</span>' : '');
+      var html = '<b>' + name + '</b> — ' + s + (fixed ? ' <span class="tt-dim">· part of the house</span>' : '');
       if (withActions && !fixed) {
-        html += '<span class="tt-act">' + (rotations(p.type) > 1 ? 'click to turn' : 'click to pick up') + ' · drag to move · right-click to remove</span>';
+        html += '<span class="tt-act">' + (rotations(p.type) > 1 ? 'click to turn' : 'click for more') + ' · drag to move · right-click to put back</span>';
       }
       return html;
     }
@@ -2080,15 +2391,15 @@
     }
     if (ch === '.') return '<b>Floor</b> — ' + breezeWord(f) + (stuck.path[x + ',' + y] && !f ? ' <span class="tt-dim">· the dashed breeze is waiting for a way out</span>' : '');
     if (ch === 'o') return '<b>Table</b> — air passes over <span class="tt-dim">· ' + breezeWord(f) + ' · nothing can be placed here</span>';
-    if (ch === '%') return '<b>Solid wall</b> <span class="tt-dim">· nothing can be mounted</span>';
+    if (ch === '%') return '<b>Hatched wall</b> <span class="tt-dim">· nothing fits in it</span>';
     if (ch === '#') {
-      if (WB.outwardDir(L, x, y) >= 0) return '<b>Outside wall</b> <span class="tt-dim">· windows fit here</span>';
+      if (WB.outwardDir(L, x, y) >= 0) return '<b>Outside wall</b> <span class="tt-dim">· a window fits here</span>';
       var inner = true;
       for (var d = 0; d < 4; d++) if (WB.isOutside(WB.cellAt(L, x + WB.DX[d], y + WB.DY[d]))) inner = false;
-      return '<b>Wall</b>' + (inner ? ' <span class="tt-dim">· inside</span>' : '');
+      return inner ? '<b>Inside wall</b>' : '<b>Wall</b>';
     }
     var w = L.wind;
-    return '<b>Garden</b> — ' + (w.strength > 0 ? 'wind from the ' + DIR_WORD[w.from] + ', ' + STRENGTH_WORD[Math.min(3, w.strength)] : 'a calm day');
+    return '<b>Garden</b> — ' + (w.strength > 0 ? 'the wind blows from ' + FROM_SIDE[w.from] + ' <span class="tt-dim">· ' + STRENGTH_WORD[Math.min(3, w.strength)] + '</span>' : 'a calm day, no wind');
   }
 
   // Places a floating box (the tooltip or a coach bubble) next to cell (x,y):
@@ -2137,6 +2448,7 @@
     var tt = dom.tooltip;
     tt.innerHTML = html;
     tt.hidden = false;
+    G.tipAt = { x: x, y: y };
     placeNear(tt, x, y, avoid, 6);
     clearTimeout(G.tipTimer);
     if (ms) G.tipTimer = setTimeout(hideTooltip, ms);
@@ -2169,20 +2481,83 @@
     clearTimeout(G.tipTimer);
     clearTimeout(G.hoverTimer);
     dom.tooltip.hidden = true;
+    G.tipAt = null;
   }
 
   var MOUNT_HELP = {
-    exterior: 'fits in an outside wall',
-    floor: 'needs an empty floor tile',
-    interior: 'fits in an inside wall, between two spaces'
+    exterior: 'goes in an outside wall',
+    floor: 'goes on an empty bit of floor',
+    interior: 'goes in an inside wall, between two rooms'
   };
-  function mountHelp() {
-    var t = WB.TOOLS[G.sel];
+  // Where a tool can go, in words, with its spots lit up.
+  function mountHelp(type) {
+    var t = WB.TOOLS[type || G.sel];
     if (!t) return;
     G.pulse = performance.now();
     if (G.guide) return; // the card beside the board already explains it
-    showToast(t.name + ' ' + MOUNT_HELP[t.mount] + ' — try a highlighted spot.', null, null, { ms: 2600, kind: 'mount' });
+    showToast('The ' + t.name.toLowerCase() + ' ' + MOUNT_HELP[t.mount] + '. Try a glowing spot.', null, null, { ms: usingTouch() ? 4500 : 3200, kind: 'mount' });
   }
+  // After a drop that missed, the spots where it fits stay lit for a moment.
+  function lingerSpots(type, valid) {
+    if (!valid || !valid.length) return;
+    G.linger = { valid: valid, wall: isWallMount(type), t0: performance.now() };
+    G.pulse = performance.now();
+    clearTimeout(G.lingerTimer);
+    G.lingerTimer = setTimeout(function () { G.linger = null; }, 1700);
+  }
+  // How long a tooltip stays: on touch, long enough to read (the next tap anywhere also closes it).
+  function tipMs(ms, html) {
+    if (!usingTouch()) return ms;
+    return Math.max(6000, (html ? plainText(html).length : 0) * 60);
+  }
+
+  // ---------------------------------------------------------------- a tapped piece
+  //
+  // Tapping your own piece never takes it away by surprise. A piece that turns
+  // turns (and says how it points now); any other piece shows a small menu with
+  // what it does and "Put back" (Delete, a right-click, a long-press or a drag
+  // off the board still take a piece away at once).
+
+  function showPieceMenu(p, ms) {
+    if (!p || G.guide) return;
+    hideTooltip();
+    G.pmenu = { x: p.x, y: p.y, type: p.type };
+    dom.pmenuTurn.hidden = rotations(p.type) < 2;
+    refreshPieceMenu();
+    dom.pmenu.hidden = false;
+    placeNear(dom.pmenu, p.x, p.y, true, 8);
+    clearTimeout(G.pmenuTimer);
+    G.pmenuTimer = setTimeout(hidePieceMenu, ms || 9000);
+  }
+  function refreshPieceMenu() {
+    if (!G.pmenu) return;
+    var html = describe(G.pmenu.x, G.pmenu.y);
+    if (dom.pmenuText.innerHTML !== html) dom.pmenuText.innerHTML = html;
+    dom.pmenuRemove.setAttribute('aria-label', 'Put the ' + lowerName(G.pmenu.type) + ' back in the tray');
+  }
+  function hidePieceMenu() {
+    clearTimeout(G.pmenuTimer);
+    if (!G.pmenu && dom.pmenu.hidden) return;
+    G.pmenu = null;
+    dom.pmenu.hidden = true;
+  }
+  dom.pmenuRemove.addEventListener('click', function () {
+    var m = G.pmenu;
+    hidePieceMenu();
+    var p = m && playerAt(m.x, m.y);
+    if (!p || boardLocked()) return;
+    removePiece(p, true);
+    showTooltipAt(m.x, m.y, '<b>' + toolName(p.type) + '</b> — back in your tray', tipMs(1600));
+  });
+  dom.pmenuTurn.addEventListener('click', function () {
+    var m = G.pmenu;
+    var p = m && playerAt(m.x, m.y);
+    if (!p || boardLocked()) return;
+    rotatePiece(p);
+    refreshPieceMenu();
+  });
+  // a tap on the menu's words closes it
+  dom.pmenu.addEventListener('click', function (e) { if (e.target === dom.pmenu || dom.pmenuText.contains(e.target)) hidePieceMenu(); });
 
   // ---------------------------------------------------------------- board input
 
@@ -2208,8 +2583,11 @@
     try { dom.canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
     I.press = {
       id: e.pointerId, x0: e.clientX, y0: e.clientY, cell: c, type: e.pointerType,
-      piece: c.inMap ? playerAt(c.x, c.y) : null, longFired: false, timer: 0
+      piece: c.inMap ? playerAt(c.x, c.y) : null, longFired: false, timer: 0,
+      // the tooltip already says this cell: a second tap closes it
+      hadTip: !dom.tooltip.hidden && !!G.tipAt && G.tipAt.x === c.x && G.tipAt.y === c.y
     };
+    if (G.pmenu && !(c.inMap && c.x === G.pmenu.x && c.y === G.pmenu.y)) hidePieceMenu();
     if (e.pointerType !== 'mouse') I.press.timer = setTimeout(onLongPress, 450);
     hideTooltip();
   }
@@ -2221,9 +2599,10 @@
     var c = pr.cell;
     pr.piece = livePiece(pr.piece);
     if (pr.piece) {
+      hidePieceMenu();
       removePiece(pr.piece, false);
       try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) { /* ignore */ }
-      showTooltipAt(c.x, c.y, '<b>' + toolName(pr.piece.type) + '</b> — back in the tray', 1400);
+      showTooltipAt(c.x, c.y, '<b>' + toolName(pr.piece.type) + '</b> — back in your tray <span class="tt-dim">· Undo brings it back</span>', tipMs(1600));
     } else if (c.inMap || c.onCanvas) {
       showTooltipAt(clamp(c.x, -1, G.L.w), clamp(c.y, -1, G.L.h), describe(c.x, c.y), 0);
     }
@@ -2265,7 +2644,7 @@
     clearTimeout(pr.timer);
     if (boardLocked()) return;
     if (pr.longFired) {
-      if (!pr.piece) G.tipTimer = setTimeout(hideTooltip, 1200);
+      if (!pr.piece) { clearTimeout(G.tipTimer); G.tipTimer = setTimeout(hideTooltip, tipMs(1200, dom.tooltip.innerHTML)); }
       return;
     }
     var c = board.pick(e.clientX, e.clientY);
@@ -2274,7 +2653,7 @@
       if (Math.hypot(e.clientX - pr.x0, e.clientY - pr.y0) > 14) return;
       c = pr.cell;
     }
-    tapCell(c, pr.type);
+    tapCell(c, pr.type, pr.hadTip);
   }
 
   function onBoardCancel(e) {
@@ -2294,7 +2673,7 @@
     }
   }
 
-  function tapCell(c, ptype) {
+  function tapCell(c, ptype, hadTip) {
     var pp = c.inMap ? playerAt(c.x, c.y) : null, fp = c.inMap ? fixedAt(c.x, c.y) : null;
     // a tap on the hint ghost places the hinted piece, turned the hinted way
     var hp = G.hint;
@@ -2313,19 +2692,29 @@
     if (pp) {
       var x = pp.x, y = pp.y, type = pp.type;
       if (rotations(type) > 1) {
+        hidePieceMenu();
         rotatePiece(pp);
         // on touch, say what it does now, but never over what the turn changed
         // (and not at all when the turn solves the level)
-        if (ptype !== 'mouse' && !G.sim.solved) showTooltipAt(x, y, describe(x, y), 1500, ptype !== 'keyboard');
+        if (ptype !== 'mouse' && !G.sim.solved) {
+          var th = describe(x, y) + (ptype === 'keyboard' ? '' : '<span class="tt-act">Tap again to turn · press and hold to put it back</span>');
+          showTooltipAt(x, y, th, tipMs(1500, th), ptype !== 'keyboard');
+        }
+      } else if (G.pmenu && G.pmenu.x === x && G.pmenu.y === y) {
+        hidePieceMenu(); // a second tap closes its menu
       } else {
-        removePiece(pp, true);
-        if (ptype !== 'mouse') showTooltipAt(x, y, '<b>' + toolName(type) + '</b> — back in the tray', 1400);
+        showPieceMenu(pp);
       }
       return;
     }
     if (fp) { fixedTap(c.x, c.y); return; }
     if (!c.inMap) {
-      if (ptype !== 'mouse' && c.onCanvas) showTooltipAt(clamp(c.x, 0, G.L.w - 1), clamp(c.y, 0, G.L.h - 1), describe(c.x, c.y), 2200);
+      if (hadTip) return;
+      if (ptype !== 'mouse' && c.onCanvas) {
+        var gx = clamp(c.x, 0, G.L.w - 1), gy = clamp(c.y, 0, G.L.h - 1), gh = describe(c.x, c.y);
+        showTooltipAt(gx, gy, gh, tipMs(2200, gh));
+        G.tipAt = { x: c.x, y: c.y };
+      }
       return;
     }
     // an object: its card, with how this one is doing right now
@@ -2336,14 +2725,28 @@
       openGuide(G.L.objects[oi].type, { at: { x: c.x, y: c.y }, focus: ptype === 'keyboard' });
       return;
     }
-    showTooltipAt(c.x, c.y, describe(c.x, c.y), 2600);
+    if (hadTip) return; // the same spot again: the tooltip closes
+    var html = describe(c.x, c.y);
+    // nothing picked up, on a spot where a tool of yours would fit: say which one to pick
+    var fits = G.sel ? [] : trayTypes().filter(function (t) { return remaining(t) > 0 && WB.canPlace(G.L, allPieces(), t, c.x, c.y); });
+    if (fits.length) {
+      var tap = usingTouch() ? 'Tap' : 'Click';
+      html += '<span class="tt-act">' + (fits.length === 1 ? tap + ' the ' + lowerName(fits[0]) + ' in your tray first' : tap + ' a tool in your tray first') + '</span>';
+      if (fits.length === 1 && !G.c1) {
+        markChipCoach(fits[0]);
+        clearTimeout(G.chipCoachTimer);
+        G.chipCoachTimer = setTimeout(function () { if (!G.c1 && G.chipCoach === fits[0]) markChipCoach(null); }, 3500);
+      }
+    }
+    showTooltipAt(c.x, c.y, html, tipMs(2600, html));
   }
   // a one-time tip gives way to what the player asked for
   function hideCoachTip() { if (G.coach && G.coach.key) hideCoach(); }
 
   function fixedTap(x, y) {
     G.shake = { x: x, y: y, t0: performance.now() };
-    showTooltipAt(x, y, describe(x, y), 2400);
+    var html = describe(x, y);
+    showTooltipAt(x, y, html, tipMs(2400, html));
   }
 
   function setHover(c) {
@@ -2420,6 +2823,8 @@
 
   function startDrag(d, e) {
     hideTooltip();
+    hidePieceMenu();
+    G.linger = null;
     I.drag = d;
     if (d.kind === 'move') {
       G.lifted = d.piece;
@@ -2514,12 +2919,19 @@
       } else if (c.inMap) {
         if (turned) rotatePiece(lifted, d.d | 0);
         nope(lifted.x, lifted.y);
+        lingerSpots(d.type, d.valid);
+        mountHelp(d.type);
       } else {
         removePiece(lifted, false);
       }
     } else if (d.kind !== 'move') {
       if (tgt) place(d.type, tgt.x, tgt.y, d.d);
-      else if (c.inMap) nope(c.x, c.y);
+      else if (c.inMap) {
+        // dropped where it can't go: say where it can, and keep those spots lit for a moment
+        nope(c.x, c.y);
+        lingerSpots(d.type, d.valid);
+        mountHelp(d.type);
+      }
     }
     updateGoals();
     updateCursorStyle();
@@ -2666,23 +3078,42 @@
     openDialog(dom.helpDlg, dom.helpClose);
     dom.helpBody.scrollTop = 0;
   }
+  // Help, in layers: the goal first (three small pictures), then the field
+  // guide of everything met so far, then folded sections: how air moves (the
+  // fine print, only for what has been met), the controls for this device, and
+  // the keyboard.
   function renderHelp() {
     stopHelpGuide();
     var n = reachedLevel();
     var h = [];
     var inLevel = {};
-    if (G.L) {
+    var playing = G.screen === 'game' && G.L;
+    if (playing) {
       Object.keys(G.L.inventory).forEach(function (t) { if (G.L.inventory[t] > 0) inLevel[t] = true; });
       G.fixed.forEach(function (p) { inLevel[p.type] = true; });
       G.L.objects.forEach(function (o) { inLevel[o.type] = true; });
       if (WB.levelConditions) WB.levelConditions(G.def).forEach(function (c) { inLevel[c] = true; });
     }
-    function has(o) { return WB.OBJECTS[o].intro <= n || inLevel[o]; }
-    h.push('<p>Make <b>every thing</b> in the house happy at the same time, with the tools in your tray. ' + (usingTouch() ? 'Tap' : 'Click or hover') + ' anything on the board to see how much air reaches it.</p>');
-    // the field guide: every tool, thing and twist met so far, each opening its card
+    function has(o) { return metBy(o, n) || inLevel[o]; }
+    var touch = usingTouch(), tap = touch ? 'Tap' : 'Click';
+    var CHEV = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5L16 12l-6.5 6.5"/></svg>';
+    function more(title, note, body, open) {
+      return '<details class="help-more"' + (open ? ' open' : '') + '><summary><span>' + title + '</span>' + (note ? '<small>' + note + '</small>' : '') + CHEV + '</summary>' + body + '</details>';
+    }
+
+    // 1. the goal
+    h.push('<p class="help-lead">Make <b>everyone</b> in the house happy, all at the same time.</p>');
+    h.push('<ul class="help-goal">' +
+      '<li>' + cv('ui', 'inlet', 48) + '<span>The wind blows in through a window on the windy side.</span></li>' +
+      '<li>' + cv('ui', 'outlet', 48) + '<span>It needs a way out: another window.</span></li>' +
+      '<li>' + cv('object', 'pinwheel', 48) + '<span>Air reaches everyone, and they are happy!</span></li>' +
+      '</ul>');
+    h.push('<p>' + tap + ' anything on the board to see how much air reaches it. Stuck? <b>Hints are free.</b></p>');
+
+    // 2. the field guide: every tool, thing and twist met so far, each opening its card
     var met = GUIDE_ORDER.filter(function (gid) { return metBy(gid, n) || inLevel[gid]; });
     if (met.length) {
-      h.push('<h3>Field guide</h3><p class="fg-note">Everything you have met so far. ' + (usingTouch() ? 'Tap' : 'Click') + ' one to see how it works.</p>');
+      h.push('<h3>Field guide</h3><p class="fg-note">Everything you have met so far. ' + tap + ' one to see how it works.</p>');
       ['tool', 'object', 'twist'].forEach(function (k) {
         var ids = met.filter(function (gid) { return guideFor(gid).kind === k; });
         if (!ids.length) return;
@@ -2697,45 +3128,55 @@
         h.push('</ul>');
       });
     }
-    h.push('<h3>How air moves</h3>');
-    h.push('<ul class="help-rules">');
-    h.push('<li><span class="rule-ico">' + cv('swirl', 'w', 28) + '</span><span><b>Wind</b> blows across the garden. The badge at the top shows which way it blows and how strong it is.</span></li>');
-    h.push('<li><span class="rule-ico">' + cv('ui', 'inlet', 34) + '</span><span>A <b>window on the windy side</b> lets the breeze in: a bright pane with arrows pointing in. Every other window <b>lets air out</b> ' + cv('ui', 'outlet', 22, 'inl') + '. Air blown back into a window on the windy side is pushed back, just like a wall.</span></li>');
-    h.push('<li><span class="rule-ico">' + cv('ui', 'stall', 34) + '</span><span><b>A breeze only flows if it has a way out.</b> A window breeze with no way out stays still: its path is a faint dashed line ending in a red ×.</span></li>');
-    h.push('<li><span class="rule-ico">' + cv('ui', 'lanes-2', 34) + '</span><span><b>Strength</b> is the number of lines in a stream: one is a gentle breeze, two is strong, three is a gale. Where breezes from different sources meet on the same spot, from any direction, they add up (a breeze crossing its own path does not add to itself).</span></li>');
-    if (n >= WB.OBJECTS.stove.intro || inLevel.stove) h.push('<li><span class="rule-ico">' + cv('object', 'stove', 30) + '</span><span><b>Smoke</b> from a stove must be carried outside' + (metBy('filter', n) || inLevel.filter ? ' or through a filter' : '') + ', never blown into a wall.' + (has('laundry') ? ' Smoky air also makes laundry dirty.' : '') + '</span></li>');
-    h.push('<li><span class="rule-ico">' + cv('ui', 'pip-happy', 30) + '</span><span>The dot on each object shows how it feels: ' + cv('ui', 'pip-idle', 18, 'inl') + ' wants air, ' + cv('ui', 'pip-happy', 18, 'inl') + ' happy, ' + cv('ui', 'pip-bad', 18, 'inl') + ' unhappy' +
-      (has('laundry') && (n >= WB.OBJECTS.stove.intro || inLevel.stove) ? ', ' + cv('ui', 'pip-dirty', 18, 'inl') + ' dirty from smoke' : '') + '.</span></li>');
+
+    // 3. how air moves: the fine print, only for what has been met
+    var r = ['<ul class="help-rules">'];
+    r.push('<li><span class="rule-ico">' + cv('swirl', 'w', 28) + '</span><span><b>Wind</b> blows across the garden. The wind badge at the top shows which way it blows and how strong it is.</span></li>');
+    r.push('<li><span class="rule-ico">' + cv('ui', 'inlet', 34) + '</span><span>A <b>window on the windy side</b> lets the breeze in: a bright pane with arrows pointing in. Every other window <b>lets air out</b> ' + cv('ui', 'outlet', 22, 'inl') + '.' +
+      (has('fan') ? ' Air blown back into a window on the windy side is pushed back, just like a wall.' : '') + '</span></li>');
+    r.push('<li><span class="rule-ico">' + cv('ui', 'stall', 34) + '</span><span><b>A breeze only flows if it has a way out.</b> With no way out it stays still: its path is a faint dashed line that ends in a red ×.</span></li>');
+    if (has('fan') || has('laundry') || has('wind2')) {
+      r.push('<li><span class="rule-ico">' + cv('ui', 'lanes-2', 34) + '</span><span><b>Strength</b> is the number of lines in a stream: one is a gentle breeze, two is strong, three is a gale. Breezes from different places add up where they meet' +
+        (n >= 51 ? ' (a breeze crossing its own path does not add to itself)' : '') + '.</span></li>');
+    }
+    if (has('stove')) r.push('<li><span class="rule-ico">' + cv('object', 'stove', 30) + '</span><span><b>Smoke</b> from a stove must be carried outside' + (has('filter') ? ' or through a filter' : '') + ', never blown into a wall.' + (has('laundry') ? ' Smoky air also makes laundry dirty.' : '') + '</span></li>');
+    r.push('<li><span class="rule-ico">' + cv('ui', 'pip-happy', 30) + '</span><span>The dot on each thing shows how it feels: ' + cv('ui', 'pip-idle', 18, 'inl') + ' waiting, ' + cv('ui', 'pip-happy', 18, 'inl') + ' happy, ' + cv('ui', 'pip-bad', 18, 'inl') + ' unhappy' +
+      (has('laundry') && has('stove') ? ', ' + cv('ui', 'pip-dirty', 18, 'inl') + ' dirty from smoke' : '') + '.</span></li>');
     if (has('laundry') || has('papers') || has('fern')) {
       var ms = [];
       if (has('laundry')) ms.push(cv('ui', 'meter-laundry-1-idle', 34, 'inl') + ' laundry wants two or more, of clean air');
       if (has('papers')) ms.push(cv('ui', 'meter-papers-0-happy', 34, 'inl') + ' papers take one at most');
       if (has('fern')) ms.push(cv('ui', 'meter-fern-1-happy', 34, 'inl') + ' a fern wants exactly one');
-      h.push('<li><span class="rule-ico">' + cv('ui', 'meter-laundry-2-happy', 34) + '</span><span>Some things are picky. Their <b>meter</b> fills with the air that reaches them: ' + ms.join(', ') + '. A red dot means too much.</span></li>');
+      r.push('<li><span class="rule-ico">' + cv('ui', 'meter-laundry-2-happy', 34) + '</span><span>Some things are picky. Their <b>meter</b> fills with the air that reaches them: ' + ms.join(', ') + '. A red dot means too much.</span></li>');
     }
-    h.push('</ul>');
-    var touch = usingTouch();
-    h.push('<h3>Controls</h3><dl class="keys">');
-    var tap = touch ? 'Tap' : 'Click';
-    h.push('<dt>' + tap + ' a tool</dt><dd>select it, then ' + tap.toLowerCase() + ' a glowing spot, or drag it onto the board</dd>');
-    h.push('<dt>' + (touch ? 'Press and hold a tool' : 'Right-click a tool') + '</dt><dd>learn what it does</dd>');
-    h.push('<dt>' + tap + ' a piece</dt><dd>turn it (if it turns) or pick it up</dd>');
-    h.push('<dt>' + tap + ' a thing in the house</dt><dd>see what it wants, and how it is doing</dd>');
-    h.push('<dt>Drag a piece</dt><dd>move it; drop it off the board to put it back</dd>');
-    h.push('<dt>' + (touch ? 'Press and hold a piece' : 'Right-click a piece') + '</dt><dd>take it away</dd>');
-    h.push('</dl>');
+    r.push('</ul>');
+    h.push(more('How air moves', 'the fine print', r.join('')));
+
+    // 4. controls, for the device in use
+    var c = ['<dl class="keys">'];
+    c.push('<dt>' + tap + ' a tool</dt><dd>pick it up, then ' + tap.toLowerCase() + ' a glowing spot. Or drag the tool onto the board.</dd>');
+    c.push('<dt>' + tap + ' it again</dt><dd>it stays picked up. ' + (touch ? 'Tap the garden' : 'Press Esc') + ' to put it down.</dd>');
+    c.push('<dt>' + (touch ? 'Press and hold a tool' : 'Right-click a tool') + '</dt><dd>learn what it does</dd>');
+    c.push('<dt>' + tap + ' a piece</dt><dd>turn it, if it turns. Other pieces say what they do, with a Put back button.</dd>');
+    c.push('<dt>' + tap + ' a thing in the house</dt><dd>see what it wants, and how it is doing</dd>');
+    c.push('<dt>Drag a piece</dt><dd>move it. Drop it off the board to put it back.</dd>');
+    c.push('<dt>' + (touch ? 'Press and hold a piece' : 'Right-click a piece') + '</dt><dd>put it back in your tray</dd>');
+    c.push('<dt>Undo, Redo, Clear</dt><dd>take back a move, do it again, or clear the board (Clear can be undone too)</dd>');
+    c.push('</dl>');
+    h.push(more('Controls', touch ? 'for touch' : 'for the mouse', c.join('')));
     // keyboard shortcuts only where a keyboard is likely (or has been used)
     if (!(touch && coarseMQ.matches && !G.sawKeys)) {
-      h.push('<h3>Keyboard</h3><dl class="keys">');
-      h.push('<dt><kbd>1</kbd>–<kbd>9</kbd>, <kbd>0</kbd></dt><dd>select a tool</dd>');
-      h.push('<dt><kbd>R</kbd></dt><dd>turn the piece under the pointer</dd>');
-      h.push('<dt><kbd>H</kbd></dt><dd>hint</dd>');
-      h.push('<dt><kbd>Ctrl</kbd> <kbd>Z</kbd></dt><dd>undo (add <kbd>Shift</kbd> to redo)</dd>');
-      h.push('<dt><kbd>Esc</kbd></dt><dd>deselect / close</dd>');
-      h.push('<dt>Arrows, <kbd>Enter</kbd></dt><dd>move around the board and place or turn</dd>');
-      h.push('<dt><kbd>Delete</kbd></dt><dd>remove the piece under the keyboard cursor</dd>');
-      h.push('<dt><kbd>I</kbd></dt><dd>about the selected tool, or what this level brings</dd>');
-      h.push('</dl>');
+      var k = ['<dl class="keys">'];
+      k.push('<dt><kbd>1</kbd>–<kbd>9</kbd>, <kbd>0</kbd></dt><dd>pick a tool</dd>');
+      k.push('<dt><kbd>R</kbd></dt><dd>turn the piece under the pointer</dd>');
+      k.push('<dt><kbd>H</kbd></dt><dd>hint</dd>');
+      k.push('<dt><kbd>Ctrl</kbd> <kbd>Z</kbd></dt><dd>undo (add <kbd>Shift</kbd> to redo)</dd>');
+      k.push('<dt><kbd>Esc</kbd></dt><dd>put the tool down / close</dd>');
+      k.push('<dt>Arrows, <kbd>Enter</kbd></dt><dd>move around the board and place or turn</dd>');
+      k.push('<dt><kbd>Delete</kbd></dt><dd>put back the piece under the keyboard cursor</dd>');
+      k.push('<dt><kbd>I</kbd></dt><dd>about the picked-up tool, or what this level brings</dd>');
+      k.push('</dl>');
+      h.push(more('Keyboard', null, k.join('')));
     }
     dom.helpBody.innerHTML = h.join('');
     paintIcons(dom.helpBody);
@@ -2790,6 +3231,7 @@
     dialogStack.push({ d: d, prev: document.activeElement });
     d.hidden = false;
     hideTooltip();
+    hidePieceMenu();
     if (d === dom.helpDlg) {
       renderCoach();
       if (G.guide && G.guide.built.demo) G.guide.built.demo.stop();
@@ -2847,6 +3289,7 @@
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (k === 'Escape') {
       if (I.drag) { cancelDrag(); return; }
+      if (G.pmenu) { hidePieceMenu(); return; }
       if (G.sel) { deselect(); return; }
       if (G.guide) { closeGuide({ how: 'close' }); return; }
       if (!dom.toast.hidden) { hideToast(); G.hint = null; return; }
@@ -2865,7 +3308,7 @@
       var chip = chips[k === '0' ? 9 : parseInt(k, 10) - 1];
       if (chip) {
         var type = chip.getAttribute('data-tool');
-        if (G.sel === type) deselect();
+        if (G.sel === type) againChip(chip, type); // the same key again keeps it, like a second tap
         else if (remaining(type) > 0) select(type);
         else { Sound.nope(); chip.classList.remove('is-shake'); void chip.offsetWidth; chip.classList.add('is-shake'); }
       }
@@ -2909,7 +3352,7 @@
       if ((k === 'Enter' || k === ' ') && G.cursor) {
         e.preventDefault();
         tapCell({ x: G.cursor.x, y: G.cursor.y, fx: G.cursor.x + 0.5, fy: G.cursor.y + 0.5, inMap: true, onCanvas: true }, 'keyboard');
-        if (G.cursor) showTooltipAt(G.cursor.x, G.cursor.y, describe(G.cursor.x, G.cursor.y), 0);
+        if (G.cursor && !G.pmenu) showTooltipAt(G.cursor.x, G.cursor.y, describe(G.cursor.x, G.cursor.y), 0);
         return;
       }
       if ((k === 'Delete' || k === 'Backspace') && G.cursor) {
@@ -2944,7 +3387,8 @@
       G.flash ? G.flash.t0 : 0, G.shake ? G.shake.t0 : 0, G.pulse || 0, G.focus ? G.focus.t0 : 0, G.winAt || 0,
       G.previewKey, I.drag ? 1 : 0, board.T, board.cssW, board.cssH, board.dpr, G.paletteVersion,
       G.spot ? G.spot.x + ',' + G.spot.y + ',' + G.spot.t0 : '',
-      dom.helpDlg.hidden && dom.confirm.hidden ? 0 : 1
+      G.linger ? G.linger.t0 : 0, G.pmenu ? G.pmenu.x + ',' + G.pmenu.y : '',
+      dom.helpDlg.hidden && dom.confirm.hidden && dom.settings.hidden ? 0 : 1
     ].join('|');
   }
 
@@ -2952,8 +3396,8 @@
     G.raf = 0;
     if (G.screen !== 'game' || document.hidden) return;
     G.raf = requestAnimationFrame(frame);
-    var blocking = !dom.helpDlg.hidden || !dom.confirm.hidden;
-    var reduced = reducedMQ.matches;
+    var blocking = !dom.helpDlg.hidden || !dom.confirm.hidden || !dom.settings.hidden;
+    var reduced = reducedMotion();
     if (blocking || reduced) {
       // draw on demand: on any change, then let eased values settle
       var sig = drawSig();
@@ -2973,17 +3417,20 @@
   }
   function drawNow(now) {
     var sim = currentSim();
-    var valid = I.drag ? I.drag.valid : (G.sel ? G.valid : null);
+    // a missed drop: where it fits stays lit for a moment
+    var lg = !I.drag && !G.sel ? G.linger : null;
+    var valid = I.drag ? I.drag.valid : (G.sel ? G.valid : lg ? lg.valid : null);
     board.draw({
       pieces: G.drawPieces,
       sim: sim,
       valid: valid,
-      validWall: I.drag ? I.drag.wall : G.validWall,
+      validWall: I.drag ? I.drag.wall : lg ? lg.wall : G.validWall,
       ghost: G.ghost,
       hint: G.hint,
       conflicts: G.conflicts,
       hover: !G.sel && !I.drag && G.hoverMouse && G.hover && G.hover.inMap ? G.hover : null,
-      cursor: G.cursor,
+      // the keyboard cursor, or the ring around a tapped piece
+      cursor: G.cursor || G.pmenu,
       focus: G.focus,
       pops: G.pops,
       shake: G.shake,
@@ -2991,7 +3438,7 @@
       pulse: G.pulse,
       spot: G.spot,
       win: G.won ? G.winAt : null,
-      reduced: reducedMQ.matches
+      reduced: reducedMotion()
     }, now);
   }
   function startLoop() {
@@ -3112,6 +3559,7 @@
   // ================================================================== boot
 
   (function boot() {
+    applySettings();
     var q = parseInt(params.get('level'), 10);
     if (q && levelById(q) && isUnlocked(q)) {
       try { history.replaceState({ id: q }, '', location.pathname + location.search + '#' + q); } catch (e) { /* ignore */ }
