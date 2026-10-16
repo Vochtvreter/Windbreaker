@@ -147,7 +147,8 @@
 
   // icon(canvas, kind, id, cssSize)
   //   kind: 'tool' | 'pair' ('a+b') | 'object' | 'swirl' | 'ui'
-  //   ui ids: pip-idle, pip-happy, pip-bad, stall, table, inlet, outlet, meter-<type>-<flow>, lanes-<n>
+  //   ui ids: pip-idle, pip-happy, pip-bad, stall, table, inlet, outlet, meter-<type>-<flow>, lanes-<n>,
+  //           courtyard, solid, calm (the field guide's twists)
   // Tools are the sprites icon.<tool>, objects object.<type> (js/sprites.js).
   function icon(canvas, kind, id, size) {
     var ctx = setupCanvas(canvas, size, size);
@@ -215,6 +216,43 @@
       ctx.strokeStyle = alpha(P('table-edge'), 0.45);
       ctx.lineWidth = Math.max(1, size * 0.03);
       ctx.stroke();
+      return;
+    }
+    // twists (the field guide): a courtyard, a hatched wall, a calm day
+    if (id === 'courtyard' || id === 'solid') {
+      var bw = size * 0.72, br = size * 0.14;
+      fillRR(ctx, -bw / 2, -bw / 2, bw, bw, br, P(id === 'solid' ? 'wall-solid' : 'icon-wall'));
+      if (id === 'courtyard') {
+        var cw = bw * 0.5;
+        fillRR(ctx, -cw / 2, -cw / 2, cw, cw, br * 0.6, P('garden'));
+        ctx.beginPath();
+        line(ctx, -cw * 0.18, cw * 0.18, -cw * 0.24, -cw * 0.06); line(ctx, 0, cw * 0.2, 0, -cw * 0.12); line(ctx, cw * 0.18, cw * 0.18, cw * 0.24, -cw * 0.06);
+        ctx.strokeStyle = P('o-leaf');
+        ctx.lineWidth = Math.max(1, size * 0.035);
+        ctx.lineCap = 'round';
+        ctx.stroke();
+      } else {
+        ctx.save();
+        ctx.beginPath(); rr(ctx, -bw / 2, -bw / 2, bw, bw, br); ctx.clip();
+        ctx.beginPath();
+        for (var hk = -bw; hk < bw; hk += size * 0.13) line(ctx, hk, bw / 2, hk + bw, -bw / 2);
+        ctx.strokeStyle = P('wall-hatch');
+        ctx.lineWidth = Math.max(1, size * 0.05);
+        ctx.stroke();
+        ctx.restore();
+      }
+      return;
+    }
+    if (id === 'calm') {
+      ctx.lineCap = 'round';
+      ctx.lineWidth = Math.max(1.4, size * 0.06);
+      ctx.strokeStyle = alpha(P('air'), 0.45);
+      ctx.beginPath(); line(ctx, -size * 0.32, -size * 0.08, size * 0.18, -size * 0.08); ctx.stroke();
+      ctx.beginPath(); line(ctx, -size * 0.2, size * 0.12, size * 0.3, size * 0.12); ctx.stroke();
+      ctx.fillStyle = P('air');
+      [[-0.3, -0.26], [0.26, -0.22], [-0.08, 0.3], [0.32, 0.3]].forEach(function (m) {
+        ctx.beginPath(); circle(ctx, m[0] * size, m[1] * size, Math.max(1.4, size * 0.045)); ctx.fill();
+      });
       return;
     }
     if (parts[0] === 'lanes') {
@@ -828,7 +866,7 @@
    *   valid: [{x,y}] | null,          // placement cells; validWall: true for wall mounts
    *   ghost: {type,x,y,d,ok} | null,  // preview under the pointer
    *   hint: {type,x,y,d} | null, conflicts: [{x,y}] | null,
-   *   hover: {x,y} | null, cursor: {x,y} | null, focus: {type,t0} | null,
+   *   hover: {x,y} | null, cursor: {x,y} | null, focus: {type,t0} | null, spot: {x,y,t0} | null,
    *   pops: {key: t0}, shake: {x,y,t0} | null, flash: {x,y,t0} | null, pulse: t0 | null,
    *   win: t0 | null, reduced: bool
    * }
@@ -1050,6 +1088,21 @@
       // its green tick already says enough
       if (!(small && g2.state === 'happy')) this.drawMeter(ctx, obj, g2, T);
       this.drawPip(ctx, obj, g2.smoky && g2.state === 'bad' ? 'dirty' : g2.state, a2 && motion ? (now - a2.stateT) / 1000 : 9, T, small, wa);
+    }
+
+    // ---------------- guide spot: a soft ring breathing where a coach bubble points
+    if (S.spot) {
+      var sp = S.spot;
+      // (a frozen moment, for the visual check, draws it at rest)
+      var sk = motion && !SETTLE ? 0.5 + 0.5 * Math.sin((now - (sp.t0 || 0)) / 1000 * Math.PI * 1.4) : 0.6;
+      var sg = T * 0.05 * sk;
+      ctx.save();
+      ctx.beginPath(); rr(ctx, sp.x * T - sg, sp.y * T - sg, T + 2 * sg, T + 2 * sg, T * 0.26);
+      ctx.strokeStyle = P('accent');
+      ctx.globalAlpha = 0.5 + 0.45 * sk;
+      ctx.lineWidth = Math.max(2, T * 0.06);
+      ctx.stroke();
+      ctx.restore();
     }
 
     // ---------------- conflicting pieces (hint)

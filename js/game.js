@@ -22,12 +22,22 @@
     papers: 'a breeze of 1 at most', fern: 'wants a breeze of exactly 1', stove: ''
   };
   function breezeWord(f) { return f > 0 ? 'breeze ' + f : 'still air'; }
-  // Things that arrive without a new tool get the same "New" card on the first
-  // level they appear in (the key is stored in seenTools, next to the tools).
-  // Objects are described by the engine; tables are map cells, described here.
-  var NEW_THINGS = ['candle', 'stove', 'table', 'laundry', 'papers', 'fern'];
-  var TABLE_DESC = 'Air passes over it, but nothing can be placed on it.';
-  function thingDesc(k) { return WB.TOOLS[k] ? WB.TOOLS[k].desc : WB.OBJECTS[k] ? WB.OBJECTS[k].desc : k === 'table' ? TABLE_DESC : ''; }
+
+  // The field guide (js/guides.js): a "Meet the …" card for every tool, object
+  // and twist. A card shows by itself on the level that introduces its thing;
+  // seen cards are remembered in store.seenTools (by id).
+  var GUIDES = WB.GUIDES || {};
+  var GUIDE_ORDER = WB.GUIDE_ORDER || [];
+  var TWIST_ICON = { courtyard: 'courtyard', calm: 'calm', solid: 'solid', table: 'table', wind2: 'lanes-2', wind3: 'lanes-3' };
+  var KIND_NEW = { tool: 'New tool', object: 'New in the house', twist: 'Something new' };
+  var KIND_WORD = { tool: 'Tool', object: 'In the house', twist: 'Good to know' };
+  var KIND_GROUP = { tool: 'Tools', object: 'Things in the house', twist: 'Weather and rooms' };
+  var DEMO_MS = 2600; // each scene of a card's little demo
+  // Compass words in level tips, said the way the board shows them.
+  var SCREEN_SIDE = { north: 'top', east: 'right', south: 'bottom', west: 'left' };
+  function plainTip(s) {
+    return String(s || '').replace(/\bfrom the (north|east|south|west)\b/gi, function (m, d) { return 'from the ' + SCREEN_SIDE[d.toLowerCase()]; });
+  }
 
   // ================================================================== helpers
 
@@ -153,13 +163,15 @@
     return sigCache[id];
   }
 
+  var INDEX = {};
+  LEVELS.forEach(function (l, i) { INDEX[l.id] = i; });
   function levelById(id) {
-    for (var i = 0; i < LEVELS.length; i++) if (LEVELS[i].id === id) return LEVELS[i];
-    return null;
+    var i = INDEX[id];
+    return i == null ? null : LEVELS[i];
   }
   function levelIndex(id) {
-    for (var i = 0; i < LEVELS.length; i++) if (LEVELS[i].id === id) return i;
-    return -1;
+    var i = INDEX[id];
+    return i == null ? -1 : i;
   }
   function chapterOf(id) {
     for (var i = 0; i < CHAPTERS.length; i++) if (id >= CHAPTERS[i].first && id <= CHAPTERS[i].last) return CHAPTERS[i];
@@ -167,13 +179,31 @@
   }
   function isDone(id) { return store.completed.indexOf(id) >= 0; }
   function markDone(id) { if (!isDone(id)) store.completed.push(id); }
+  // The furthest solved level, as an index into LEVELS (-1: none).
+  var furthestMemo = { list: null, n: -1, f: -1 };
+  function furthestDone() {
+    var c = store.completed;
+    // progress only grows by push (or is replaced): the list and its length say whether it changed
+    if (furthestMemo.list === c && furthestMemo.n === c.length) return furthestMemo.f;
+    var f = -1;
+    c.forEach(function (id) { var i = levelIndex(id); if (i > f) f = i; });
+    furthestMemo = { list: c, n: c.length, f: f };
+    return f;
+  }
   // Level n is playable when it is the first level, is solved, or the level
   // before it in the list is solved (ids are 1..100; a gap never locks the rest).
+  // Players coming back from an older version can have solved levels here and
+  // there (the levels were reordered): every level before their furthest
+  // solved one is open too. Playing in order, that changes nothing.
   function isUnlocked(id) {
     if (UNLOCK_ALL) return true;
     var i = levelIndex(id);
     if (i < 0) return false;
-    return i === 0 || isDone(id) || isDone(LEVELS[i - 1].id);
+    return i === 0 || isDone(id) || isDone(LEVELS[i - 1].id) || i < furthestDone();
+  }
+  function chapterDone(ch) {
+    for (var n = ch.first; n <= ch.last; n++) if (levelById(n) && !isDone(n)) return false;
+    return true;
   }
   function nextPlayableId() {
     for (var i = 0; i < LEVELS.length; i++) {
@@ -274,12 +304,14 @@
     home: $('home'), game: $('game'), chapters: $('chapters'), play: $('btn-play'), progress: $('home-progress'),
     sound: $('btn-sound'), soundLabel: $('sound-label'), resetProgress: $('btn-reset-progress'), homeToast: $('home-toast'),
     back: $('btn-back'), lvlNum: $('lvl-num'), lvlName: $('lvl-name'), lvlDone: $('lvl-done'), wind: $('wind'), help: $('btn-help'),
-    tip: $('tip'), stage: $('stage'), canvas: $('board'), tooltip: $('tooltip'), live: $('sr-live'),
+    tip: $('tip'), guideLine: $('guide-line'), tipIcon: $('tip-icon'), tipMore: $('tip-more'), guide: $('guide'),
+    coach: $('coach'), coachText: $('coach-text'), coachArrow: document.querySelector('#coach .coach-arrow'),
+    stage: $('stage'), canvas: $('board'), tooltip: $('tooltip'), live: $('sr-live'),
     toast: $('toast'), toastText: $('toast-text'), toastAction: $('toast-action'), toastClose: $('toast-close'),
-    newtool: $('newtool'), newtoolIcon: $('newtool-icon'), newtoolTitle: $('newtool-title'), newtoolDesc: $('newtool-desc'), newtoolOk: $('newtool-ok'),
     goals: $('goals'), undo: $('btn-undo'), reset: $('btn-reset'), hint: $('btn-hint'), next: $('btn-next'), nextLabel: $('btn-next-label'),
     tray: $('tray'), trayWrap: document.querySelector('.tray-wrap'), side: document.querySelector('.side'), avatar: $('drag-avatar'),
-    win: $('win'), winSub: $('win-sub'), winDots: $('win-dots'), winTeaser: $('win-teaser'), winTeaserIcon: $('win-teaser-icon'),
+    win: $('win'), winTitle: $('win-title'), winSub: $('win-sub'), winDots: $('win-dots'), winTeaser: $('win-teaser'), winTeaserIcon: $('win-teaser-icon'),
+    winChapter: $('win-chapter'), winChapterIcon: $('win-chapter-icon'), winChapterName: $('win-chapter-name'), winRecap: $('win-recap'),
     winTeaserText: $('win-teaser-text'), winFinal: $('win-final'), winNext: $('win-next'), winLevels: $('win-levels'),
     helpDlg: $('help'), helpBody: $('help-body'), helpClose: $('help-close'), helpSound: $('help-sound'),
     confirm: $('confirm'), confirmYes: $('confirm-yes'), confirmNo: $('confirm-no')
@@ -299,10 +331,13 @@
     ghost: null, hint: null, conflicts: null, lifted: null,
     previewSim: null, previewKey: null, dragBaseSim: null,
     // all pointer state lives here and is cleared by resetInput()
-    input: { press: null, drag: null, tray: null, suppressClick: false, cancelledPointer: null },
+    input: { press: null, drag: null, tray: null, suppressClick: false, cancelledPointer: null, chipLong: null, infoDown: null, swallowClick: 0 },
     pops: {}, shake: null, flash: null, pulse: null, focus: null,
-    won: false, winAt: null, winTimer: 0, winCardTimer: 0,
-    newTool: null, newToolUsed: false, reserve: 0, lastPtr: null, sawKeys: false,
+    won: false, winAt: null, winTimer: 0, winCardTimer: 0, chapterDoneBefore: false,
+    newTool: null, newToolUsed: false, lastPtr: null, sawKeys: false,
+    // the field guide: the card this level introduces, the card on screen,
+    // the coach bubble (and its ring on the board), the first level's steps
+    levelGuide: null, guide: null, helpGuide: null, coach: null, spot: null, c1: null, c1Timer: 0, coachGoal: null, coachHide: 0, chipCoach: null,
     drawPieces: [], raf: 0, toastTimer: 0, tipTimer: 0, hoverTimer: 0, coachTimer: 0,
     pushedFromHome: false, lastSig: '', settleUntil: 0, paletteVersion: 0,
     openedAt: -1e9, focusBoardOnOpen: false
@@ -430,12 +465,41 @@
     return cands[0].k;
   }
   function pairKey(k) { return k.split('+').sort().join('+'); }
+  // The icon pair of each challenge chapter, picked in chapter order (so no two share one).
+  var PAIRS = null;
+  function masteryPair(ch) {
+    if (!PAIRS) {
+      PAIRS = {};
+      var used = {};
+      CHAPTERS.forEach(function (c) {
+        if (chapterIntro(c)) return;
+        var pr = chapterPair(c, used);
+        used[pairKey(pr)] = true;
+        PAIRS[c.n] = pr;
+      });
+    }
+    return PAIRS[ch.n] || chapterPair(ch, null);
+  }
+
+  // What a challenge chapter (no new thing) is about, in a few words.
+  function chapterTheme(ch, pair) {
+    var lvls = [];
+    for (var n = ch.first; n <= ch.last; n++) if (levelById(n)) lvls.push(levelById(n));
+    function all(f) { return lvls.length > 0 && lvls.every(f); }
+    function has(c) { return function (l) { return (l.map || []).join('').indexOf(c) >= 0; }; }
+    if (all(function (l) { return (l.wind.strength | 0) === 0; })) return 'no wind at all';
+    if (all(function (l) { return (l.wind.strength | 0) >= 3; })) return 'gale days';
+    if (ch === CHAPTERS[CHAPTERS.length - 1]) return 'everything you know';
+    if (all(has('s')) && all(has('l'))) return 'smoke and washing';
+    if (all(has('s'))) return 'smoky kitchens';
+    var ids = pair.split('+');
+    return ids.map(function (t) { return WB.TOOLS[t] ? WB.TOOLS[t].name.toLowerCase() + 's' : t; }).join(' and ');
+  }
 
   function renderHome() {
     var frag = document.createDocumentFragment();
     var nextId = nextPlayableId();
     var shownLocked = false;
-    var usedPairs = {};
     CHAPTERS.forEach(function (ch) {
       var ids = [];
       for (var n = ch.first; n <= ch.last; n++) if (levelById(n)) ids.push(n);
@@ -444,11 +508,20 @@
       var label = 'Chapter ' + ch.n + ': ' + ch.title;
       var ic = el('canvas', 'ch-icon');
       ic.setAttribute('aria-hidden', 'true');
-      if (ch.tool) R.icon(ic, 'tool', ch.tool, 40);
-      else {
-        var pair = chapterPair(ch, usedPairs);
-        usedPairs[pairKey(pair)] = true;
+      // a chapter that brings something new shows it (a tool, or an object:
+      // never a tool that has not arrived yet); a challenge chapter shows the
+      // two tools it leans on most
+      var intro = chapterIntro(ch), tag = null;
+      if (intro) {
+        guideIcon(ic, intro.id, 40);
+        tag = '<b>New:</b> ' + esc(thingTitle(intro.id));
+        label += ', new: ' + thingTitle(intro.id);
+      } else {
+        var pair = masteryPair(ch);
         R.icon(ic, 'pair', pair, 40);
+        var theme = chapterTheme(ch, pair);
+        tag = '<b>Challenge:</b> ' + esc(theme);
+        label += ', challenge: ' + theme;
       }
 
       if (!anyOpen && shownLocked) {
@@ -457,7 +530,7 @@
         row.setAttribute('aria-label', label + ', locked');
         row.appendChild(ic);
         var tt = el('div', 'ch-fold-title');
-        tt.innerHTML = '<span>' + ch.n + ' · </span>' + esc(ch.title);
+        tt.innerHTML = '<span>' + ch.n + ' · </span>' + esc(ch.title) + (tag ? '<small class="ch-new" aria-hidden="true">' + tag + '</small>' : '');
         row.appendChild(tt);
         var meta = el('div', 'ch-fold-meta');
         meta.innerHTML = LOCK_SVG + ids.length + ' levels';
@@ -473,6 +546,12 @@
       var titles = el('div', 'ch-titles');
       titles.appendChild(el('div', 'ch-kicker', 'Chapter ' + ch.n));
       titles.appendChild(el('div', 'ch-title', ch.title));
+      if (tag) {
+        var tg = el('div', 'ch-new');
+        tg.innerHTML = tag;
+        tg.setAttribute('aria-hidden', 'true'); // said in the section label
+        titles.appendChild(tg);
+      }
       head.appendChild(titles);
       var cnt = el('div', 'ch-count' + (done === ids.length && ids.length ? ' is-done' : ''));
       if (!anyOpen) cnt.innerHTML = LOCK_SVG;
@@ -609,6 +688,10 @@
     clearTimeout(G.winTimer); // a cancelled drag re-checks the win
     hideTooltip();
     hideToast();
+    closeGuide({ silent: true, keep: true });
+    hideCoach();
+    clearTimeout(G.c1Timer);
+    G.c1 = null;
     closeDialog(dom.win, true);
     closeDialog(dom.helpDlg, true);
   }
@@ -643,21 +726,31 @@
     dom.lvlName.textContent = def.name || 'Level ' + id;
     dom.lvlDone.hidden = !isDone(id);
     renderWind();
-    if (def.tip) { dom.tip.textContent = def.tip; dom.tip.hidden = false; } else { dom.tip.hidden = true; }
-    renderNewTool();
+    // the card this level introduces: shown by itself the first time, then
+    // folded into the guidance line above the board
+    G.levelGuide = levelGuideId(id);
+    var autoGuide = !!G.levelGuide && store.seenTools.indexOf(G.levelGuide) < 0;
+    var intro = chapterIntro(G.chapter);
+    G.newTool = autoGuide && intro && intro.kind === 'tool' && intro.id === G.levelGuide ? intro.id : null;
+    G.newToolUsed = false;
+    // the very first level: three soft steps pinned to the board
+    G.c1 = firstLevelCoach();
+    G.coachGoal = G.c1 ? goalLine() : null;
     renderTray();
     renderGoals();
     updateButtons();
     board.setLevel(G.L, id);
-    G.reserve = 0;
+    if (autoGuide) openGuide(G.levelGuide, { intro: true, focus: G.focusBoardOnOpen });
+    else updateGuideLine();
     layoutBoard();
     startLoop();
     window.scrollTo(0, 0);
     G.openedAt = performance.now();
     // "Next" (win card or pill) disappears with the old level: keep keyboard
-    // focus on the board instead of letting it fall back to the page
-    if (G.focusBoardOnOpen) dom.canvas.focus({ preventScroll: true });
+    // focus on the board (or the new card) instead of letting it fall back to the page
+    if (G.focusBoardOnOpen && !G.guide) dom.canvas.focus({ preventScroll: true });
     G.focusBoardOnOpen = false;
+    if (!G.guide) startCoachSoon();
     // a saved board that already solves the level (closed mid-celebration, or
     // a redesigned level): let the normal win run so progress is recorded
     if (G.sim.solved && !isDone(id)) checkWin();
@@ -721,91 +814,503 @@
     showToast(windText(), null, null, { ms: 4200, kind: 'wind' });
   });
 
-  function firstSentence(s) {
-    var m = /^(.+?[.!?])(\s|$)/.exec(s || '');
-    return m ? m[1] : s;
+  // ---------------------------------------------------------------- field guide: data
+
+  function chapterIntro(ch) {
+    if (!ch) return null;
+    if (ch.intro) return ch.intro;
+    return ch.tool ? { kind: 'tool', id: ch.tool } : null;
   }
-  // The first level (in play order) a thing appears on: objects by their
-  // map character, tables by 'o'.
-  var firstSeen = null;
-  function firstLevelWith(thing) {
-    if (!firstSeen) {
-      firstSeen = {};
-      var chars = { candle: 'c', stove: 's', table: 'o', laundry: 'l', papers: 'n', fern: 'f' };
+  function guideKind(id) { return WB.TOOLS[id] ? 'tool' : WB.OBJECTS[id] ? 'object' : 'twist'; }
+  // A thing's card; a thing without one gets a plain card from the engine's words.
+  function guideFor(id) {
+    if (GUIDES[id]) return GUIDES[id];
+    var src = WB.TOOLS[id] || WB.OBJECTS[id] || (WB.CONDITIONS && WB.CONDITIONS[id]);
+    if (!src) return null;
+    return { id: id, kind: guideKind(id), title: src.name, oneLiner: src.desc, points: [], controls: '' };
+  }
+  function thingTitle(id) { var c = guideFor(id); return c ? c.title : String(id); }
+  function lowerName(id) { return thingTitle(id).toLowerCase(); }
+  function guideIcon(canvas, id, size) {
+    var k = guideKind(id);
+    if (k === 'tool') R.icon(canvas, 'tool', id, size);
+    else if (k === 'object') R.icon(canvas, 'object', id, size);
+    else R.icon(canvas, 'ui', TWIST_ICON[id] || 'calm', size);
+  }
+  // The first level (in play order) that has each twist.
+  var firstTwist = null;
+  function firstTwistLevel(id) {
+    if (!firstTwist) {
+      firstTwist = {};
       LEVELS.forEach(function (lv) {
-        var m = (lv.map || []).join('');
-        Object.keys(chars).forEach(function (k) { if (firstSeen[k] == null && m.indexOf(chars[k]) >= 0) firstSeen[k] = lv.id; });
+        (WB.levelConditions ? WB.levelConditions(lv) : []).forEach(function (c) { if (firstTwist[c] == null) firstTwist[c] = lv.id; });
       });
     }
-    return firstSeen[thing];
+    return firstTwist[id];
   }
-  // What the "New" card introduces on this level: the chapter's tool on its
-  // first level, otherwise a thing (object or table) seen here for the first time.
-  function newThingHere() {
-    var ch = G.chapter;
-    if (ch && ch.tool && G.id === ch.first) return ch.tool;
-    for (var i = 0; i < NEW_THINGS.length; i++) {
-      var k = NEW_THINGS[i];
-      if (firstLevelWith(k) === G.id && store.seenTools.indexOf(k) < 0) return k;
-    }
+  // The card a level introduces: its chapter's new thing on the chapter's first
+  // level, or a twist on the first level that has it. Practice levels: none.
+  function levelGuideId(id) {
+    var ch = chapterOf(id), it = chapterIntro(ch);
+    if (it && ch.first === id && guideFor(it.id)) return it.id;
+    var def = levelById(id);
+    var conds = def && WB.levelConditions ? WB.levelConditions(def) : [];
+    for (var i = 0; i < conds.length; i++) if (firstTwistLevel(conds[i]) === id && guideFor(conds[i])) return conds[i];
     return null;
   }
-  function thingName(k) { return WB.TOOLS[k] ? WB.TOOLS[k].name : WB.OBJECTS[k] ? WB.OBJECTS[k].name : k === 'table' ? 'Table' : k; }
-  function paintNewIcon() {
-    var k = G.newTool;
-    if (!k) return;
-    if (WB.TOOLS[k]) R.icon(dom.newtoolIcon, 'tool', k, 40);
-    else if (WB.OBJECTS[k]) R.icon(dom.newtoolIcon, 'object', k, 40);
-    else R.icon(dom.newtoolIcon, 'ui', k, 40);
+  // Has the player met this thing by level n?
+  function metBy(id, n) {
+    var k = guideKind(id);
+    if (k === 'tool') return WB.TOOLS[id].intro <= n;
+    if (k === 'object') return WB.OBJECTS[id].intro <= n;
+    var f = firstTwistLevel(id);
+    return f != null && f <= n;
   }
-  function renderNewTool() {
-    var thing = newThingHere();
-    G.newTool = thing && store.seenTools.indexOf(thing) < 0 ? thing : null;
-    G.newToolUsed = false;
-    dom.newtool.classList.remove('is-leaving');
-    placeNewToolCard();
-    if (!G.newTool) { dom.newtool.hidden = true; return; }
-    var isTool = !!WB.TOOLS[thing];
-    dom.newtool.setAttribute('aria-label', isTool ? 'New tool' : 'New in the house');
-    dom.newtoolTitle.textContent = thingName(thing);
-    dom.newtoolDesc.textContent = isTool ? firstSentence(thingDesc(thing)) : thingDesc(thing);
-    dom.newtool.title = thingDesc(thing);
-    paintNewIcon();
-    dom.newtool.hidden = false;
+  // The cards say "tap"; with a mouse it is a click.
+  function tapWords(s) { return usingTouch() ? String(s) : String(s).replace(/\bTap\b/g, 'Click').replace(/\btap\b/g, 'click'); }
+
+  var CLOSE_SVG = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>';
+  var HAND_SVG = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 12.5V5.8a1.6 1.6 0 0 1 3.2 0v5.4"/><path d="M12.7 10.6a1.6 1.6 0 0 1 3.2 0v1.2"/><path d="M15.9 11.4a1.6 1.6 0 0 1 3.1.4v3.4a5.8 5.8 0 0 1-5.8 5.8h-.6a5.6 5.6 0 0 1-4.4-2.1l-2.8-3.6a1.6 1.6 0 0 1 2.4-2.1l1.9 1.8"/></svg>';
+  var CHEVRON_SVG = '<svg class="ico fg-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5L16 12l-6.5 6.5"/></svg>';
+  var BACK_SVG = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg>';
+
+  // ---------------------------------------------------------------- field guide: the demo
+
+  // A card's demo: its tiny house, drawn by the real board renderer on a canvas
+  // of its own, looping between the "before" and "after" scenes (tap to switch)
+  // with their captions. With reduced motion both scenes stand still, side by side.
+  function makeDemo(card) {
+    var d = card.demo;
+    if (!d || !d.map) return null;
+    var L;
+    try { L = WB.parseLevel({ name: card.title, wind: d.wind, map: d.map, fixed: d.fixed || [], inventory: {} }); } catch (e) { return null; }
+    var fixed = L.fixed.map(norm);
+    function scene(list) {
+      list = (list || []).map(norm);
+      var draw = fixed.map(function (p) { return { type: p.type, x: p.x, y: p.y, d: p.d, fixed: true }; })
+        .concat(list.map(function (p) { return { type: p.type, x: p.x, y: p.y, d: p.d, fixed: false }; }));
+      return { list: list, pieces: draw, sim: WB.simulate(L, fixed.concat(list)) };
+    }
+    var scenes = [scene(d.before), scene(d.after)];
+    var caps = [d.caption_before || '', d.caption_after || ''];
+    var still = reducedMQ.matches;
+    var wrap = el('div', 'gdemo' + (still ? ' is-still' : ''));
+    var views = [];
+    function view(parent, si) {
+      var box = el('div', 'gdemo-box');
+      var c = el('canvas', 'gdemo-canvas');
+      c.setAttribute('aria-hidden', 'true');
+      box.appendChild(c);
+      parent.appendChild(box);
+      var b = new R.Board(c);
+      b.setLevel(L, 11 + views.length);
+      var v = { box: box, board: b, si: si, pops: {} };
+      views.push(v);
+      return v;
+    }
+    var cap = null, dots = null;
+    if (still) {
+      [0, 1].forEach(function (si) {
+        var fig = el('figure', 'gdemo-fig');
+        view(fig, si);
+        fig.appendChild(el('figcaption', 'gdemo-cap', caps[si]));
+        wrap.appendChild(fig);
+      });
+    } else {
+      var v0 = view(wrap, 0);
+      v0.box.addEventListener('click', function () { flip(); });
+      cap = el('p', 'gdemo-cap');
+      cap.setAttribute('aria-hidden', 'true');
+      wrap.appendChild(cap);
+      dots = el('div', 'gdemo-dots');
+      dots.setAttribute('aria-hidden', 'true');
+      dots.appendChild(el('i'));
+      dots.appendChild(el('i'));
+      wrap.appendChild(dots);
+      // screen readers hear both scenes once, not every few seconds
+      wrap.appendChild(el('p', 'sr-only', 'Before: ' + caps[0] + ' After: ' + caps[1]));
+    }
+    var running = false, raf = 0, t0 = 0, cur = -1, ro = null;
+    function layout() {
+      views.forEach(function (v) {
+        var w = Math.floor(v.box.clientWidth);
+        if (w < 40) return;
+        v.board.layout(w, Math.round(w * (L.h + 1.5) / (L.w + 1.5)), 0);
+      });
+    }
+    function paint(v, si, now) {
+      v.board.draw({ pieces: scenes[si].pieces, sim: scenes[si].sim, pops: v.pops, reduced: still }, now);
+    }
+    function show(si, now) {
+      var v = views[0];
+      v.pops = {};
+      // the piece that makes the difference pops in
+      if (cur === 0 && si === 1) {
+        scenes[1].list.forEach(function (p) {
+          var same = scenes[0].list.some(function (q) { return q.type === p.type && q.x === p.x && q.y === p.y && q.d === p.d; });
+          if (!same) v.pops[p.x + ',' + p.y] = now;
+        });
+      }
+      cur = si;
+      cap.textContent = caps[si];
+      cap.classList.remove('is-in');
+      void cap.offsetWidth;
+      cap.classList.add('is-in');
+      dots.children[0].classList.toggle('on', si === 0);
+      dots.children[1].classList.toggle('on', si === 1);
+      wrap.setAttribute('data-scene', si ? 'after' : 'before');
+    }
+    function frame(now) {
+      raf = 0;
+      if (!running) return;
+      if (still) { views.forEach(function (v) { paint(v, v.si, now); }); return; } // drawn once per change
+      raf = requestAnimationFrame(frame);
+      if (document.hidden) return;
+      // the visual check draws a frozen moment: always the "after" scene
+      var si = typeof window.__wbFreezeTime === 'number' ? 1 : Math.floor(Math.max(0, now - t0) / DEMO_MS) % 2;
+      if (si !== cur) show(si, now);
+      paint(views[0], cur, now);
+    }
+    function kick() { if (running && !raf) raf = requestAnimationFrame(frame); }
+    function flip() { t0 = performance.now() - (cur === 0 ? DEMO_MS : 0); }
+    return {
+      el: wrap,
+      start: function () {
+        if (running) return;
+        running = true;
+        cur = -1;
+        t0 = performance.now();
+        layout();
+        if (window.ResizeObserver && !ro) {
+          ro = new ResizeObserver(function () { layout(); kick(); });
+          views.forEach(function (v) { ro.observe(v.box); });
+        }
+        kick();
+      },
+      stop: function () {
+        running = false;
+        if (raf) cancelAnimationFrame(raf);
+        raf = 0;
+        if (ro) { ro.disconnect(); ro = null; }
+      },
+      repaint: function () { views.forEach(function (v) { v.board.refreshPalette(); }); kick(); }
+    };
   }
-  // Portrait and desktop: the card floats over the top of the stage. Landscape
-  // phones: it sits at the top of the side column, so the house keeps its size.
-  function placeNewToolCard() {
-    var want = landscapeMQ.matches ? dom.side : dom.stage;
-    if (dom.newtool.parentNode !== want) {
-      if (want === dom.side) dom.side.insertBefore(dom.newtool, dom.side.firstChild);
-      else dom.stage.insertBefore(dom.newtool, dom.tooltip);
+
+  // ---------------------------------------------------------------- field guide: the card
+
+  // A card's content: head, what it does, the demo, how it works, how to use it.
+  // opts: { intro, titleId, close: fn, status: html, buttons: [{ id, label, cls, fn }] }
+  function buildCard(card, opts) {
+    opts = opts || {};
+    var root = el('div', 'gcard');
+    var head = el('div', 'gcard-head');
+    var ic = el('canvas', 'gcard-icon');
+    ic.setAttribute('aria-hidden', 'true');
+    guideIcon(ic, card.id, 44);
+    head.appendChild(ic);
+    var tt = el('div', 'gcard-titles');
+    tt.appendChild(el('p', 'gcard-kicker', (opts.intro ? KIND_NEW : KIND_WORD)[card.kind] || ''));
+    var h = el('h2', 'gcard-title', opts.intro ? 'Meet the ' + card.title.toLowerCase() : card.title);
+    if (opts.titleId) h.id = opts.titleId;
+    tt.appendChild(h);
+    head.appendChild(tt);
+    if (opts.close) {
+      var x = el('button', 'icon-btn icon-btn-small gcard-close');
+      x.type = 'button';
+      x.setAttribute('aria-label', 'Close');
+      x.innerHTML = CLOSE_SVG;
+      x.addEventListener('click', opts.close);
+      head.appendChild(x);
+    }
+    root.appendChild(head);
+    var main = el('div', 'gcard-main');
+    main.appendChild(el('p', 'gcard-one', tapWords(card.oneLiner)));
+    var status = null;
+    if (opts.status != null) {
+      status = el('p', 'gcard-status');
+      status.innerHTML = opts.status;
+      main.appendChild(status);
+    }
+    var demo = makeDemo(card);
+    if (demo) main.appendChild(demo.el);
+    if (card.points && card.points.length) {
+      var ul = el('ul', 'gcard-points');
+      card.points.forEach(function (p) { ul.appendChild(el('li', null, tapWords(p))); });
+      main.appendChild(ul);
+    }
+    if (card.controls) {
+      var ctl = el('p', 'gcard-controls');
+      ctl.innerHTML = HAND_SVG + '<span>' + esc(tapWords(card.controls)) + '</span>';
+      main.appendChild(ctl);
+    }
+    root.appendChild(main);
+    if (opts.buttons && opts.buttons.length) {
+      var bar = el('div', 'gcard-buttons');
+      opts.buttons.forEach(function (b) {
+        var btn = el('button', b.cls, b.label);
+        btn.type = 'button';
+        if (b.id) btn.id = b.id;
+        btn.addEventListener('click', b.fn);
+        bar.appendChild(btn);
+      });
+      root.appendChild(bar);
+    }
+    return { el: root, demo: demo, status: status, icon: ic };
+  }
+
+  // ---------------------------------------------------------------- field guide: on the game screen
+  //
+  // One card at a time. Phones and tablets: a bottom sheet in place of the tray
+  // (the board takes the rest of the screen). Wide screens: a panel beside the
+  // board. Landscape phones: the side column. The board is laid out in the
+  // space that is left, so the card never covers the house. Closed, the card
+  // folds into the guidance line above the board, which opens it again.
+  // While it is open it is the only voice: no tip line, coach bubble or tooltip.
+
+  function openGuide(id, opts) {
+    opts = opts || {};
+    var card = guideFor(id);
+    if (!card || G.screen !== 'game' || boardLocked()) return;
+    closeGuide({ silent: true, keep: true });
+    hideTooltip();
+    if (!dom.toast.hidden && dom.toast.getAttribute('data-kind') !== 'reset') hideToast();
+    var at = opts.at || null;
+    var buttons = [];
+    if (showMeTarget(id)) buttons.push({ id: 'guide-show', label: 'Show me', cls: 'btn btn-quiet', fn: function () { closeGuide({ how: 'show' }); } });
+    buttons.push({ id: 'guide-go', label: 'Let’s try it', cls: 'btn btn-primary', fn: function () { closeGuide({ how: 'go' }); } });
+    var built = buildCard(card, {
+      intro: !!opts.intro, titleId: 'guide-title', status: at ? describe(at.x, at.y) : null, buttons: buttons,
+      close: function () { closeGuide({ how: 'close' }); }
+    });
+    dom.guide.textContent = '';
+    dom.guide.appendChild(built.el);
+    dom.guide.setAttribute('data-kind', card.kind);
+    dom.guide.hidden = false;
+    dom.game.classList.add('is-guiding');
+    // more to read below? the last lines fade out
+    var main = built.el.querySelector('.gcard-main');
+    var fade = function () { main.classList.toggle('can-scroll', main.scrollHeight - main.scrollTop - main.clientHeight > 6); };
+    main.addEventListener('scroll', fade, { passive: true });
+    G.guide = { id: id, intro: !!opts.intro, at: at, built: built, fade: fade };
+    renderCoach();
+    updateGuideLine();
+    if (built.demo) built.demo.start();
+    fade();
+    if (opts.focus) { var go = $('guide-go'); if (go) go.focus({ preventScroll: true }); }
+    announce((opts.intro ? 'Meet the ' + card.title.toLowerCase() : card.title) + '. ' + tapWords(card.oneLiner));
+  }
+
+  // how: 'go' (Let's try it), 'show' (Show me), 'close' (× or Esc).
+  // keep: another card takes its place, or the level is left (this level's
+  // card then opens by itself again next time).
+  function closeGuide(opts) {
+    opts = opts || {};
+    var g = G.guide;
+    if (!g) return;
+    var hadFocus = dom.guide.contains(document.activeElement);
+    if (g.built.demo) g.built.demo.stop();
+    G.guide = null;
+    dom.guide.hidden = true;
+    dom.guide.textContent = '';
+    dom.game.classList.remove('is-guiding');
+    if (opts.keep) return; // replaced, or the level is left: not read yet
+    if (g.id === G.levelGuide) {
+      markGuideSeen(g.id);
+      if (G.newTool) { G.newTool = null; updateTray(); }
+    }
+    // the board takes the freed space: let it settle in softly
+    dom.canvas.classList.remove('is-settling');
+    void dom.canvas.offsetWidth;
+    dom.canvas.classList.add('is-settling');
+    updateGuideLine();
+    if (opts.how === 'show') showMe(g.id);
+    if (hadFocus && !opts.silent) {
+      var f = opts.how !== 'show' && !dom.guideLine.hidden && !dom.tipMore.hidden ? dom.tipMore : dom.canvas;
+      f.focus({ preventScroll: true });
+    }
+    startCoachSoon();
+    renderCoach();
+  }
+
+  function markGuideSeen(id) {
+    if (store.seenTools.indexOf(id) >= 0) return;
+    store.seenTools.push(id);
+    saveStore();
+  }
+
+  // "Show me": light up where a tool can go, or ring the objects of that kind.
+  function showMeTarget(id) {
+    if (!G.L) return false;
+    if (WB.TOOLS[id]) return remaining(id) > 0;
+    if (WB.OBJECTS[id]) return G.L.objects.some(function (o) { return o.type === id; });
+    return false;
+  }
+  function showMe(id) {
+    if (WB.TOOLS[id]) {
+      if (remaining(id) > 0 && !boardLocked()) { select(id); G.pulse = performance.now(); }
+    } else if (WB.OBJECTS[id]) {
+      G.focus = { type: id, t0: performance.now() };
     }
   }
-  onMQ(landscapeMQ, function () {
-    placeNewToolCard();
-    G.reserve = 0;
-    layoutBoard();
+
+  // The guidance line above the board: the level's tip. On a level that brings
+  // something new it also carries that thing's icon and an (i) that opens its card.
+  function updateGuideLine() {
+    if (!G.def) return;
+    var gid = G.levelGuide;
+    var text = G.coachGoal || (G.def.tip ? tapWords(plainTip(G.def.tip)) : '');
+    if (gid && !text) text = tapWords(guideFor(gid).oneLiner);
+    if (dom.tip.textContent !== text) dom.tip.textContent = text;
+    dom.tipIcon.hidden = !gid;
+    dom.tipMore.hidden = !gid;
+    dom.guideLine.classList.toggle('has-guide', !!gid);
+    if (gid) {
+      guideIcon(dom.tipIcon, gid, 28);
+      var nm = lowerName(gid);
+      dom.tipMore.setAttribute('aria-label', 'About the ' + nm);
+      dom.tipMore.title = 'Meet the ' + nm;
+    }
+    // one voice: while the card is open, it says it all
+    dom.guideLine.hidden = !text || !!G.guide;
+  }
+  dom.guideLine.addEventListener('click', function () {
+    if (G.screen === 'game' && G.levelGuide && !G.guide) openGuide(G.levelGuide);
   });
-  function markToolSeen() {
-    if (G.newTool && store.seenTools.indexOf(G.newTool) < 0) {
-      store.seenTools.push(G.newTool);
-      saveStore();
+
+  onMQ(landscapeMQ, function () {
+    layoutBoard();
+    positionCoach();
+  });
+
+  // ---------------------------------------------------------------- coach bubbles
+  //
+  // One soft bubble pinned to a cell of the board, with a ring breathing on
+  // that cell: the first level's steps, and one-time tips (turning a fan,
+  // moving pieces, a window off the breeze's path, smoky laundry). It waits
+  // while a card, a toast or the help is open, and no tooltip shows with it.
+  // Taps go through it to the board; it moves on or fades by itself.
+
+  function showCoach(x, y, text, opts) {
+    opts = opts || {};
+    clearTimeout(G.coachHide);
+    var c = G.coach = { x: x, y: y, text: text, key: opts.key || null, t0: performance.now() };
+    if (opts.ms) G.coachHide = setTimeout(function () { if (G.coach === c) hideCoach(); }, opts.ms);
+    renderCoach();
+  }
+  function coachShowing() { return !!G.coach && !dom.coach.hidden; }
+  function renderCoach() {
+    var c = G.coach;
+    var show = !!c && G.screen === 'game' && !G.guide && dom.toast.hidden && dom.helpDlg.hidden && dom.win.hidden;
+    dom.coach.hidden = !show;
+    G.spot = show ? { x: c.x, y: c.y, t0: c.t0 } : null;
+    if (!show) return;
+    hideTooltip();
+    if (dom.coachText.textContent !== c.text) {
+      dom.coachText.textContent = c.text;
+      dom.coach.classList.remove('is-in');
+      void dom.coach.offsetWidth;
+      dom.coach.classList.add('is-in');
+    }
+    positionCoach();
+  }
+  function hideCoach() {
+    clearTimeout(G.coachHide);
+    G.coach = null;
+    G.spot = null;
+    dom.coach.hidden = true;
+    markChipCoach(null);
+  }
+  function positionCoach() {
+    var c = G.coach;
+    if (!c || dom.coach.hidden || !G.L) return;
+    var p = placeNear(dom.coach, c.x, c.y, true, 12);
+    var a = dom.coachArrow.style;
+    dom.coach.setAttribute('data-side', p.side);
+    a.left = a.top = '';
+    if (p.side === 'above' || p.side === 'below') a.left = clamp(p.cx - p.l - 6, 12, p.w - 24) + 'px';
+    else a.top = clamp(p.cy - p.t - 6, 10, p.h - 22) + 'px';
+  }
+  // a tray chip that softly calls for a tap
+  function markChipCoach(type) {
+    G.chipCoach = type;
+    var chips = dom.tray.querySelectorAll('.chip');
+    for (var i = 0; i < chips.length; i++) chips[i].classList.toggle('is-coach', chips[i].getAttribute('data-tool') === type);
+  }
+
+  // ---------------------------------------------------------------- the first level's coach
+  //
+  // Three soft steps pinned to the board: where the wind comes in, where it
+  // stops for want of a way out (the dashed line and the red ×, explained right
+  // where they are), and the happy ending. A window placed off the breeze's
+  // path gets a gentle word, once.
+
+  var C1_TEXT = {
+    in: 'The wind blows in here. The dashed line shows where it wants to go.',
+    out: 'But it stops at this wall, at the red ×: no way out yet. Put a window here!',
+    move: 'But it stops at this wall, at the red \u00d7: no way out yet. Drag your window here!',
+    offpath: 'Breezes blow in straight lines. Try where the dashed line ends.',
+    flow: 'The breeze flows! Now let it reach the pinwheel.',
+    done: 'In one window, out the other: that’s a breeze! The pinwheel is happy.'
+  };
+  function firstLevelCoach() {
+    if (!LEVELS.length || G.id !== LEVELS[0].id || G.levelGuide !== 'window' || isDone(G.id) || seenTip('coach1')) return null;
+    var inlet = stalledInlets(G.sim)[0];
+    return inlet ? { step: null, inlet: { x: inlet.source.x, y: inlet.source.y } } : null;
+  }
+  function stalledInlets(sim) { return sim.trees.filter(function (t) { return t.kind === 'inlet' && !t.active; }); }
+  // the wall cell where a stalled breeze stops (its red ×)
+  function stallCell(sim) { return stallInfo(sim).first; }
+  function goalLine() {
+    var objs = G.L.objects;
+    if (!objs.length || !objs.every(function (o) { return o.type === 'pinwheel'; })) return null;
+    return objs.length === 1 ? 'Make the pinwheel spin!' : 'Make every pinwheel spin!';
+  }
+  function startCoachSoon() {
+    var c1 = G.c1;
+    if (!c1 || c1.step || G.guide || G.sim.solved) return;
+    c1.step = 'wait';
+    clearTimeout(G.c1Timer);
+    G.c1Timer = setTimeout(function () { if (G.c1 === c1) c1Step('in'); }, 450);
+  }
+  function c1Step(step) {
+    var c1 = G.c1;
+    if (!c1 || G.screen !== 'game' || G.won) return;
+    clearTimeout(G.c1Timer);
+    c1.step = step;
+    markChipCoach(null);
+    if (step === 'in') {
+      showCoach(c1.inlet.x, c1.inlet.y, C1_TEXT.in);
+      G.c1Timer = setTimeout(function () { if (G.c1 === c1 && c1.step === 'in') c1Step('out'); }, 4200);
+    } else if (step === 'out') {
+      var sc = stallCell(G.sim);
+      if (!sc) { hideCoach(); return; }
+      // no window left in the tray: the one on the board has to move
+      showCoach(sc.x, sc.y, remaining('window') > 0 ? C1_TEXT.out : C1_TEXT.move);
+      if (G.sel !== 'window' && remaining('window') > 0) markChipCoach('window');
+    } else if (step === 'offpath') {
+      showCoach(c1.placed.x, c1.placed.y, C1_TEXT.offpath);
+      G.c1Timer = setTimeout(function () { if (G.c1 === c1 && c1.step === 'offpath') c1Step('out'); }, 4500);
+    } else if (step === 'flow') {
+      var g = null;
+      G.sim.goals.forEach(function (x) { if (!g && !x.ok) g = x; });
+      if (g) showCoach(g.x, g.y, C1_TEXT.flow, { ms: 6000 }); else hideCoach();
     }
   }
-  // Fades the card away. The board keeps its place (the reserved space stays
-  // until the next level), so nothing jumps under the player's finger.
-  function dismissNewTool() {
-    if (!G.newTool) return;
-    markToolSeen();
-    G.newTool = null;
-    updateTray();
-    var card = dom.newtool;
-    if (card.contains(document.activeElement)) dom.canvas.focus({ preventScroll: true });
-    card.classList.add('is-leaving');
-    setTimeout(function () { if (!G.newTool) { card.hidden = true; card.classList.remove('is-leaving'); } }, reducedMQ.matches ? 0 : 260);
+  // after every move on the first level (placed: the piece just placed)
+  function c1Update(placed) {
+    var c1 = G.c1;
+    if (!c1 || !c1.step || c1.step === 'wait' || G.sim.solved) return;
+    if (!stalledInlets(G.sim).length) { c1Step('flow'); return; }
+    if (placed && placed.type === 'window' && !seenTip('offpath')) {
+      store.seenTips.push('offpath');
+      saveStore();
+      c1.placed = placed;
+      c1Step('offpath');
+      return;
+    }
+    if (c1.step !== 'offpath' && c1.step !== 'in') c1Step('out');
   }
-  dom.newtoolOk.addEventListener('click', dismissNewTool);
 
   // ---------------------------------------------------------------- tray
 
@@ -829,10 +1334,17 @@
       b.appendChild(cv);
       b.appendChild(el('span', 'chip-name', t.name));
       b.appendChild(el('span', 'chip-count', '0'));
-      b.title = t.name + (i < 10 ? ' (' + ((i + 1) % 10) + ')' : '');
+      // on the selected chip: an (i) that opens the tool's card (so does a long-press)
+      var info = el('span', 'chip-info', 'i');
+      info.setAttribute('aria-hidden', 'true');
+      b.appendChild(info);
+      b.title = t.name + (i < 10 ? ' (' + ((i + 1) % 10) + ')' : '') + ' \u00b7 ' + (coarseMQ.matches ? 'press and hold' : 'right-click') + ' to learn more';
       b.addEventListener('click', onChipClick);
       b.addEventListener('pointerdown', onChipDown);
-      b.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+      b.addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+        if (G.lastPtr === 'mouse' && !boardLocked()) openGuide(type);
+      });
       b.addEventListener('animationend', function () { b.classList.remove('is-shake'); });
       dom.tray.appendChild(b);
     });
@@ -874,6 +1386,7 @@
       b.disabled = n <= 0 && G.sel !== type;
       b.classList.toggle('is-selected', G.sel === type);
       b.classList.toggle('is-new', G.newTool === type && !G.newToolUsed);
+      b.classList.toggle('is-coach', G.chipCoach === type && G.sel !== type);
       b.setAttribute('aria-pressed', G.sel === type ? 'true' : 'false');
       b.setAttribute('aria-label', toolName(type) + ', ' + n + ' left' + (G.sel === type ? ', selected' : ''));
     }
@@ -882,6 +1395,9 @@
   function onChipClick(e) {
     var type = this.getAttribute('data-tool');
     if (I.suppressClick) { I.suppressClick = false; return; }
+    var info = I.infoDown === type;
+    I.infoDown = null;
+    if (info && e.detail !== 0) { openGuide(type); return; }
     // not during the win celebration, and not the second click of a
     // double-click on "Next level" (the pill sits over the new tray)
     if (boardLocked()) return;
@@ -915,6 +1431,7 @@
     G.sel = type;
     G.valid = WB.placementCells(G.L, allPieces(), type);
     G.validWall = isWallMount(type);
+    if (G.chipCoach === type) markChipCoach(null);
     hideTooltip();
     updateTray();
     var chip = dom.tray.querySelector('[data-tool="' + type + '"]');
@@ -1100,6 +1617,11 @@
     updateButtons();
     checkWin();
     noteDirty();
+    // a tip pinned to a piece goes with it
+    if (G.coach && /^(turn|move|offpath)$/.test(G.coach.key || '') && !playerAt(G.coach.x, G.coach.y)) hideCoach();
+    if (G.c1) c1Update(opts.placed || null);
+    // a card opened from an object says how that object is doing right now
+    if (G.guide && G.guide.at && G.guide.built.status) G.guide.built.status.innerHTML = describe(G.guide.at.x, G.guide.at.y);
   }
 
   // Once ever: the first time a move leaves laundry dirty, say why.
@@ -1107,11 +1629,11 @@
     if (seenTip('dirty') || G.sim.solved) return;
     var g = null;
     G.sim.goals.forEach(function (x) { if (!g && x.smoky) g = x; });
-    if (!g || (!dom.toast.hidden && dom.toast.getAttribute('data-kind') !== 'coach')) return;
-    clearTimeout(G.coachTimer);
+    if (!g || !dom.toast.hidden || G.guide) return;
     store.seenTips.push('dirty');
     saveStore();
-    showToast('Smoky air made the laundry dirty — send the smoke another way, or through a filter.', null, null, { ms: 6000, kind: 'coach', near: g });
+    var filter = metBy('filter', reachedLevel());
+    showCoach(g.x, g.y, 'Smoky air made the laundry dirty. Send the smoke another way' + (filter ? ', or through a filter.' : '.'), { key: 'dirty', ms: 7000 });
   }
 
   function goalSummary() {
@@ -1122,16 +1644,18 @@
   function place(type, x, y, d) {
     if (remaining(type) <= 0 || !WB.canPlace(G.L, allPieces(), type, x, y)) { nope(x, y); return false; }
     // placed right on the hint ghost: take the hinted rotation too
-    if (G.hint && G.hint.x === x && G.hint.y === y && G.hint.type === type) d = G.hint.d;
+    var onHint = !!(G.hint && G.hint.x === x && G.hint.y === y && G.hint.type === type);
+    if (onHint) d = G.hint.d;
     var p = { type: type, x: x, y: y, d: rotations(type) > 1 ? (d | 0) % rotations(type) : 0 };
     var first = G.pieces.length === 0;
+    var stalledBefore = stalledInlets(G.sim).length;
     if (type === G.newTool) G.newToolUsed = true;
     if (!dom.toast.hidden && dom.toast.getAttribute('data-kind') === 'mount') hideToast();
-    commit(G.pieces.concat([p]));
+    commit(G.pieces.concat([p]), { placed: { type: type, x: x, y: y } });
     G.pops[x + ',' + y] = performance.now();
     Sound.tick();
     announce(toolName(type) + ' placed. ' + goalSummary());
-    coach(type, first);
+    coach(type, x, y, first, stalledBefore, onHint);
     return true;
   }
 
@@ -1172,6 +1696,7 @@
     var nd = to == null ? WB.rotate(p.type, p.d) : to;
     var np = G.pieces.map(function (q) { return q === p ? { type: q.type, x: q.x, y: q.y, d: nd } : q; });
     G.rot[p.type] = nd;
+    if (G.coach && G.coach.key === 'turn') hideCoach();
     commit(np);
     G.pops[p.x + ',' + p.y] = performance.now();
     Sound.turn();
@@ -1218,26 +1743,34 @@
     Sound.nope();
   }
 
-  // One-time coaching for moving, removing and turning pieces.
-  function coach(type, firstOnBoard) {
-    if (G.sim.solved) return;
+  // One-time tips after placing a piece, in a coach bubble pinned next to it:
+  // a window that missed the breeze's path, turning a fan, moving pieces
+  // (not on a level that brings something new: one voice at a time).
+  function coach(type, x, y, firstOnBoard, stalledBefore, onHint) {
+    if (G.sim.solved || G.c1) return;
     var touch = usingTouch();
     var msg = null, key = null;
-    if (rotations(type) > 1 && !seenTip('turn')) {
+    var wp = type === 'window' ? playerAt(x, y) : null;
+    if (wp && WB.windowRole(G.L, wp) === 'outlet' && !seenTip('offpath') && stalledBefore > 0 && stalledInlets(G.sim).length >= stalledBefore) {
+      key = 'offpath';
+      msg = C1_TEXT.offpath;
+    } else if (rotations(type) > 1 && !seenTip('turn') && !onHint) {
       key = 'turn';
-      msg = (touch ? 'Tap' : 'Click') + ' the ' + toolName(type).toLowerCase() + ' to turn it.';
-    } else if (!seenTip('move') && !firstOnBoard) {
+      msg = (touch ? 'Tap' : 'Click') + ' it to turn it.';
+    } else if (!seenTip('move') && !firstOnBoard && !G.levelGuide) {
       key = 'move';
-      msg = touch ? 'Drag a piece to move it · press and hold to remove it.' : 'Drag a piece to move it · right-click to remove it.';
+      msg = touch ? 'Drag a piece to move it. Press and hold to take it away.' : 'Drag a piece to move it. Right-click to take it away.';
     }
     if (!msg || (!dom.toast.hidden && dom.toast.getAttribute('data-kind') === 'hint')) return;
     clearTimeout(G.coachTimer);
     G.coachTimer = setTimeout(function () {
-      if (G.screen !== 'game' || G.sim.solved || G.won || !dom.toast.hidden) return;
+      if (G.screen !== 'game' || G.sim.solved || G.won || G.guide || !dom.toast.hidden) return;
+      var p = playerAt(x, y);
+      if (!p || p.type !== type) return; // already moved or gone
       store.seenTips.push(key);
       saveStore();
-      showToast(msg, null, null, { ms: 5200, kind: 'coach' });
-    }, 500);
+      showCoach(x, y, msg, { key: key, ms: 6000 });
+    }, key === 'offpath' ? 250 : 500);
   }
 
   // ---------------------------------------------------------------- win
@@ -1259,38 +1792,54 @@
   function win() {
     G.won = true;
     G.winAt = performance.now();
+    G.chapterDoneBefore = !!G.chapter && chapterDone(G.chapter);
     markDone(G.id);
-    dismissNewTool(); // an overlay: fading it never moves the board
+    if (G.levelGuide) markGuideSeen(G.levelGuide);
+    G.newTool = null;
     forgetBoard(G.id);
     saveStore();
     resetInput();
     deselect();
     hideToast();
     hideTooltip();
+    hideCoach();
     clearTimeout(G.coachTimer);
     G.hint = null; G.conflicts = null; G.cursor = null;
     Sound.chime();
     announce('Fresh air! Level ' + G.id + ' solved.');
+    // the first level's last step: the happy ending, said where it happened
+    var c1 = G.c1;
+    if (c1) {
+      clearTimeout(G.c1Timer);
+      G.c1 = null;
+      store.seenTips.push('coach1');
+      saveStore();
+      var ob = G.L.objects[0];
+      if (ob && !G.guide) showCoach(ob.x, ob.y, C1_TEXT.done);
+    }
     var id = G.id;
     clearTimeout(G.winCardTimer);
     G.winCardTimer = setTimeout(function () {
       G.winCardTimer = 0;
       if (G.screen === 'game' && G.id === id && G.won) showWinCard();
       else updateButtons();
-    }, reducedMQ.matches ? 300 : 1250);
+    }, c1 ? (reducedMQ.matches ? 1500 : 2600) : reducedMQ.matches ? 300 : 1250);
     updateButtons();
   }
 
   function showWinCard() {
     closeDialog(dom.helpDlg, true);
     closeDialog(dom.confirm, true);
+    hideCoach();
     var idx = levelIndex(G.id);
     var next = idx >= 0 && idx + 1 < LEVELS.length ? LEVELS[idx + 1] : null;
     var allDone = LEVELS.every(function (l) { return isDone(l.id); });
     dom.winSub.textContent = 'Level ' + G.id + (G.def.name ? ' · ' + G.def.name : '') + ' solved';
     // chapter progress
-    dom.winDots.textContent = '';
     var ch = G.chapter;
+    var complete = !!ch && !G.chapterDoneBefore && chapterDone(ch);
+    dom.winTitle.textContent = complete ? 'Chapter complete!' : 'Fresh air!';
+    dom.winDots.textContent = '';
     if (ch) {
       for (var n = ch.first; n <= ch.last; n++) {
         if (!levelById(n)) continue;
@@ -1299,15 +1848,30 @@
       }
     }
     dom.winDots.hidden = !ch;
-    // tease the next chapter's new tool
-    var nch = next ? chapterOf(next.id) : null;
-    if (nch && ch && nch !== ch && nch.tool && nch.first === next.id) {
-      dom.winTeaser.hidden = false;
-      R.icon(dom.winTeaserIcon, 'tool', nch.tool, 34);
-      dom.winTeaserText.innerHTML = 'Next chapter: <b class="nw">new tool —&nbsp;' + esc(toolName(nch.tool)) + '</b>';
-    } else {
-      dom.winTeaser.hidden = true;
+    dom.winDots.classList.toggle('is-full', complete);
+    // a finished chapter: a small, warm moment and what you can do now
+    dom.winChapter.hidden = !complete;
+    if (complete) {
+      var it = chapterIntro(ch), card = it && guideFor(it.id);
+      if (it) guideIcon(dom.winChapterIcon, it.id, 40); else R.icon(dom.winChapterIcon, 'pair', masteryPair(ch), 40);
+      dom.winChapterName.textContent = ch.title + ': all done.';
+      dom.winRecap.textContent = card && card.recap ? card.recap : 'Every house in it is full of fresh air.';
     }
+    // what comes next: the next chapter's new thing (a tool or an object), or its challenge
+    var nch = next ? chapterOf(next.id) : null, tease = null;
+    if (nch && nch !== ch && nch.first === next.id) {
+      var nit = chapterIntro(nch);
+      var lead = complete ? 'Next: ' : 'Next chapter: ';
+      if (nit) {
+        guideIcon(dom.winTeaserIcon, nit.id, 34);
+        tease = lead + '<b class="nw">meet the ' + esc(lowerName(nit.id)) + '</b>';
+      } else {
+        R.icon(dom.winTeaserIcon, 'pair', masteryPair(nch), 34);
+        tease = lead + '<b>' + esc(nch.title) + '</b>, a challenge: ' + esc(chapterTheme(nch, masteryPair(nch)));
+      }
+    }
+    dom.winTeaser.hidden = !tease;
+    if (tease) dom.winTeaserText.innerHTML = tease;
     var last = !next;
     dom.winFinal.hidden = !last;
     dom.winFinal.textContent = allDone
@@ -1338,6 +1902,8 @@
     if (dom.hint.disabled || dom.hint.hidden) return;
     var sol = (G.def.solution || []).map(norm);
     hideTooltip();
+    hideCoachTip();
+    closeGuide({ silent: true }); // one voice: the hint speaks now
     if (!sol.length) { showToast('No hint for this one — experiment!'); return; }
     if (G.sim.solved) { showToast('Everything is already happy.'); return; }
     function same(a, b) {
@@ -1404,15 +1970,18 @@
       dom.toastAction.onclick = null;
     }
     // keep the toast away from the cell it talks about
-    var top = !!(opts.near && G.L && opts.near.y >= G.L.h / 2 && dom.newtool.hidden);
+    var top = !!(opts.near && G.L && opts.near.y >= G.L.h / 2);
     dom.toast.classList.toggle('at-top', top);
     dom.toast.hidden = false;
+    renderCoach(); // a coach bubble waits while a toast speaks
     G.toastTimer = setTimeout(hideToast, opts.ms || (actionLabel ? 9000 : 5000));
   }
   function hideToast() {
     clearTimeout(G.toastTimer);
+    var was = !dom.toast.hidden;
     dom.toast.hidden = true;
     G.conflicts = null;
+    if (was) renderCoach();
   }
   dom.toastClose.addEventListener('click', function () { hideToast(); G.hint = null; });
 
@@ -1439,6 +2008,25 @@
     return own;
   }
 
+  // Cells on the path of a stalled breeze (its dashed line) and where it stops
+  // (its red ×), cached on the simulation result.
+  function stallInfo(sim) {
+    if (sim._wbStall) return sim._wbStall;
+    var out = { path: {}, end: {}, first: null };
+    var A = R.analyze(sim, G.L);
+    A.stalled.forEach(function (st) {
+      out.path[Math.floor((st.hx + WB.DX[st.d] * 0.5) / 2) + ',' + Math.floor((st.hy + WB.DY[st.d] * 0.5) / 2)] = true;
+    });
+    // the red × sits just inside the wall (or window) that stops the breeze (see render.js)
+    A.stallEnds.forEach(function (e) {
+      var c = { x: Math.floor(e.x + e.dx * 0.32), y: Math.floor(e.y + e.dy * 0.32) };
+      out.end[c.x + ',' + c.y] = true;
+      if (!out.first) out.first = c;
+    });
+    sim._wbStall = out;
+    return out;
+  }
+
   // What is at (x,y), and how much air reaches it. withActions adds a dim
   // line telling a mouse user what they can do with their own pieces.
   function describe(x, y, withActions) {
@@ -1456,8 +2044,8 @@
           if (WB.windowRole(L, p) === 'inlet') {
             var tr = null;
             sim.trees.forEach(function (t) { if (t.kind === 'inlet' && t.source.x === p.x && t.source.y === p.y) tr = t; });
-            s = 'inlet, facing the wind' + (tr && !tr.active ? ' <span class="tt-dim">· no way out yet</span>' : '');
-          } else s = 'outlet, lets air out';
+            s = 'on the windy side, lets the wind in' + (tr && !tr.active ? ' <span class="tt-dim">· no way out yet</span>' : '');
+          } else s = 'lets air out';
           break;
         // a source reports what it sends out: its own 1, plus the air of other
         // sources it pushes on (its own stream coming round again adds nothing)
@@ -1484,7 +2072,13 @@
       if (ob.type === 'stove') return '<b>' + oname + '</b> — ' + stoveWord(g, sim);
       return '<b>' + oname + '</b> — ' + (g.smoky ? DIRTY : NEED[ob.type]) + ' <span class="tt-dim">· ' + breezeWord(g.flow) + '</span>';
     }
-    if (ch === '.') return '<b>Floor</b> — ' + breezeWord(f);
+    // where a breeze is stuck: the dashed line and its red ×, explained
+    var stuck = stallInfo(sim);
+    if (stuck.end[x + ',' + y]) {
+      return '<b>No way out</b> — the breeze stops at this wall' +
+        (ch === '#' && WB.outwardDir(L, x, y) >= 0 ? ' <span class="tt-dim">· a window here would let it out</span>' : '');
+    }
+    if (ch === '.') return '<b>Floor</b> — ' + breezeWord(f) + (stuck.path[x + ',' + y] && !f ? ' <span class="tt-dim">· the dashed breeze is waiting for a way out</span>' : '');
     if (ch === 'o') return '<b>Table</b> — air passes over <span class="tt-dim">· ' + breezeWord(f) + ' · nothing can be placed here</span>';
     if (ch === '%') return '<b>Solid wall</b> <span class="tt-dim">· nothing can be mounted</span>';
     if (ch === '#') {
@@ -1497,47 +2091,63 @@
     return '<b>Garden</b> — ' + (w.strength > 0 ? 'wind from the ' + DIR_WORD[w.from] + ', ' + STRENGTH_WORD[Math.min(3, w.strength)] : 'a calm day');
   }
 
-  // Shows the tooltip above the cell (below when there is no room). With
-  // `avoid` (a touch turn, where the player wants to see what changed) it takes
-  // the spot around the cell that hides the fewest objects, pieces and streams.
-  function showTooltipAt(x, y, html, ms, avoid) {
-    var tt = dom.tooltip;
-    tt.innerHTML = html;
-    tt.hidden = false;
+  // Places a floating box (the tooltip or a coach bubble) next to cell (x,y):
+  // above it, else below. With `avoid` (a touch turn, where the player wants to
+  // see what changed, or a coach bubble) it takes the spot around the cell that
+  // hides the fewest objects, pieces and streams. Returns where it went.
+  function placeNear(box, x, y, avoid, gap) {
+    gap = gap || 6;
     var rect = board.cellRect(x, y);
     var ox = dom.canvas.offsetLeft, oy = dom.canvas.offsetTop, T = rect.size;
     var cx = ox + rect.left + T / 2;
     var top = oy + rect.top;
-    tt.style.left = '0px';
-    var w = tt.offsetWidth, h = tt.offsetHeight;
+    box.style.left = '0px';
+    box.style.top = '0px';
+    var w = box.offsetWidth, h = box.offsetHeight;
     var sw = dom.stage.clientWidth, sh = dom.stage.clientHeight;
-    var cands = [{ l: cx - w / 2, t: top - h - 6 }, { l: cx - w / 2, t: top + T + 6 }];
+    var cands = [{ l: cx - w / 2, t: top - h - gap, s: 'above' }, { l: cx - w / 2, t: top + T + gap, s: 'below' }];
     if (avoid) {
-      cands.push({ l: ox + rect.left + T + 6, t: top + T / 2 - h / 2 });
-      cands.push({ l: ox + rect.left - w - 6, t: top + T / 2 - h / 2 });
-      cands.push({ l: cx - w / 2, t: top - T - h - 6 });
-      cands.push({ l: cx - w / 2, t: top + 2 * T + 6 });
+      cands.push({ l: ox + rect.left + T + gap, t: top + T / 2 - h / 2, s: 'right' });
+      cands.push({ l: ox + rect.left - w - gap, t: top + T / 2 - h / 2, s: 'left' });
+      cands.push({ l: cx - w / 2, t: top - T - h - gap, s: 'above' });
+      cands.push({ l: cx - w / 2, t: top + 2 * T + gap, s: 'below' });
       // last resort: just outside the house, above or below it
-      cands.push({ l: cx - w / 2, t: oy + board.oy - h - 6 });
-      cands.push({ l: cx - w / 2, t: oy + board.oy + G.L.h * T + 6 });
+      cands.push({ l: cx - w / 2, t: oy + board.oy - h - gap, s: 'above' });
+      cands.push({ l: cx - w / 2, t: oy + board.oy + G.L.h * T + gap, s: 'below' });
     }
     var best = null;
     for (var i = 0; i < cands.length; i++) {
       var c = cands[i];
       c.l = Math.max(8, Math.min(sw - w - 8, c.l));
       var cost = (c.t >= 4 && c.t + h <= sh - 4 ? 0 : 1000) + i * 0.5;
-      if (avoid) cost += coverCost(c.l - ox, c.t - oy, w, h);
-      if (!best || cost < best.cost) best = { l: c.l, t: c.t, cost: cost };
+      // a box beside the cell must not slide over it
+      if ((c.s === 'right' && c.l < ox + rect.left + T) || (c.s === 'left' && c.l + w > ox + rect.left)) cost += 500;
+      if (avoid) cost += coverCost(c.l - ox, c.t - oy, w, h, box === dom.coach);
+      if (!best || cost < best.cost) best = { l: c.l, t: c.t, s: c.s, cost: cost };
     }
-    tt.style.left = best.l + 'px';
-    tt.style.top = Math.max(4, Math.min(sh - h - 4, best.t)) + 'px';
+    var t = Math.max(4, Math.min(sh - h - 4, best.t));
+    box.style.left = best.l + 'px';
+    box.style.top = t + 'px';
+    return { l: best.l, t: t, w: w, h: h, side: best.s, cx: cx, cy: top + T / 2 };
+  }
+  // Shows the tooltip next to a cell, for `ms` (0: until hidden). Never while
+  // a card or a coach bubble is speaking.
+  function showTooltipAt(x, y, html, ms, avoid) {
+    if (G.guide || coachShowing()) return;
+    var tt = dom.tooltip;
+    tt.innerHTML = html;
+    tt.hidden = false;
+    placeNear(tt, x, y, avoid, 6);
     clearTimeout(G.tipTimer);
     if (ms) G.tipTimer = setTimeout(hideTooltip, ms);
   }
   // How much of the board a box (canvas px) hides: objects matter most, then
   // pieces, then cells with air moving through them.
-  function coverCost(l, t, w, h) {
+  // A coach bubble also keeps off the house where it can, and off the spots
+  // where the selected tool could go.
+  function coverCost(l, t, w, h, coach) {
     var L = G.L, T = board.T, sim = G.sim, cost = 0;
+    var valid = coach && (I.drag ? I.drag.valid : G.valid);
     var x0 = Math.floor((l - board.ox) / T), x1 = Math.floor((l + w - board.ox) / T);
     var y0 = Math.floor((t - board.oy) / T), y1 = Math.floor((t + h - board.oy) / T);
     for (var y = Math.max(0, y0); y <= Math.min(L.h - 1, y1); y++) {
@@ -1550,6 +2160,7 @@
         if (objectAt(x, y) >= 0) cost += 12 + 24 * frac;
         else if (playerAt(x, y) || fixedAt(x, y)) cost += 6 * frac;
         else if (WB.isFloorish(WB.cellAt(L, x, y)) && sim.flow[y * L.w + x] > 0) cost += 2 * frac;
+        if (coach) cost += (isValidCell(valid, x, y) ? 5 : 1) * frac;
       }
     }
     return cost;
@@ -1569,6 +2180,7 @@
     var t = WB.TOOLS[G.sel];
     if (!t) return;
     G.pulse = performance.now();
+    if (G.guide) return; // the card beside the board already explains it
     showToast(t.name + ' ' + MOUNT_HELP[t.mount] + ' — try a highlighted spot.', null, null, { ms: 2600, kind: 'mount' });
   }
 
@@ -1581,6 +2193,7 @@
   function onBoardDown(e) {
     if (boardLocked() || !e.isPrimary) return;
     Sound.unlock();
+    if (G.c1 && G.c1.step === 'in') c1Step('out');
     G.cursor = null;
     var c = board.pick(e.clientX, e.clientY);
     if (e.button === 2) {
@@ -1715,8 +2328,18 @@
       if (ptype !== 'mouse' && c.onCanvas) showTooltipAt(clamp(c.x, 0, G.L.w - 1), clamp(c.y, 0, G.L.h - 1), describe(c.x, c.y), 2200);
       return;
     }
+    // an object: its card, with how this one is doing right now
+    var oi = objectAt(c.x, c.y);
+    if (oi >= 0) {
+      if (G.guide && G.guide.at && G.guide.at.x === c.x && G.guide.at.y === c.y) { closeGuide({ how: 'close' }); return; }
+      hideCoachTip();
+      openGuide(G.L.objects[oi].type, { at: { x: c.x, y: c.y }, focus: ptype === 'keyboard' });
+      return;
+    }
     showTooltipAt(c.x, c.y, describe(c.x, c.y), 2600);
   }
+  // a one-time tip gives way to what the player asked for
+  function hideCoachTip() { if (G.coach && G.coach.key) hideCoach(); }
 
   function fixedTap(x, y) {
     G.shake = { x: x, y: y, t0: performance.now() };
@@ -1935,10 +2558,21 @@
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     if (boardLocked()) return;
     var type = this.getAttribute('data-tool');
+    I.infoDown = e.target && e.target.closest && e.target.closest('.chip-info') ? type : null;
     Sound.unlock();
     if (remaining(type) <= 0) return;
-    I.tray = { type: type, x0: e.clientX, y0: e.clientY, pointerId: e.pointerId, el: this, ptype: e.pointerType };
+    var tp = I.tray = { type: type, x0: e.clientX, y0: e.clientY, pointerId: e.pointerId, el: this, ptype: e.pointerType };
     try { this.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    // press and hold (finger or pen): the tool's card
+    if (e.pointerType !== 'mouse') {
+      setTimeout(function () {
+        if (I.tray !== tp || boardLocked()) return;
+        I.tray = null;
+        I.chipLong = tp.pointerId;
+        try { if (navigator.vibrate) navigator.vibrate(10); } catch (err) { /* ignore */ }
+        openGuide(type);
+      }, 520);
+    }
   }
 
   window.addEventListener('pointermove', function (e) {
@@ -1953,6 +2587,7 @@
       var intent = tp.ptype === 'mouse' || landscapeMQ.matches || Math.abs(dy) > Math.abs(dx) * 0.8;
       if (dist > 8 && intent) {
         I.tray = null;
+        I.infoDown = null;
         startDrag({ kind: 'new', type: tp.type, d: defaultRot(tp.type), pointerId: e.pointerId, ptype: e.pointerType }, e);
       } else if (dist > 14) {
         I.tray = null; // horizontal scroll of the tray
@@ -1974,8 +2609,19 @@
       setTimeout(function () { I.suppressClick = false; }, 0);
     }
     if (I.tray && I.tray.pointerId === e.pointerId) I.tray = null;
+    // the click that ends a long-press on a chip is not a tap (the card may
+    // have opened right under the finger)
+    if (I.chipLong === e.pointerId) {
+      I.chipLong = null;
+      I.swallowClick = performance.now() + 150; // a real next tap takes longer than this
+    }
   });
+  window.addEventListener('click', function (e) {
+    if (I.swallowClick && performance.now() < I.swallowClick) { e.stopPropagation(); e.preventDefault(); }
+    I.swallowClick = 0;
+  }, true);
   window.addEventListener('pointercancel', function (e) {
+    if (I.chipLong === e.pointerId) I.chipLong = null;
     if (I.drag && e.pointerId === I.drag.pointerId) cancelDrag();
     if (I.tray && I.tray.pointerId === e.pointerId) I.tray = null;
   });
@@ -2016,6 +2662,12 @@
 
   function openHelp() {
     updateSoundButton();
+    renderHelp();
+    openDialog(dom.helpDlg, dom.helpClose);
+    dom.helpBody.scrollTop = 0;
+  }
+  function renderHelp() {
+    stopHelpGuide();
     var n = reachedLevel();
     var h = [];
     var inLevel = {};
@@ -2023,15 +2675,35 @@
       Object.keys(G.L.inventory).forEach(function (t) { if (G.L.inventory[t] > 0) inLevel[t] = true; });
       G.fixed.forEach(function (p) { inLevel[p.type] = true; });
       G.L.objects.forEach(function (o) { inLevel[o.type] = true; });
+      if (WB.levelConditions) WB.levelConditions(G.def).forEach(function (c) { inLevel[c] = true; });
     }
     function has(o) { return WB.OBJECTS[o].intro <= n || inLevel[o]; }
-    h.push('<p>Make <b>every object</b> in the house happy at the same time by placing the tools from your tray. Tap or hover anything to see how much air reaches it.</p>');
+    h.push('<p>Make <b>every thing</b> in the house happy at the same time, with the tools in your tray. ' + (usingTouch() ? 'Tap' : 'Click or hover') + ' anything on the board to see how much air reaches it.</p>');
+    // the field guide: every tool, thing and twist met so far, each opening its card
+    var met = GUIDE_ORDER.filter(function (gid) { return metBy(gid, n) || inLevel[gid]; });
+    if (met.length) {
+      h.push('<h3>Field guide</h3><p class="fg-note">Everything you have met so far. ' + (usingTouch() ? 'Tap' : 'Click') + ' one to see how it works.</p>');
+      ['tool', 'object', 'twist'].forEach(function (k) {
+        var ids = met.filter(function (gid) { return guideFor(gid).kind === k; });
+        if (!ids.length) return;
+        h.push('<h4>' + KIND_GROUP[k] + '</h4><ul class="fguide">');
+        ids.forEach(function (gid) {
+          var c = guideFor(gid);
+          var ic = k === 'tool' ? cv('tool', gid, 40) : k === 'object' ? cv('object', gid, 40) : cv('ui', TWIST_ICON[gid] || 'calm', 40);
+          h.push('<li><button type="button" class="fg-item" data-guide="' + esc(gid) + '">' + ic +
+            '<span class="fg-text"><span class="gloss-name">' + esc(c.title) + '</span><span class="gloss-desc">' + esc(tapWords(c.oneLiner)) + '</span></span>' +
+            CHEVRON_SVG + '</button></li>');
+        });
+        h.push('</ul>');
+      });
+    }
+    h.push('<h3>How air moves</h3>');
     h.push('<ul class="help-rules">');
     h.push('<li><span class="rule-ico">' + cv('swirl', 'w', 28) + '</span><span><b>Wind</b> blows across the garden. The badge at the top shows which way it blows and how strong it is.</span></li>');
-    h.push('<li><span class="rule-ico">' + cv('ui', 'inlet', 34) + '</span><span>A <b>window facing the wind</b> is an inlet: a bright pane with arrows pointing in. Every other window is an <b>outlet</b> ' + cv('ui', 'outlet', 22, 'inl') + ' that lets air out. Air blown back into a window that faces the wind is pushed back, just like a wall.</span></li>');
-    h.push('<li><span class="rule-ico">' + cv('ui', 'stall', 34) + '</span><span><b>A breeze only flows if it has a way out.</b> An inlet with no outlet stays still: its path is a faint dashed line ending in a red ×.</span></li>');
+    h.push('<li><span class="rule-ico">' + cv('ui', 'inlet', 34) + '</span><span>A <b>window on the windy side</b> lets the breeze in: a bright pane with arrows pointing in. Every other window <b>lets air out</b> ' + cv('ui', 'outlet', 22, 'inl') + '. Air blown back into a window on the windy side is pushed back, just like a wall.</span></li>');
+    h.push('<li><span class="rule-ico">' + cv('ui', 'stall', 34) + '</span><span><b>A breeze only flows if it has a way out.</b> A window breeze with no way out stays still: its path is a faint dashed line ending in a red ×.</span></li>');
     h.push('<li><span class="rule-ico">' + cv('ui', 'lanes-2', 34) + '</span><span><b>Strength</b> is the number of lines in a stream: one is a gentle breeze, two is strong, three is a gale. Where breezes from different sources meet on the same spot, from any direction, they add up (a breeze crossing its own path does not add to itself).</span></li>');
-    if (n >= WB.OBJECTS.stove.intro || inLevel.stove) h.push('<li><span class="rule-ico">' + cv('object', 'stove', 30) + '</span><span><b>Smoke</b> from a stove must be carried outside or through a filter, never blown into a wall.' + (has('laundry') ? ' Smoky air also makes laundry dirty.' : '') + '</span></li>');
+    if (n >= WB.OBJECTS.stove.intro || inLevel.stove) h.push('<li><span class="rule-ico">' + cv('object', 'stove', 30) + '</span><span><b>Smoke</b> from a stove must be carried outside' + (metBy('filter', n) || inLevel.filter ? ' or through a filter' : '') + ', never blown into a wall.' + (has('laundry') ? ' Smoky air also makes laundry dirty.' : '') + '</span></li>');
     h.push('<li><span class="rule-ico">' + cv('ui', 'pip-happy', 30) + '</span><span>The dot on each object shows how it feels: ' + cv('ui', 'pip-idle', 18, 'inl') + ' wants air, ' + cv('ui', 'pip-happy', 18, 'inl') + ' happy, ' + cv('ui', 'pip-bad', 18, 'inl') + ' unhappy' +
       (has('laundry') && (n >= WB.OBJECTS.stove.intro || inLevel.stove) ? ', ' + cv('ui', 'pip-dirty', 18, 'inl') + ' dirty from smoke' : '') + '.</span></li>');
     if (has('laundry') || has('papers') || has('fern')) {
@@ -2042,33 +2714,15 @@
       h.push('<li><span class="rule-ico">' + cv('ui', 'meter-laundry-2-happy', 34) + '</span><span>Some things are picky. Their <b>meter</b> fills with the air that reaches them: ' + ms.join(', ') + '. A red dot means too much.</span></li>');
     }
     h.push('</ul>');
-
-    var tools = WB.TOOL_ORDER.filter(function (t) { return WB.TOOLS[t].intro <= n || inLevel[t]; });
-    if (tools.length) {
-      h.push('<h3>Tools</h3><ul class="gloss">');
-      tools.forEach(function (t) {
-        h.push('<li>' + cv('tool', t, 40) + '<div><div class="gloss-name">' + esc(WB.TOOLS[t].name) + '</div><div class="gloss-desc">' + esc(WB.TOOLS[t].desc) + '</div></div></li>');
-      });
-      h.push('</ul>');
-    }
-    var objs = WB.OBJECT_ORDER.filter(has);
-    if (objs.length) {
-      h.push('<h3>Things in the house</h3><ul class="gloss">');
-      objs.forEach(function (o) {
-        h.push('<li>' + cv('object', o, 40) + '<div><div class="gloss-name">' + esc(WB.OBJECTS[o].name) + '</div><div class="gloss-desc">' + esc(WB.OBJECTS[o].desc) + '</div></div></li>');
-      });
-      var tl = firstLevelWith('table');
-      if ((tl != null && tl <= n) || (G.L && G.L.cells && G.L.cells.indexOf('o') >= 0)) {
-        h.push('<li>' + cv('ui', 'table', 40) + '<div><div class="gloss-name">Table</div><div class="gloss-desc">' + TABLE_DESC + '</div></div></li>');
-      }
-      h.push('</ul>');
-    }
     var touch = usingTouch();
     h.push('<h3>Controls</h3><dl class="keys">');
-    h.push('<dt>Tap a tool</dt><dd>select it, then tap a highlighted spot — or drag it onto the board</dd>');
-    h.push('<dt>Tap a piece</dt><dd>turn it (fans, deflectors) or pick it up</dd>');
+    var tap = touch ? 'Tap' : 'Click';
+    h.push('<dt>' + tap + ' a tool</dt><dd>select it, then ' + tap.toLowerCase() + ' a glowing spot, or drag it onto the board</dd>');
+    h.push('<dt>' + (touch ? 'Press and hold a tool' : 'Right-click a tool') + '</dt><dd>learn what it does</dd>');
+    h.push('<dt>' + tap + ' a piece</dt><dd>turn it (if it turns) or pick it up</dd>');
+    h.push('<dt>' + tap + ' a thing in the house</dt><dd>see what it wants, and how it is doing</dd>');
     h.push('<dt>Drag a piece</dt><dd>move it; drop it off the board to put it back</dd>');
-    h.push('<dt>' + (touch ? 'Press and hold' : 'Right-click') + '</dt><dd>remove a piece</dd>');
+    h.push('<dt>' + (touch ? 'Press and hold a piece' : 'Right-click a piece') + '</dt><dd>take it away</dd>');
     h.push('</dl>');
     // keyboard shortcuts only where a keyboard is likely (or has been used)
     if (!(touch && coarseMQ.matches && !G.sawKeys)) {
@@ -2080,13 +2734,47 @@
       h.push('<dt><kbd>Esc</kbd></dt><dd>deselect / close</dd>');
       h.push('<dt>Arrows, <kbd>Enter</kbd></dt><dd>move around the board and place or turn</dd>');
       h.push('<dt><kbd>Delete</kbd></dt><dd>remove the piece under the keyboard cursor</dd>');
+      h.push('<dt><kbd>I</kbd></dt><dd>about the selected tool, or what this level brings</dd>');
       h.push('</dl>');
     }
     dom.helpBody.innerHTML = h.join('');
     paintIcons(dom.helpBody);
-    openDialog(dom.helpDlg, dom.helpClose);
-    dom.helpBody.scrollTop = 0;
   }
+
+  // A card from the field guide, inside the help sheet (with a way back).
+  function showHelpGuide(id) {
+    var card = guideFor(id);
+    if (!card) return;
+    var scroll = dom.helpBody.scrollTop;
+    stopHelpGuide();
+    var built = buildCard(card, {});
+    dom.helpBody.textContent = '';
+    var back = el('button', 'btn btn-quiet btn-small help-back');
+    back.type = 'button';
+    back.innerHTML = BACK_SVG + '<span>Field guide</span>';
+    back.addEventListener('click', function () {
+      renderHelp();
+      dom.helpBody.scrollTop = scroll;
+      var b = dom.helpBody.querySelector('[data-guide="' + id + '"]');
+      if (b) b.focus({ preventScroll: true });
+    });
+    dom.helpBody.appendChild(back);
+    var wrap = el('div', 'help-guide');
+    wrap.appendChild(built.el);
+    dom.helpBody.appendChild(wrap);
+    G.helpGuide = { id: id, built: built, scroll: scroll };
+    if (built.demo) built.demo.start();
+    dom.helpBody.scrollTop = 0;
+    back.focus({ preventScroll: true });
+  }
+  function stopHelpGuide() {
+    if (G.helpGuide && G.helpGuide.built.demo) G.helpGuide.built.demo.stop();
+    G.helpGuide = null;
+  }
+  dom.helpBody.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest ? e.target.closest('[data-guide]') : null;
+    if (b) showHelpGuide(b.getAttribute('data-guide'));
+  });
   function paintIcons(root) {
     var cvs = root.querySelectorAll('canvas[data-icon]');
     for (var i = 0; i < cvs.length; i++) {
@@ -2102,6 +2790,10 @@
     dialogStack.push({ d: d, prev: document.activeElement });
     d.hidden = false;
     hideTooltip();
+    if (d === dom.helpDlg) {
+      renderCoach();
+      if (G.guide && G.guide.built.demo) G.guide.built.demo.stop();
+    }
     setTimeout(function () { if (!d.hidden) (focusEl || d.querySelector('button')).focus(); }, 30);
   }
   function closeDialog(d, silent) {
@@ -2115,7 +2807,13 @@
         break;
       }
     }
+    if (d === dom.helpDlg) {
+      stopHelpGuide();
+      renderCoach();
+      if (G.guide && G.guide.built.demo) G.guide.built.demo.start();
+    }
     if (d === dom.win && G.screen === 'game') {
+      closeGuide({ silent: true });
       updateButtons();
       if (!silent && !dom.next.hidden) dom.next.focus();
     }
@@ -2150,8 +2848,9 @@
     if (k === 'Escape') {
       if (I.drag) { cancelDrag(); return; }
       if (G.sel) { deselect(); return; }
+      if (G.guide) { closeGuide({ how: 'close' }); return; }
       if (!dom.toast.hidden) { hideToast(); G.hint = null; return; }
-      if (G.newTool) { dismissNewTool(); return; }
+      if (G.coach) { hideCoach(); return; }
       hideTooltip();
       return;
     }
@@ -2186,6 +2885,11 @@
       return;
     }
     if (k === 'h' || k === 'H') { hint(); return; }
+    if (k === 'i' || k === 'I') {
+      var gid = G.sel || G.levelGuide;
+      if (gid && !(G.guide && G.guide.id === gid)) openGuide(gid, { focus: true });
+      return;
+    }
     if (document.activeElement === dom.canvas) {
       var dirs = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
       if (dirs[k]) {
@@ -2226,12 +2930,10 @@
     var w = dom.stage.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
     var h = dom.stage.clientHeight - pt - parseFloat(cs.paddingBottom);
     if (w <= 0 || h <= 0) return;
-    // keep the house clear of the "New tool" card; once reserved for a level,
-    // the space stays so dismissing the card never moves the board
-    if (!dom.newtool.hidden && dom.newtool.parentNode === dom.stage) G.reserve = Math.max(G.reserve, dom.newtool.offsetTop + dom.newtool.offsetHeight - pt + 4);
     var before = board.T + ',' + board.ox + ',' + board.oy;
-    board.layout(w, h, G.reserve);
-    if (before !== board.T + ',' + board.ox + ',' + board.oy) hideTooltip();
+    board.layout(w, h, 0);
+    if (before !== board.T + ',' + board.ox + ',' + board.oy) { hideTooltip(); positionCoach(); }
+    if (G.guide) G.guide.fade();
   }
 
   function drawSig() {
@@ -2241,6 +2943,7 @@
       cu ? cu.x + ',' + cu.y : '', G.hint ? G.hint.x + ',' + G.hint.y : '', G.conflicts ? G.conflicts.length : 0,
       G.flash ? G.flash.t0 : 0, G.shake ? G.shake.t0 : 0, G.pulse || 0, G.focus ? G.focus.t0 : 0, G.winAt || 0,
       G.previewKey, I.drag ? 1 : 0, board.T, board.cssW, board.cssH, board.dpr, G.paletteVersion,
+      G.spot ? G.spot.x + ',' + G.spot.y + ',' + G.spot.t0 : '',
       dom.helpDlg.hidden && dom.confirm.hidden ? 0 : 1
     ].join('|');
   }
@@ -2286,6 +2989,7 @@
       shake: G.shake,
       flash: G.flash,
       pulse: G.pulse,
+      spot: G.spot,
       win: G.won ? G.winAt : null,
       reduced: reducedMQ.matches
     }, now);
@@ -2313,8 +3017,17 @@
     if (G.screen === 'game') {
       renderTray();
       renderGoals();
-      paintNewIcon();
-      if (!dom.helpDlg.hidden) paintIcons(dom.helpBody);
+      updateGuideLine();
+      if (G.guide) {
+        guideIcon(G.guide.built.icon, G.guide.id, 44);
+        if (G.guide.built.demo) G.guide.built.demo.repaint();
+      }
+      if (!dom.helpDlg.hidden) {
+        if (G.helpGuide) {
+          guideIcon(G.helpGuide.built.icon, G.helpGuide.id, 44);
+          if (G.helpGuide.built.demo) G.helpGuide.built.demo.repaint();
+        } else paintIcons(dom.helpBody);
+      }
     } else if (G.screen === 'home') {
       renderHome();
     }
@@ -2366,6 +3079,8 @@
     place: place,
     select: select,
     hint: hint,
+    openGuide: function (id) { openGuide(id); },
+    closeGuide: function () { closeGuide({ how: 'close' }); },
     solve: function () { commit((G.def.solution || []).map(norm)); }
   };
 
@@ -2385,7 +3100,11 @@
         solved: !!(G.sim && G.sim.solved), won: G.won, celebrating: !!G.winCardTimer,
         hint: G.hint ? norm(G.hint) : null, conflicts: G.conflicts ? G.conflicts.slice() : null,
         cursor: G.cursor ? { x: G.cursor.x, y: G.cursor.y } : null,
-        dragging: !!I.drag, newTool: G.newTool, T: board.T
+        dragging: !!I.drag, newTool: G.newTool, T: board.T,
+        // the field guide: the card on screen, this level's card, the coach bubble
+        guide: G.guide ? G.guide.id : null, levelGuide: G.levelGuide,
+        coach: G.coach && !dom.coach.hidden ? { x: G.coach.x, y: G.coach.y, key: G.coach.key, text: G.coach.text } : null,
+        coachStep: G.c1 ? G.c1.step : null
       };
     }
   };

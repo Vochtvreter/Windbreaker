@@ -63,15 +63,9 @@
     <div id="stage" class="stage">
       <canvas id="board" class="board" tabindex="0" aria-label="Game board" aria-describedby="board-help"></canvas>
       <p id="board-help" class="sr-only">Arrow keys move around the board. Enter places the selected tool, or turns or picks up a piece. Delete removes a piece. Number keys pick a tool, H shows a hint.</p>
-      <div id="newtool" class="newtool" role="note" aria-label="New tool" hidden>
-        <canvas id="newtool-icon" class="newtool-icon" aria-hidden="true"></canvas>
-        <div class="newtool-text">
-          <p class="newtool-title"><span class="newtool-kicker">New:</span> <span id="newtool-title">Window</span></p>
-          <p id="newtool-desc" class="newtool-desc"></p>
-        </div>
-        <button id="newtool-ok" class="btn btn-small" type="button">Got it</button>
-      </div>
       <div id="tooltip" class="tooltip" hidden></div>
+      <!-- a coach bubble pinned to the board: first steps and one-time tips -->
+      <div id="coach" class="coach" role="status" aria-live="polite" hidden><span id="coach-text"></span><i class="coach-arrow" aria-hidden="true"></i></div>
       <div id="toast" class="toast" role="status" aria-live="polite" hidden>
         <span id="toast-text"></span>
         <button id="toast-action" class="btn btn-small" type="button" hidden>Undo</button>
@@ -82,7 +76,17 @@
     </div>
 
     <div class="side">
-      <p id="tip" class="tip" hidden></p>
+      <!-- "Meet the …" card: a bottom sheet on phones, a side panel on wide screens and landscape phones -->
+      <section id="guide" class="guide" aria-labelledby="guide-title" hidden></section>
+
+      <!-- the guidance line: the level's tip; on a level that brings something new, also its card -->
+      <div id="guide-line" class="tip-line" hidden>
+        <canvas id="tip-icon" class="tip-icon" aria-hidden="true" hidden></canvas>
+        <p id="tip" class="tip"></p>
+        <button id="tip-more" class="tip-more" type="button" hidden>
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.2"/><path class="fill" d="M12 7.9v.2"/></svg>
+        </button>
+      </div>
 
       <div class="hud">
         <ul id="goals" class="goals" aria-label="Goals"></ul>
@@ -127,6 +131,7 @@
       </div>
       <p id="win-sub" class="win-sub">Level 1 solved</p>
       <div id="win-dots" class="win-dots" aria-hidden="true"></div>
+      <div id="win-chapter" class="win-chapter" hidden><canvas id="win-chapter-icon" aria-hidden="true"></canvas><p><b id="win-chapter-name"></b> <span id="win-recap"></span></p></div>
       <div id="win-teaser" class="win-teaser" hidden><canvas id="win-teaser-icon" aria-hidden="true"></canvas><span id="win-teaser-text"></span></div>
       <p id="win-final" class="win-final" hidden></p>
       <div class="win-buttons">
@@ -166,6 +171,7 @@
   <script src="js/engine.js"></script>
   <script src="js/levels.js"></script>
   <script src="js/migrate.js"></script>
+  <script src="js/guides.js"></script>
   <script src="js/sprites.js"></script>
   <script src="js/render.js"></script>
   <script src="art/art.js"></script>

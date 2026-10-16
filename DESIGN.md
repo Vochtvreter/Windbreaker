@@ -304,6 +304,13 @@ The schedule lives in the engine (`WB.INTRO_ORDER`, `WB.CONDITIONS`,
 it. Each built level also gets a stable `key` (from its unique name) so saved
 progress survives reordering.
 
+Each new thing is explained by its card in `js/guides.js` (shown by itself on
+its intro level, or a twist's first level, then folded into the guidance line
+above the board; `tests/guides.test.js` checks every card's demo). On those
+levels the card is the only guidance; practice levels show just their tip.
+Level n opens when level n-1 is solved; every level before the furthest
+solved one is open too (for progress carried over from v1.0).
+
 Rough targets: early chapters stay small (1–3 pieces, 1–3 objects, one or two
 rooms); practice levels in chapters 1–15 rise gently and use the newest thing;
 mastery chapters 16–20 bring 4–8 pieces, several rooms and decoy pieces.
@@ -374,6 +381,7 @@ js/version.js         version shown on the level-select screen (bumped per relea
 js/engine.js          rules + simulation (UMD, shared with Node tools)
 js/levels.js          generated from levels/src by tools/build-levels.js
 js/migrate.js         translates saved progress when the level order changes
+js/guides.js          the field guide: a "Meet the …" card (text + demo) per tool, object and twist
 js/sprites.js         sprite registry: every tool, object and mark drawing
 js/render.js          board composition (garden, house, airflow) using sprites
 js/game.js            UI, input, progress, screens

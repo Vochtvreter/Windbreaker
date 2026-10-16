@@ -282,6 +282,15 @@ button {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.ch-new {
+  margin-top: 1px;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ch-new b { color: var(--accent-text); font-weight: 700; }
 .ch-count {
   font-size: 13px;
   color: var(--muted);
@@ -378,6 +387,8 @@ button {
 .chapter.is-folded .ch-icon { width: 30px; height: 30px; border-radius: 9px; opacity: 0.7; }
 .chapter.is-folded .ch-fold-title { flex: 1; min-width: 0; font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chapter.is-folded .ch-fold-title span { font-weight: 500; color: var(--muted); }
+.chapter.is-folded .ch-new { display: block; margin-top: 0; font-size: 12.5px; font-weight: 500; color: var(--muted); }
+.chapter.is-folded .ch-new b { color: var(--muted); font-weight: 600; }
 .chapter.is-folded .ch-fold-meta { font-size: 12.5px; display: inline-flex; align-items: center; gap: 5px; flex: none; }
 .chapter.is-folded .ico { width: 15px; height: 15px; stroke-width: 2; }
 
@@ -483,16 +494,54 @@ button {
 .wind.is-calm { padding: 0 12px; }
 .wind.is-calm .wind-glyph { display: none; }
 
-.tip {
+.tip-line {
   grid-area: tip;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   margin: 0 auto;
-  padding: 2px 20px 6px;
-  max-width: 640px;
+  padding: 2px 16px 6px;
+  max-width: 680px;
+  min-width: 0;
+  width: 100%;
+}
+.tip {
+  min-width: 0;
   text-align: center;
   color: var(--ink-soft);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.4;
 }
+/* on a level that brings something new: its icon, the tip, and an (i) for its card */
+.tip-line.has-guide { cursor: pointer; }
+.tip-line.has-guide .tip { text-align: left; color: var(--ink); }
+.tip-icon {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 10px;
+  background: var(--bg-2);
+}
+.tip-more {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  margin: -4px -6px -4px -2px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--accent-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color .15s, transform .12s;
+}
+.tip-more:hover { background: var(--accent-soft); }
+.tip-more:active { transform: scale(0.94); }
+.tip-more .ico { width: 24px; height: 24px; }
 
 .stage {
   grid-area: stage;
@@ -566,48 +615,6 @@ button {
 .toast > span { flex: 1; min-width: 0; }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 6px); } }
 .toast.at-top { top: 12px; bottom: auto; }
-
-/* "New: <tool>" card floats over the top of the garden; the board reserves room for it */
-.newtool {
-  position: absolute;
-  z-index: 4;
-  top: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(460px, calc(100% - 28px));
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 9px 9px 9px 9px;
-  border-radius: 18px;
-  background: var(--surface);
-  box-shadow: var(--shadow-lg);
-  animation: newtool-in .4s cubic-bezier(.2, .9, .3, 1.2);
-  transition: opacity .25s ease, transform .25s ease;
-}
-.newtool.is-leaving { opacity: 0; transform: translate(-50%, -8px); pointer-events: none; }
-@keyframes newtool-in { from { opacity: 0; transform: translate(-50%, -8px) scale(0.98); } }
-.newtool-icon {
-  width: 40px;
-  height: 40px;
-  flex: none;
-  border-radius: 12px;
-  background: var(--bg-2);
-}
-.newtool-text { flex: 1; min-width: 0; }
-.newtool-kicker { color: var(--accent-text); }
-.newtool-title { font-weight: 600; font-size: 15px; line-height: 1.25; }
-.newtool-desc {
-  font-size: 13px;
-  color: var(--ink-soft);
-  line-height: 1.35;
-  margin-top: 1px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.newtool .btn { flex: none; align-self: center; }
 
 .hud {
   grid-area: hud;
@@ -768,6 +775,31 @@ button {
   background: var(--accent-2);
   box-shadow: 0 0 0 2px var(--surface);
 }
+.chip.is-new.is-selected::after { display: none; }
+/* on the selected chip: (i) opens the tool's card */
+.chip-info {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 12.5px;
+  font-weight: 800;
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  line-height: 1;
+  cursor: help;
+}
+.chip.is-selected .chip-info { display: inline-flex; }
+/* the first level's coach: "this one!" */
+.chip.is-coach { border-color: var(--accent); animation: chip-call 1.8s ease-in-out infinite; }
+@keyframes chip-call { 50% { box-shadow: 0 0 0 7px var(--accent-soft), var(--shadow); } }
 .chip:disabled {
   opacity: 0.5;
   cursor: default;
@@ -804,6 +836,243 @@ button {
   opacity: 0.95;
 }
 .drag-avatar canvas { width: 40px; height: 40px; }
+
+/* ------------------------------------------------------------------ field guide: "Meet the …" cards */
+
+/* On the game screen: a bottom sheet in place of the tray on phones and
+   tablets, a panel beside the board on wide screens, the side column on
+   landscape phones. The board is laid out in what is left, never under it. */
+.guide {
+  grid-area: guide;
+  position: relative;
+  z-index: 3;
+  min-height: 0;
+  width: 100%;
+  max-height: min(64vh, 620px);
+  max-height: min(64dvh, 620px);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: 26px 26px 0 0;
+  box-shadow: var(--shadow-lg);
+  animation: sheet-in .38s cubic-bezier(.2, .9, .3, 1.05);
+  overflow: hidden;
+}
+@keyframes sheet-in { from { opacity: 0; transform: translateY(18px); } }
+@media (min-width: 620px) {
+  .guide { justify-self: center; width: min(600px, calc(100% - 32px)); margin-bottom: 16px; border-radius: 26px; }
+}
+.game.is-guiding {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: "top" "stage" "guide";
+}
+.game.is-guiding .hud,
+.game.is-guiding .tray-wrap { display: none; }
+
+.guide > .gcard {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.gcard-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 12px 0 18px;
+}
+.help-guide .gcard-head { padding: 4px 0 0; }
+.gcard-icon {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 14px;
+  background: var(--bg-2);
+}
+.gcard-titles { flex: 1; min-width: 0; }
+.gcard-kicker {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+.gcard-title { font-size: 21px; font-weight: 700; line-height: 1.2; letter-spacing: -0.01em; }
+.gcard-close { align-self: flex-start; }
+.gcard-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px 18px 4px;
+}
+.help-guide .gcard-main { padding: 8px 0 0; overflow: visible; }
+/* more to read below: the last lines fade out */
+.gcard-main.can-scroll {
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 30px), transparent);
+  mask-image: linear-gradient(180deg, #000 calc(100% - 30px), transparent);
+}
+/* the board settles in softly when the card folds away */
+.board.is-settling { animation: board-settle .45s ease-out; }
+@keyframes board-settle { from { opacity: 0.35; } }
+.gcard-one { font-size: 16px; line-height: 1.4; color: var(--ink); }
+.gcard-status {
+  margin-top: 8px;
+  padding: 7px 11px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+.gcard-status b { color: var(--ink); }
+.gcard-status .tt-dim { color: var(--muted); }
+.gcard-points {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 7px;
+}
+.gcard-points li {
+  position: relative;
+  padding-left: 20px;
+  font-size: 15px;
+  line-height: 1.42;
+  color: var(--ink);
+}
+.gcard-points li::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 0.58em;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--air);
+}
+.gcard-controls {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.gcard-controls .ico { width: 20px; height: 20px; margin-top: 1px; color: var(--accent-text); }
+.gcard-buttons {
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 14px max(14px, env(safe-area-inset-bottom)) 14px;
+  border-top: 1px solid var(--line);
+}
+.gcard-buttons .btn { min-width: 0; }
+.gcard-buttons .btn-primary { padding: 0 24px; }
+
+/* the demo: a tiny house drawn by the board renderer */
+.gdemo { margin: 12px auto 2px; max-width: 300px; }
+.gdemo-box {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--line);
+  cursor: pointer;
+  line-height: 0;
+}
+.gdemo-canvas { display: block; }
+.gdemo-cap {
+  margin-top: 8px;
+  min-height: 2.8em;
+  text-align: center;
+  font-size: 14.5px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+.gdemo-cap.is-in { animation: cap-in .45s ease-out; }
+@keyframes cap-in { from { opacity: 0; transform: translateY(3px); } }
+.gdemo-dots { display: flex; justify-content: center; gap: 6px; margin-top: 2px; }
+.gdemo-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line-strong); transition: background-color .3s; }
+.gdemo-dots i.on { background: var(--accent); }
+/* reduced motion: before and after, standing still side by side */
+.gdemo.is-still { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 460px; }
+.gdemo.is-still .gdemo-box { cursor: default; }
+.gdemo-fig { margin: 0; min-width: 0; }
+.gdemo.is-still .gdemo-cap { font-size: 13px; min-height: 0; }
+
+/* the coach: a soft bubble pinned to a cell of the board */
+.coach {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  top: 0;
+  width: max-content;
+  max-width: min(250px, calc(100% - 16px));
+  padding: 9px 13px;
+  border-radius: 14px;
+  background: var(--accent-fill);
+  color: var(--accent-ink);
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  box-shadow: var(--shadow-lg);
+  /* taps go through to the board: the bubble never swallows a move */
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.coach.is-in { animation: coach-in .32s cubic-bezier(.2, .9, .3, 1.2), coach-float 3.2s ease-in-out .32s infinite; }
+@keyframes coach-in { from { opacity: 0; transform: scale(0.94); } }
+@keyframes coach-float { 50% { transform: translateY(-2px); } }
+.coach-arrow {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--accent-fill);
+  border-radius: 2px;
+  transform: rotate(45deg);
+}
+.coach[data-side="above"] .coach-arrow { bottom: -5px; }
+.coach[data-side="below"] .coach-arrow { top: -5px; }
+.coach[data-side="right"] .coach-arrow { left: -5px; }
+.coach[data-side="left"] .coach-arrow { right: -5px; }
+
+/* help: the field guide */
+.fg-note { font-size: 14px; }
+.help-body h4 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  margin: 12px 0 2px;
+}
+.fguide { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.fg-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 6px 7px 4px;
+  border: none;
+  border-radius: 14px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color .15s;
+}
+.fg-item:hover { background: var(--surface-2); }
+.fg-item canvas { width: 40px; height: 40px; border-radius: 12px; background: var(--bg-2); flex: none; }
+.fg-text { flex: 1; min-width: 0; }
+.fg-text > span { display: block; }
+.fg-go { width: 18px; height: 18px; color: var(--muted); }
+.help-back { margin: 0 0 4px -10px; padding: 0 12px 0 6px; gap: 2px; }
+.help-back .ico { width: 18px; height: 18px; }
+.help-guide .gdemo { max-width: 320px; }
+.help-body .help-guide p { margin-bottom: 0; }
+.help-body .help-guide .gcard-one { color: var(--ink); }
+.help-body .help-guide .gcard-kicker { color: var(--accent-text); }
 
 /* ------------------------------------------------------------------ overlays */
 
@@ -881,6 +1150,28 @@ button {
 }
 .win-dots i.on { background: var(--accent); }
 .win-dots i.now { box-shadow: 0 0 0 3px var(--accent-soft); }
+.win-dots.is-full i { animation: dot-pop .5s cubic-bezier(.3, 1.6, .5, 1) backwards; }
+.win-dots.is-full i:nth-child(2) { animation-delay: .07s; }
+.win-dots.is-full i:nth-child(3) { animation-delay: .14s; }
+.win-dots.is-full i:nth-child(4) { animation-delay: .21s; }
+.win-dots.is-full i:nth-child(5) { animation-delay: .28s; }
+@keyframes dot-pop { from { transform: scale(0.4); } }
+.win-chapter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px auto 0;
+  padding: 10px 14px 10px 10px;
+  max-width: 100%;
+  border-radius: 16px;
+  background: var(--accent-soft);
+  text-align: left;
+  font-size: 14.5px;
+  line-height: 1.38;
+  color: var(--ink);
+}
+.win-chapter canvas { width: 40px; height: 40px; flex: none; border-radius: 12px; background: var(--surface); }
+.win-chapter b { display: block; font-weight: 700; }
 .win-teaser {
   display: flex;
   align-items: center;
@@ -976,8 +1267,8 @@ button {
 .gloss-name { font-weight: 600; }
 .gloss-desc { color: var(--ink-soft); font-size: 13.5px; line-height: 1.35; }
 .help-body .keys + h3 { margin-top: 18px; }
-.keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; color: var(--ink-soft); font-size: 13.5px; }
-.keys dt { font-weight: 600; color: var(--ink); white-space: nowrap; }
+.keys { display: grid; grid-template-columns: fit-content(46%) 1fr; gap: 6px 12px; margin: 0; color: var(--ink-soft); font-size: 13.5px; }
+.keys dt { font-weight: 600; color: var(--ink); }
 .keys dd { margin: 0; }
 kbd {
   font-family: inherit;
@@ -993,6 +1284,15 @@ kbd {
 @media (min-width: 900px) and (min-height: 600px) {
   .actions .icon-btn { padding: 0 12px 0 10px; }
   .btn-label { display: inline; }
+  /* the card is a panel beside the board; tray and buttons stay in reach */
+  .game.is-guiding {
+    grid-template-columns: minmax(0, 1fr) minmax(330px, 390px);
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+    grid-template-areas: "top top" "tip guide" "stage guide" "hud guide" "tray guide";
+  }
+  .game.is-guiding .hud { display: flex; }
+  .game.is-guiding .tray-wrap { display: block; }
+  .guide { align-self: start; justify-self: stretch; width: auto; max-height: 100%; margin: 6px 16px 16px 4px; border-radius: 24px; }
 }
 
 @media (max-width: 419px) {
@@ -1010,16 +1310,20 @@ kbd {
   .tray.is-many .chip { width: min(52px, calc((100vw - 50px) / 7)); min-width: 44px; height: 52px; border-radius: 15px; }
   .tray.is-many .chip canvas { width: 30px; height: 30px; }
   .level-title { font-size: 15.5px; }
-  .tip { font-size: 13.5px; padding: 0 16px 4px; }
+  .tip-line { padding: 0 12px 4px; }
+  .tip { font-size: 14.5px; }
   /* full-bleed garden on phones */
   .stage { padding: 0; }
   .board { border-radius: 0; box-shadow: none; }
   .hud { padding-left: 12px; padding-right: 6px; padding-top: 4px; }
   .tray { padding-left: 12px; padding-right: 12px; min-height: 88px; }
+  .guide { max-height: min(66vh, 620px); max-height: min(66dvh, 620px); }
+  .gdemo { max-width: 250px; }
+  .gcard-head { padding-left: 16px; }
+  .gcard-main { padding-left: 16px; padding-right: 16px; }
 }
 
 @media (max-width: 420px) {
-  .newtool-desc { -webkit-line-clamp: 3; }
   /* goals become icon + count, so up to six fit on one line */
   .goals { gap: 0 6px; }
   .goal { background: transparent; box-shadow: none; padding: 0 2px 0 0; gap: 2px; height: 32px; font-size: 13px; }
@@ -1049,7 +1353,8 @@ kbd {
     padding: 4px 12px max(10px, env(safe-area-inset-bottom)) 4px;
   }
   .topbar { padding-top: 4px; padding-bottom: 0; }
-  .tip { order: 0; text-align: left; padding: 0 4px; margin: 0; font-size: 13px; }
+  .tip-line { order: 0; justify-content: flex-start; padding: 0 4px; margin: 0; }
+  .tip { text-align: left; font-size: 14px; }
   .tray-wrap { order: 1; flex: none; }
   .hud { order: 2; }
   .stage { padding: 4px 4px 8px 12px; }
@@ -1070,23 +1375,31 @@ kbd {
   .chip, .tray.is-many .chip { width: 50px; height: 50px; padding: 0; min-width: 0; border-radius: 15px; touch-action: none; }
   .chip canvas, .tray.is-many .chip canvas { width: 32px; height: 32px; }
   .chip-count { top: 2px; right: 2px; min-width: 19px; height: 19px; font-size: 12px; padding: 0 4px; }
-  /* the "New" card sits at the top of the side column, so the house keeps its size */
-  .side .newtool {
-    order: -1;
-    position: static;
-    flex: none;
-    transform: none;
-    width: auto;
-    flex-wrap: wrap;
-    padding: 7px;
-    gap: 6px 8px;
-    box-shadow: var(--shadow);
-    animation: newtool-in-side .35s ease-out;
+  /* the card takes the whole side column while it is open */
+  .game.is-guiding {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 42%);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      "top top"
+      "stage side";
   }
-  .side .newtool.is-leaving { transform: translateY(-6px); }
-  .side .newtool-text { flex: 1 1 140px; }
-  .side .newtool .btn { margin-left: auto; }
-  .side .newtool-desc { -webkit-line-clamp: 4; }
+  .game.is-guiding .side { overflow: hidden; padding-right: 10px; }
+  .side .guide {
+    flex: 1 1 auto;
+    max-height: none;
+    width: auto;
+    margin: 0 0 max(4px, env(safe-area-inset-bottom));
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    animation-name: fade-in;
+  }
+  .gcard-head { padding: 12px 10px 0 14px; }
+  .gcard-main { padding: 6px 14px 4px; }
+  .gcard-title { font-size: 18px; }
+  .gcard-one { font-size: 15px; }
+  .gcard-buttons { padding: 8px 10px; }
+  .gdemo { max-width: 240px; margin-top: 8px; }
+  .coach { max-width: min(220px, calc(100% - 16px)); font-size: 13.5px; }
   /* toasts float in the top bar, over the level title, never over the house */
   .toast, .toast.at-top {
     position: fixed;
@@ -1097,16 +1410,12 @@ kbd {
     max-width: calc(100vw - max(240px, 36vw) - 68px);
     animation-name: toast-in-top;
   }
-  .newtool-icon { width: 34px; height: 34px; }
-  .newtool-desc { font-size: 12px; line-height: 1.3; }
-  .newtool-title { font-size: 14px; }
   .overlay.sheet { justify-content: flex-end; align-items: flex-end; }
   .win-card { width: min(340px, 100%); padding: 16px 18px 16px; }
   .win-title { font-size: 22px; }
   .win-buttons { margin-top: 12px; }
 }
 
-@keyframes newtool-in-side { from { opacity: 0; transform: translateY(-6px); } }
 @keyframes toast-in-top { from { opacity: 0; transform: translateY(-6px); } }
 
 @media (prefers-reduced-motion: reduce) {

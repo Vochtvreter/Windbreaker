@@ -8,7 +8,8 @@ the laundry dry, keep the candles lit and get the kitchen smoke outside.
 
 * 100 levels, from very easy to properly tricky
 * new things arrive one at a time: each chapter introduces a single tool or
-  object, explains it, and gives you four more puzzles with what you know
+  object with a friendly "Meet the …" card and a little animated demo, then
+  gives you four more puzzles with what you know
 * restyle it yourself: colours, sizes, speeds and your own drawings (see
   `GRAPHICS.md` and `studio.html`)
 * plays with mouse or touch, on phones and desktops, in light or dark mode
@@ -38,12 +39,15 @@ the laundry dry, keep the candles lit and get the kitchen smoke outside.
   ceiling fan.
 
 **Controls:** tap a tool, then a highlighted cell (or drag it onto the board).
+Press and hold a tool (right-click with a mouse), or tap a thing in the house,
+to see its card again; Help has a Field guide of everything you have met.
 Tap a placed fan or deflector to turn it; tapping any other piece puts it back
 in the tray. Drag a piece to move it; drag it off the board, right-click or
 long-press to remove it. The Undo, Reset and Hint buttons are always there
 (undo is also Ctrl/Cmd+Z; redo is Ctrl/Cmd+Shift+Z or Ctrl+Y), and the **?**
 button at the top opens the rules. With a keyboard: 1–9 and 0 pick a tool, R
-turns the piece under the pointer, H shows a hint, the arrow keys and Enter
+turns the piece under the pointer, H shows a hint, I opens the card of the
+selected tool (or of what the level brings), the arrow keys and Enter
 move around the board and place or turn pieces, Delete removes one, Esc
 deselects. Progress is saved in your browser.
 
@@ -73,6 +77,9 @@ All paths are relative, so it works from any sub-path.
 * `js/version.js` — the version shown on the level-select screen, bumped with
   every release.
 * `js/render.js`, `js/game.js`, `css/style.css`, `index.html` — the game.
+* `js/guides.js` — the "Meet the …" cards: what each tool, object and twist
+  does, in plain words, and its little demo house. Edit the text right there
+  (the comment at the top says how); `npm test` checks every demo.
 * `GRAPHICS.md` — how the game looks and how to change it. It starts with a
   quick start for artists: colours, speeds and sizes, and your own drawings,
   all in one file (`art/art.js`), with the art studio (`studio.html`) as the

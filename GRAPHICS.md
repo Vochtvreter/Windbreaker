@@ -324,8 +324,12 @@ cached, so big SVGs cost nothing per frame.
 it, the happy state is used: `spinning`, `lit`, `dry`, `calm`, `swaying`, `clear`.
 
 Not sprites: the garden, walls, floor and tables (colours, plus textures), the
-airflow, the wind streaks, smoke, highlights, requirement meters, and the hint
-and win effects. Colours and `tuning` change those.
+airflow, the wind streaks, smoke, highlights, requirement meters, the hint
+and win effects, the ring under a coach bubble, and the field guide's icons
+for courtyards, hatched walls and calm days. Colours and `tuning` change those.
+
+The little houses on the "Meet the …" cards (js/guides.js) are drawn by the
+same board renderer, so your sprites, colours and textures show there too.
 
 ### textures
 
@@ -442,9 +446,11 @@ listener and a check at `load`.
 ### The visual check: `tools/visual.js`
 
 A graphics change should change exactly what you meant it to. The visual
-check renders 58 pictures (light and dark, phone and desktop) of the home
+check renders 76 pictures (light and dark, phone and desktop) of the home
 screen, levels, the gallery rooms, a hint, the help sheet, a win, reduced
-motion and the example art, and compares them pixel by pixel with a baseline.
+motion, the example art and the field guide (a "Meet the …" card with its
+demo, the guidance line, the first level's coach, a card in Help), and
+compares them pixel by pixel with a baseline.
 
 ```sh
 node tools/visual.js --baseline               # the reference: the game as it is now

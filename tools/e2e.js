@@ -344,6 +344,36 @@ async function longPress(page, pt, ms) {
 }
 
 function key(p) { return p.type + '@' + p.x + ',' + p.y + (WB.TOOLS[p.type].rotations > 1 ? '/' + (p.d | 0) : ''); }
+
+// The "Meet the …" card a level brings (js/guides.js): the chapter's new thing
+// on the chapter's first level, or a twist on the first level that has it.
+function levelGuides(data) {
+  const out = {}, seen = {};
+  data.levels.forEach((lv) => {
+    const ch = data.chapters.find((c) => lv.id >= c.first && lv.id <= c.last);
+    const intro = ch && (ch.intro || (ch.tool ? { kind: 'tool', id: ch.tool } : null));
+    if (intro && ch.first === lv.id) out[lv.id] = intro.id;
+    WB.levelConditions(lv).forEach((c) => { if (!seen[c]) { seen[c] = true; if (!out[lv.id]) out[lv.id] = c; } });
+  });
+  return out;
+}
+// The level's tip as the guidance line says it (screen words, not compass words).
+const SIDE = { north: 'top', east: 'right', south: 'bottom', west: 'left' };
+// (the walk plays with a mouse, so "tap" reads "click")
+function plainTip(t) {
+  return String(t || '').replace(/\bfrom the (north|east|south|west)\b/gi, (m, d) => 'from the ' + SIDE[d.toLowerCase()])
+    .replace(/\bTap\b/g, 'Click').replace(/\btap\b/g, 'click');
+}
+async function guideUi(page) {
+  return page.evaluate(() => {
+    const g = document.getElementById('guide'), line = document.getElementById('guide-line');
+    return {
+      card: g.hidden ? null : (document.getElementById('guide-title') || {}).textContent || '',
+      line: line.hidden ? null : document.getElementById('tip').textContent,
+      more: !line.hidden && !document.getElementById('tip-more').hidden,
+    };
+  });
+}
 function keys(list) { return list.map(key).sort(); }
 
 async function shot(page, name) {
@@ -488,13 +518,9 @@ async function sectionWalk() {
     });
     if (!data) return;
     const chapterOf = (id) => data.chapters.find((c) => id >= c.first && id <= c.last);
-    // things that arrive without a tool get a "New" card on the first level they appear in
-    const THINGS = [['c', 'Candle'], ['s', 'Stove'], ['o', 'Table'], ['l', 'Laundry'], ['n', 'Papers'], ['f', 'Fern']];
-    const thingIntro = {};
-    THINGS.forEach(([ch, name]) => {
-      const lv = data.levels.find((l) => l.map.join('').includes(ch));
-      if (lv && !thingIntro[lv.id]) thingIntro[lv.id] = name;
-    });
+    // every new tool, object and twist brings its card on the level that introduces it
+    const cards = levelGuides(data);
+    const guides = await page.evaluate(() => window.WB.GUIDES || {});
     let unlocked = false; // set after a failure, to keep walking
     for (let i = 0; i < data.levels.length; i++) {
       const lv = data.levels[i];
@@ -508,8 +534,6 @@ async function sectionWalk() {
           num: document.getElementById('lvl-num').textContent,
           chips: Array.from(document.querySelectorAll('.chip')).map((c) => [c.getAttribute('data-tool'), c.querySelector('.chip-count').textContent]),
           goals: document.querySelectorAll('#goals .goal').length,
-          newtool: document.getElementById('newtool').hidden ? null : document.getElementById('newtool-title').textContent,
-          tip: document.getElementById('tip').hidden ? null : document.getElementById('tip').textContent,
           hash: location.hash,
         }));
         eq(ui.num, String(lv.id), title + ': level number in the top bar');
@@ -518,11 +542,40 @@ async function sectionWalk() {
         eq(ui.chips, inv, title + ': tray chips and counts');
         const L = WB.parseLevel(lv);
         eq(ui.goals, new Set(L.objects.map((o) => o.type)).size, title + ': goals strip has one entry per object type');
-        eq(ui.tip, lv.tip || null, title + ': tip line');
         const ch = chapterOf(lv.id);
-        const intro = ch && ch.tool && ch.first === lv.id && !unlocked;
-        if (intro) eq(ui.newtool, WB.TOOLS[ch.tool].name, title + ': "New: tool" card');
-        else if (!unlocked) eq(ui.newtool, thingIntro[lv.id] || null, title + (thingIntro[lv.id] ? ': "New: ' + thingIntro[lv.id] + '" card' : ': no "New" card'));
+        const card = cards[lv.id] && guides[cards[lv.id]];
+        eq((await state(page)).levelGuide, cards[lv.id] || null, title + ': the card this level brings');
+        let gu = await guideUi(page);
+        if (card && !unlocked) {
+          // one voice: the card, and no tip line beside it
+          eq(gu.card, 'Meet the ' + card.title.toLowerCase(), title + ': "Meet the …" card');
+          eq(gu.line, null, title + ': no tip line while the card is open');
+          if (i === 0) await shot(page, 'walk-level-' + lv.id + '-card');
+          await page.click('#guide-go');
+          gu = await guideUi(page);
+          eq(gu.card, null, title + ': "Let\u2019s try it" folds the card away');
+          assert(gu.more, title + ': the guidance line can open the card again');
+          const want = i === 0 ? 'Make the pinwheel spin!' : lv.tip ? plainTip(lv.tip) : card.oneLiner.replace(/\bTap\b/g, 'Click').replace(/\btap\b/g, 'click');
+          eq(gu.line, want, title + ': guidance line');
+        } else if (!unlocked) {
+          eq(gu.card, null, title + ': no card on a practice level');
+          eq(gu.line, lv.tip ? plainTip(lv.tip) : null, title + ': tip line');
+          eq(gu.more, false, title + ': just the tip on a practice level');
+        }
+        if (i === 0 && !unlocked) {
+          // the first level's coach: where the wind comes in, then where it stops
+          const inlet = WB.parseLevel(lv).fixed.find((p) => p.type === 'window');
+          const c1 = await expectState(page, (st) => st.coach && st.coachStep === 'in', title + ': coach step 1 (the wind comes in here)');
+          eq([c1.coach.x, c1.coach.y], [inlet.x, inlet.y], title + ': step 1 is pinned to the window the wind comes in by');
+          await shot(page, 'walk-level-' + lv.id + '-coach');
+          const bb = await page.locator('#board').boundingBox();
+          await page.mouse.click(bb.x + 16, bb.y + 16); // a tap anywhere on the board: the next step
+          await page.mouse.move(2, 2);
+          const c2 = await expectState(page, (st) => st.coach && st.coachStep === 'out', title + ': coach step 2 (no way out: put a window here)');
+          // on the first level, the answer is right where the breeze stops
+          eq([c2.coach.x, c2.coach.y], [lv.solution[0].x, lv.solution[0].y], title + ': step 2 is pinned where the breeze stops');
+          assert(await page.$eval('.chip[data-tool="window"]', (b) => b.classList.contains('is-coach')), title + ': the window in the tray calls softly');
+        }
         if (i === 0) await shot(page, 'walk-level-' + lv.id + '-start');
 
         const sol = lv.solution || [];
@@ -547,6 +600,17 @@ async function sectionWalk() {
         (unlocked ? solvedUnlocked : solvedIds).push(lv.id);
         const sub = await page.textContent('#win-sub');
         assert(sub.includes('Level ' + lv.id), title + ': win card names the level (' + sub + ')');
+        // the last level of a chapter: a small "chapter complete" moment, and what is next
+        if (!unlocked && ch && ch.last === lv.id) {
+          eq((await page.textContent('#win-title')).trim(), 'Chapter complete!', title + ': chapter complete');
+          assert(await page.isVisible('#win-chapter'), title + ': the chapter recap is shown');
+          const nch = next && chapterOf(next.id);
+          const nit = nch && (nch.intro || (nch.tool ? { id: nch.tool } : null));
+          if (nit) assert((await page.textContent('#win-teaser-text')).includes('meet the ' + guides[nit.id].title.toLowerCase()), title + ': it says what the next chapter brings');
+          if (lv.id === data.chapters[0].last) await shot(page, 'walk-chapter-complete');
+        } else if (!unlocked) {
+          eq((await page.textContent('#win-title')).trim(), 'Fresh air!', title + ': win title');
+        }
         if (i === 0) await shot(page, 'walk-level-' + lv.id + '-win');
         if (next) {
           await page.waitForFunction(() => document.activeElement && document.activeElement.id === 'win-next', null, { timeout: 1000 })
@@ -604,13 +668,45 @@ async function sectionInteract() {
     const at = (x, y) => cellXY(page, x, y);
     const piecesAre = (list, what) => expectState(page, (s) => JSON.stringify(keys(s.pieces)) === JSON.stringify(keys(list)), what + ' → ' + JSON.stringify(keys(list)));
 
-    await step('open the fixture level', async () => {
+    await step('open the fixture level: the chapter\'s new tool brings its card', async () => {
       await openHome(page);
       await page.click('#btn-play');
       await expectState(page, (s) => s.screen === 'game' && s.id === 1, 'level 1 open');
-      assert(await page.isVisible('#newtool'), '"New: Fan" card on the chapter\'s first level');
-      eq(await page.textContent('#newtool-title'), 'Fan', 'new tool name');
+      const gu = await guideUi(page);
+      eq(gu.card, 'Meet the fan', '"Meet the fan" card on the chapter\'s first level');
+      eq(gu.line, null, 'no tip line while the card speaks');
+      assert(await page.$eval('#guide .gdemo canvas', (c) => c.width > 0), 'the card has its little demo');
+      assert(await page.isVisible('#guide-show') && await page.isVisible('#guide-go'), '"Show me" and "Let\u2019s try it"');
       await settle(page);
+      // the card is beside the board, never over it
+      const r = await page.evaluate(() => {
+        const g = document.getElementById('guide').getBoundingClientRect(), b = document.getElementById('board').getBoundingClientRect();
+        return { overlap: g.left < b.right && g.right > b.left && g.top < b.bottom && g.bottom > b.top };
+      });
+      assert(!r.overlap, 'the card does not cover the board');
+      // one voice: hovering the board says nothing while the card is open
+      const p = await at(4, 2);
+      await page.mouse.move(p.x, p.y);
+      await sleep(700);
+      assert(await page.isHidden('#tooltip'), 'no tooltip while the card is open');
+      await page.mouse.move(2, 2);
+      await shot(page, 'interact-guide-card');
+    });
+    await step('"Let\u2019s try it" folds the card into the guidance line, which opens it again', async () => {
+      await page.click('#guide-go');
+      await page.waitForSelector('#guide', { state: 'hidden' });
+      let gu = await guideUi(page);
+      eq(gu.line, 'A fixture level for the end-to-end test.', 'the tip line comes back');
+      assert(gu.more, 'with an (i) for the card');
+      await settle(page);
+      await page.click('#tip-more');
+      gu = await guideUi(page);
+      eq(gu.card, 'Fan', 'the (i) opens the fan\'s card again');
+      await page.keyboard.press('Escape');
+      await page.waitForSelector('#guide', { state: 'hidden' });
+      await settle(page);
+      const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('windbreaker.v1')).seenTools);
+      assert(saved.includes('fan'), 'a card seen is remembered');
     });
     await step('hover shows a tooltip; a fixed piece says it is fixed', async () => {
       const p = await at(4, 2);
@@ -621,12 +717,20 @@ async function sectionInteract() {
       await page.waitForFunction(() => /fixed/i.test(document.getElementById('tooltip').textContent) && !document.getElementById('tooltip').hidden, null, { timeout: 2000 });
       await piecesAre([], 'a fixed piece cannot be picked up');
     });
-    await step('"Got it" dismisses the new tool card without moving the board', async () => {
-      const before = await at(0, 0);
-      await page.click('#newtool-ok');
-      await page.waitForSelector('#newtool', { state: 'hidden' });
+    await step('right-click on a tool, tap on an object: their cards', async () => {
+      await page.click('.chip[data-tool="deflector"]', { button: 'right' });
+      eq((await guideUi(page)).card, 'Deflector', 'right-clicking a tool opens its card');
+      eq((await state(page)).sel, null, 'and does not pick it up');
+      await page.click('#guide-go');
+      await page.waitForSelector('#guide', { state: 'hidden' });
       await settle(page);
-      eq(await at(0, 0), before, 'board did not move');
+      await clickCell(page, 4, 2);
+      eq((await guideUi(page)).card, 'Pinwheel', 'clicking an object opens its card');
+      assert(/Pinwheel/.test(await page.textContent('#guide .gcard-status')), 'with how this one is doing');
+      await shot(page, 'interact-object-card');
+      await page.click('#guide .gcard-close');
+      await page.waitForSelector('#guide', { state: 'hidden' });
+      await settle(page);
     });
     await step('drag a fan from the tray onto the board', async () => {
       const from = await center(page, '.chip[data-tool="fan"]');
@@ -761,7 +865,8 @@ async function sectionInteract() {
       await page.reload();
       await expectState(page, (s) => s.screen === 'game' && s.id === 1, 'level 1 reopens after reload');
       await piecesAre([{ type: 'fan', x: 1, y: 4, d: 3 }], 'board restored');
-      assert(await page.isHidden('#newtool'), 'a dismissed "New" card stays dismissed');
+      assert(await page.isHidden('#guide'), 'a card seen does not open by itself again');
+      assert((await guideUi(page)).more, 'the guidance line still offers it');
       await settle(page);
     });
     await step('solving shows the win card; closing it leaves a Next button', async () => {
@@ -827,7 +932,13 @@ async function sectionInteract() {
       await page.waitForSelector('#help:not([hidden])');
       const txt = await page.textContent('#help-body');
       assert(/way out/.test(txt) && /Fan/.test(txt) && /Pinwheel/.test(txt), 'help explains the rules and lists tools and objects');
+      assert(/Field guide/.test(txt), 'help has the field guide');
       await shot(page, 'interact-help');
+      await page.click('#help-body [data-guide="fan"]');
+      await page.waitForSelector('#help-body .help-guide .gdemo canvas');
+      assert(/Blows a gentle breeze/.test(await page.textContent('#help-body')), 'a field guide entry opens its card in the help');
+      await page.click('#help-body .help-back');
+      await page.waitForSelector('#help-body [data-guide="fan"]');
       await page.keyboard.press('Escape');
       await page.waitForSelector('#help', { state: 'hidden' });
     });
@@ -869,8 +980,15 @@ async function sectionTouch() {
       await openHome(page);
       await page.tap('.lvl[data-level="1"]');
       await expectState(page, (s) => s.screen === 'game' && s.id === 1, 'level 1');
-      await page.tap('#newtool-ok');
-      await page.waitForSelector('#newtool', { state: 'hidden' });
+      // a bottom sheet on a phone: under the board, not over it
+      const r = await page.evaluate(() => {
+        const g = document.getElementById('guide').getBoundingClientRect(), b = document.getElementById('board').getBoundingClientRect();
+        return { g: g.top, b: b.bottom };
+      });
+      assert(r.g >= r.b - 1, 'the card sits below the board (card top ' + Math.round(r.g) + ', board bottom ' + Math.round(r.b) + ')');
+      await shot(page, 'touch-guide-sheet');
+      await page.tap('#guide-go');
+      await page.waitForSelector('#guide', { state: 'hidden' });
       await settle(page);
       T = (await state(page)).T;
       await noHorizontalScroll(page, '390x844 game');
@@ -889,6 +1007,16 @@ async function sectionTouch() {
     await step('long-press removes a piece', async () => {
       await longPress(page, await at(1, 4), 700);
       await piecesAre([], 'long-press removed the fan');
+    });
+    await step('long-press on a tool opens its card (the lifting finger taps nothing)', async () => {
+      await settle(page);
+      await longPress(page, await center(page, '.chip[data-tool="window"]'), 750);
+      await sleep(150);
+      eq((await guideUi(page)).card, 'Window', 'the window\'s card');
+      eq((await state(page)).sel, null, 'the tool is not picked up');
+      await page.tap('#guide-go');
+      await page.waitForSelector('#guide', { state: 'hidden' });
+      await settle(page);
     });
     // While dragging on touch the piece floats above the finger, so the finger
     // aims a little below the target cell, as a player's would.
@@ -945,33 +1073,49 @@ async function sectionMobile() {
       const biggest = (list) => list.reduce((a, b) => (area(b) > area(a) ? b : a));
       const big = biggest(data.levels);
       const many = data.levels.reduce((a, b) => (Object.keys(b.inventory).length > Object.keys(a.inventory).length ? b : a));
-      const intros = data.levels.filter((l) => data.chapters.some((c) => c.tool && c.first === l.id));
+      const intros = data.levels.filter((l) => data.chapters.some((c) => (c.intro || c.tool) && c.first === l.id));
       const intro = intros.length ? biggest(intros) : null;
       const picks = [big, many, intro].filter((l, i, arr) => l && arr.indexOf(l) === i);
       for (const lv of picks) {
         await step(tag + ': level ' + lv.id + ' (' + lv.map[0].length + 'x' + lv.map.length + ', ' + Object.keys(lv.inventory).length + ' tools' +
-          (lv === intro ? ', "New" card' : '') + ') fits', async () => {
+          (lv === intro ? ', "Meet" card' : '') + ') fits', async () => {
           await page.goto(BASE + '?unlock#' + lv.id);
           await expectState(page, (s) => s.screen === 'game' && s.id === lv.id, 'level open');
           await settle(page);
           await noHorizontalScroll(page, tag + ' level ' + lv.id);
-          const r = await page.evaluate((L) => {
+          const measure = () => page.evaluate((L) => {
             const a = window.__wb.cell(0, 0), b = window.__wb.cell(L.w - 1, L.h - 1);
             const chips = Array.from(document.querySelectorAll('.chip')).map((c) => { const q = c.getBoundingClientRect(); return Math.min(q.width, q.height); });
-            const card = document.getElementById('newtool');
+            const card = document.getElementById('guide');
             const cr = card.hidden ? null : card.getBoundingClientRect();
             return { left: a.x - a.size / 2, top: a.y - a.size / 2, right: b.x + b.size / 2, bottom: b.y + b.size / 2, T: a.size, chips,
               card: cr && { top: cr.top, bottom: cr.bottom, left: cr.left, right: cr.right }, iw: innerWidth, ih: innerHeight };
           }, { w: lv.map[0].length, h: lv.map.length });
-          const box = Math.round(r.left) + ',' + Math.round(r.top) + '..' + Math.round(r.right) + ',' + Math.round(r.bottom);
-          assert(r.left >= 0 && r.right <= r.iw && r.top >= 0 && r.bottom <= r.ih, 'house fully in view (' + box + ' in ' + r.iw + 'x' + r.ih + ')');
-          assert(r.T >= 16, 'tiles are not tiny (' + r.T + ' px)');
-          assert(r.chips.every((c) => c >= 44), 'tray chips at least 44 px (' + r.chips.map(Math.round).join(', ') + ')');
+          let r = await measure();
+          const inView = (what) => {
+            const box = Math.round(r.left) + ',' + Math.round(r.top) + '..' + Math.round(r.right) + ',' + Math.round(r.bottom);
+            assert(r.left >= 0 && r.right <= r.iw && r.top >= 0 && r.bottom <= r.ih, 'house fully in view' + what + ' (' + box + ' in ' + r.iw + 'x' + r.ih + ')');
+            assert(r.T >= 16, 'tiles are not tiny' + what + ' (' + r.T + ' px)');
+            return box;
+          };
           if (lv === intro) {
-            assert(r.card, '"New" card shown on a tool\'s first level');
+            assert(r.card, '"Meet" card shown on the first level of a chapter');
+            const box = inView(' with the card open');
             const overlap = r.card.bottom > r.top && r.card.top < r.bottom && r.card.right > r.left && r.card.left < r.right;
-            assert(!overlap, '"New" card (' + Math.round(r.card.top) + '..' + Math.round(r.card.bottom) + ') covers the house (' + box + ')');
+            assert(!overlap, '"Meet" card (' + Math.round(r.card.top) + '..' + Math.round(r.card.bottom) + ') covers the house (' + box + ')');
+            await shot(page, file + '-level-' + lv.id + '-card');
+            await page.tap('#guide-go');
+            await page.waitForSelector('#guide', { state: 'hidden' });
+            await settle(page);
+            r = await measure();
+          } else if (r.card) {
+            await page.tap('#guide-go');
+            await page.waitForSelector('#guide', { state: 'hidden' });
+            await settle(page);
+            r = await measure();
           }
+          inView('');
+          assert(r.chips.every((c) => c >= 44), 'tray chips at least 44 px (' + r.chips.map(Math.round).join(', ') + ')');
           await shot(page, file + '-level-' + lv.id);
         });
       }
@@ -981,6 +1125,11 @@ async function sectionMobile() {
           await page.goto(BASE + '?unlock#' + lv.id);
           await expectState(page, (s) => s.screen === 'game' && s.id === lv.id, 'level open');
           await settle(page);
+          if (await page.isVisible('#guide')) {
+            await page.tap('#guide-go');
+            await page.waitForSelector('#guide', { state: 'hidden' });
+            await settle(page);
+          }
           await placeSolution(page, lv.solution, 'touch');
           await page.waitForSelector('#win:not([hidden])', { timeout: 6000 });
           await noHorizontalScroll(page, tag + ' win card');

@@ -175,6 +175,32 @@ const SCENES = [
   },
   { name: 'calm', url: '?unlock#6', pieces: 'solution', closeWin: true },
   { name: 'busy-solved', url: '?unlock#100', pieces: 'solution', winCard: true },
+  // the field guide (js/guides.js): a "Meet the …" card with its demo (drawn at the
+  // frozen moment: always the "after" scene), the same still and side by side with
+  // reduced motion, the guidance line it folds into, the first level's coach, a card in Help
+  { name: 'guide-card', url: '?unlock#21', needs: 'js/guides.js' },
+  { name: 'guide-card-reduced', url: '?unlock#21', reduced: true, sizes: ['phone'], needs: 'js/guides.js' },
+  {
+    name: 'guide-line', url: '?unlock#21', needs: 'js/guides.js',
+    setup: async (page) => { await page.click('#guide-go'); await page.waitForSelector('#guide', { state: 'hidden' }); },
+  },
+  {
+    name: 'first-steps', url: '?unlock#1', needs: 'js/guides.js',
+    setup: async (page) => {
+      await page.click('#guide-go');
+      await waitFor(page, () => !document.getElementById('coach').hidden, 'the first coach bubble');
+    },
+  },
+  {
+    name: 'field-guide', url: '?unlock#16', sizes: ['phone', 'desktop'], needs: 'js/guides.js',
+    setup: async (page) => {
+      await page.click('#guide-go');
+      await page.click('#btn-help');
+      await page.waitForSelector('#help:not([hidden])');
+      await page.click('#help-body [data-guide="stove"]');
+      await page.waitForSelector('#help-body .help-guide');
+    },
+  },
   // the example art manifest (art/examples/art.js): images, layers, states, code, texture, tokens
   { name: 'art-examples', url: '?unlock&art=examples#901', pieces: 'solution', closeWin: true, sizes: ['desktop'], needs: 'art/examples/art.js' },
   { name: 'art-examples-trouble', url: '?unlock&art=examples#902', pieces: 'solution', sizes: ['phone'], needs: 'art/examples/art.js' },
