@@ -133,3 +133,16 @@ test('migrate: a fresh browser is only marked', () => {
   assert.equal(out['windbreaker.v1'], undefined);
   assert.equal(out['windbreaker.levelset'], '2');
 });
+
+test('index.html loads the guides and the migration before the game', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const order = [...html.matchAll(/<script src="([^"]+)"/g)].map((m) => m[1]);
+  const at = (f) => order.indexOf(f);
+  for (const f of ['js/engine.js', 'js/levels.js', 'js/migrate.js', 'js/guides.js', 'js/render.js', 'js/game.js']) assert.ok(at(f) >= 0, f + ' is loaded');
+  assert.ok(at('js/levels.js') < at('js/migrate.js'), 'the migration needs the levels (their keys)');
+  assert.ok(at('js/migrate.js') < at('js/game.js'), 'progress is migrated before the game reads it');
+  assert.ok(at('js/guides.js') < at('js/game.js'), 'the cards are there when the game starts');
+  for (const id of ['guide', 'guide-line', 'tip', 'tip-more', 'tip-icon', 'coach', 'coach-text', 'win-chapter', 'win-recap']) {
+    assert.match(html, new RegExp('id="' + id + '"'), '#' + id + ' is in index.html');
+  }
+});

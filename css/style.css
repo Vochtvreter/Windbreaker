@@ -799,7 +799,7 @@ button {
 .chip.is-selected .chip-info { display: inline-flex; }
 /* the first level's coach: "this one!" */
 .chip.is-coach { border-color: var(--accent); animation: chip-call 1.8s ease-in-out infinite; }
-@keyframes chip-call { 50% { box-shadow: 0 0 0 6px var(--accent-soft), var(--shadow); transform: translateY(-2px); } }
+@keyframes chip-call { 50% { box-shadow: 0 0 0 7px var(--accent-soft), var(--shadow); } }
 .chip:disabled {
   opacity: 0.5;
   cursor: default;

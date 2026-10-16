@@ -4,6 +4,32 @@ Every release is merged to `main` with a version bump; work in progress lives
 on the `dev` branch. The version is shown at the bottom of the level-select
 screen.
 
+## Unreleased — friendlier guides
+
+* "Meet the …" cards (js/guides.js, 22 of them): every tool, object and twist
+  gets a card the first time it turns up, with a looping mini demo drawn by
+  the real board renderer (before and after, side by side and still with
+  reduced motion), two or three plain points and how to use it. "Let's try
+  it" folds the card into the guidance line above the board; "Show me"
+  lights up where the new tool can go. A bottom sheet on phones, a panel
+  beside the board on wide screens and landscape phones: never over the house.
+* One voice: on a level that brings something new, the card (then its line)
+  is the only guidance; practice levels keep just their tip. Tips say "from
+  the left", not "from the west".
+* The first level teaches itself in three soft steps pinned to the board
+  (the wind comes in here, it stops at the red ×: put a window here, done),
+  with a gentle word for a window placed off the breeze's path. The first
+  fan says "Tap it to turn it". The "no way out" mark explains itself.
+* Cards open again any time: press and hold (or right-click) a tool, the (i)
+  on a selected tool, tap an object (with how it is doing right now), the (i)
+  on the guidance line, or the new Field guide in Help.
+* Level select: each chapter shows what it brings ("New: Fan", with its own
+  icon, never a tool that has not arrived yet) or its challenge theme.
+  Finishing a chapter gets a small "Chapter complete" moment and says what
+  is next ("Next: meet the candle").
+* Players coming back from v1.0 (solved levels here and there after the
+  reorder) find every level up to their furthest solved one open.
+
 ## v1.1 — One new thing at a time, and graphics you can restyle
 
 * Gentler progression: chapters 1-15 each introduce exactly one new tool

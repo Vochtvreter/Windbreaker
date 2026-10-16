@@ -332,7 +332,7 @@
     newTool: null, newToolUsed: false, lastPtr: null, sawKeys: false,
     // the field guide: the card this level introduces, the card on screen,
     // the coach bubble (and its ring on the board), the first level's steps
-    levelGuide: null, guide: null, helpGuide: null, coach: null, spot: null, c1: null, coachGoal: null, coachHide: 0,
+    levelGuide: null, guide: null, helpGuide: null, coach: null, spot: null, c1: null, c1Timer: 0, coachGoal: null, coachHide: 0, chipCoach: null,
     drawPieces: [], raf: 0, toastTimer: 0, tipTimer: 0, hoverTimer: 0, coachTimer: 0,
     pushedFromHome: false, lastSig: '', settleUntil: 0, paletteVersion: 0,
     openedAt: -1e9, focusBoardOnOpen: false
@@ -1245,7 +1245,7 @@
     done: 'In one window, out the other: that’s a breeze! The pinwheel is happy.'
   };
   function firstLevelCoach() {
-    if (!LEVELS.length || G.id !== LEVELS[0].id || isDone(G.id) || seenTip('coach1')) return null;
+    if (!LEVELS.length || G.id !== LEVELS[0].id || G.levelGuide !== 'window' || isDone(G.id) || seenTip('coach1')) return null;
     var inlet = stalledInlets(G.sim)[0];
     return inlet ? { step: null, inlet: { x: inlet.source.x, y: inlet.source.y } } : null;
   }
