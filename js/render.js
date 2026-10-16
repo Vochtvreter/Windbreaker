@@ -1093,7 +1093,8 @@
     // ---------------- guide spot: a soft ring breathing where a coach bubble points
     if (S.spot) {
       var sp = S.spot;
-      var sk = motion ? 0.5 + 0.5 * Math.sin((now - (sp.t0 || 0)) / 1000 * Math.PI * 1.4) : 0.6;
+      // (a frozen moment, for the visual check, draws it at rest)
+      var sk = motion && !SETTLE ? 0.5 + 0.5 * Math.sin((now - (sp.t0 || 0)) / 1000 * Math.PI * 1.4) : 0.6;
       var sg = T * 0.05 * sk;
       ctx.save();
       ctx.beginPath(); rr(ctx, sp.x * T - sg, sp.y * T - sg, T + 2 * sg, T + 2 * sg, T * 0.26);
