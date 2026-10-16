@@ -79,7 +79,7 @@
   function meterShape(ctx, type, flow, state, T) {
     var spec = METER[type];
     if (!spec) return;
-    var dr = Math.max(2.4, T * 0.062), g = Math.max(2.2, T * 0.045);
+    var dr = Math.max(2.9, T * 0.062), g = Math.max(2.2, T * 0.045);
     var barW = Math.max(1.4, T * 0.03), pl = dr * 0.9, padX = Math.max(3.5, T * 0.07);
     var list = [], k;
     for (k = 0; k < spec.slots.length; k++) list.push({ k: 'slot', w: dr * 2, req: spec.slots[k] === 'req', on: k < flow });
@@ -442,6 +442,12 @@
     var T = Math.min(availW / (L.w + 2 * m), hAvail / (L.h + 2 * m));
     if (T < 40) {
       m = 0.75;
+      T = Math.min(availW / (L.w + 2 * m), hAvail / (L.h + 2 * m));
+    }
+    // still small (a big house on a phone): a slimmer strip of garden, so the
+    // house, and every spot to tap, gets bigger
+    if (T < 34) {
+      m = 0.35;
       T = Math.min(availW / (L.w + 2 * m), hAvail / (L.h + 2 * m));
     }
     T = T >= 20 ? Math.floor(T) : Math.max(10, T);
@@ -1006,6 +1012,7 @@
       ctx.save(); pieceTransform(p); SPR.draw(TOOL_SPRITE[p.type], ctx, o); ctx.restore();
     }
 
+    this.drawBumps(ctx, A, T, pieces, t, motion);
     this.drawStallMarkers(ctx, A, T, sim.solved, S.valid);
 
     // ---------------- objects
@@ -1337,7 +1344,8 @@
           ctx.stroke(heads[c2]);
         }
       } else {
-        // reduced motion: static lanes and direction chevrons
+        // reduced motion: solid lanes and direction chevrons (a dashed line
+        // only ever means a breeze that is stuck)
         for (var c3 = 0; c3 < 2; c3++) {
           var lanes = new Path2D(), chev = new Path2D();
           for (i = 0; i < runs.length; i++) {
@@ -1357,11 +1365,9 @@
             }
           }
           var col3 = c3 ? P('smoke') : P('air');
-          ctx.setLineDash([T * 0.22, T * 0.16]);
           ctx.strokeStyle = col3;
           ctx.lineWidth = lw;
           ctx.stroke(lanes);
-          ctx.setLineDash([]);
           ctx.strokeStyle = c3 ? darker(col3, 0.2) : P('air-deep');
           ctx.lineWidth = Math.max(1.4, T * 0.045);
           ctx.stroke(chev);
@@ -1440,6 +1446,37 @@
       }
     }
     ctx.restore();
+  };
+
+  // A stream stopped by a wall right where a piece stands (a fan pointed
+  // straight into the wall next to it): its last half tile is hidden under the
+  // piece, so it would look as if nothing happens. Its bump is drawn on top:
+  // soft ripples against the wall face and a quiet × on the wall.
+  Board.prototype.drawBumps = function (ctx, A, T, pieces, realT, motion) {
+    if (!A.blockEnds.length || !pieces.length) return;
+    var L = this.L, at = {}, i;
+    for (i = 0; i < pieces.length; i++) at[pieces[i].x + ',' + pieces[i].y] = true;
+    for (i = 0; i < A.blockEnds.length; i++) {
+      var be = A.blockEnds[i];
+      if (be.d < 0 || !at[Math.floor(be.x - be.dx * 0.25) + ',' + Math.floor(be.y - be.dy * 0.25)]) continue;
+      if (!WB.isWall(WB.cellAt(L, Math.floor(be.x + be.dx * 0.25), Math.floor(be.y + be.dy * 0.25)))) continue; // a wall face, not a curtain
+      var bx = be.x * T, by = be.y * T, base = Math.atan2(-be.dy, -be.dx);
+      var br = Math.max(5, T * 0.17);
+      var ph = motion ? (realT * 0.9 + i * 0.37) % 1 : 0.5;
+      ctx.save();
+      ctx.lineCap = 'round';
+      for (var rp = 0; rp < 2; rp++) {
+        var q = (ph + rp * 0.5) % 1;
+        ctx.beginPath();
+        ctx.arc(bx, by, br * (0.5 + 0.8 * q), base - 1.05, base + 1.05);
+        ctx.strokeStyle = alpha(be.smoke ? darker(P('smoke'), 0.1) : P('air-deep'), 0.85 * Math.sin(Math.PI * q));
+        ctx.lineWidth = Math.max(1.5, T * 0.045);
+        ctx.stroke();
+      }
+      ctx.restore();
+      STALL_OPT.x = (be.x + be.dx * 0.3) * T; STALL_OPT.y = (be.y + be.dy * 0.3) * T; STALL_OPT.r = Math.max(4.5, T * 0.11); STALL_OPT.quiet = true;
+      SPR.draw('ui.stall', ctx, STALL_OPT);
+    }
   };
 
   // "No way out" markers of stalled inlets: inside the wall (or window) that

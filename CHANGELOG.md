@@ -29,6 +29,41 @@ screen.
   is next ("Next: meet the candle").
 * Players coming back from v1.0 (solved levels here and there after the
   reorder) find every level up to their furthest solved one open.
+* Gentle hints: the first press gives an idea in words about what is wrong
+  ("The breeze needs a way out", "Try your fan: …"), never the answer;
+  "Show me" (or a second press) shows one piece, picked so that following it
+  rarely makes anything unhappy (and says so when it must). "That one isn't
+  needed here. Put it back?" replaces the old wording. After a minute or 8
+  moves without anything new becoming happy, the Hint button glows, and once
+  a visit "Stuck? A hint is free" appears. Never automatic.
+* Plain words everywhere: "blowing up ↑", "from the left", "lets air out";
+  tips say "the other side" instead of "the far side". The wind badge reads
+  "Wind → gentle" on every screen, its arrow made of one, two or three lines.
+* Forgiving taps: tapping a window (or any piece that can't turn) shows what
+  it does with a "Put back" button instead of silently removing it; tapping
+  the selected tool again keeps it (with a little bounce and where it goes);
+  a drop that misses says where the piece fits and keeps those spots lit;
+  tapping an empty spot with nothing picked up says which tool to pick.
+* Labelled Undo, Redo (new on screen), Clear (new eraser icon) and Hint on
+  every screen size; tool names under the icons on phones; counts read "×2";
+  the new tool has a small "New" label until it is first used.
+* Settings (gear on the home screen, in the game's top bar on wide screens,
+  and in Help): sound, Normal / Large text, less motion, show the guide cards
+  again, and reset progress (moved off the home screen, last and quiet).
+* Larger, darker teaching text (tips, cards, tooltips, chip names); tooltips
+  stay at least 6 s on touch and close with the next tap.
+* Help in layers: the goal in three pictures, the field guide, then folded
+  "How air moves" (only rules for things met so far), controls for this
+  device, and the keyboard. "How to play" under Play on the home screen.
+* The goals bar says it in words: "Make the pinwheel spin", "2 of 3 happy",
+  "Almost! One more to go", "Everyone is happy!"; a new thing's goal chip
+  says hello once; an unhappy goal gets a red ring.
+* A fan blowing straight into the wall next to it shows its bump (ripples and
+  a quiet × on the wall) and says "straight into the wall, so no breeze". With
+  less motion, flowing air is a solid line with arrowheads; a dashed line only
+  ever means a breeze with no way out.
+* Big houses on phones: a slimmer garden strip around the house (bigger
+  tiles), more forgiving taps on small tiles, slightly bigger meters.
 
 ## v1.1 — One new thing at a time, and graphics you can restyle
 

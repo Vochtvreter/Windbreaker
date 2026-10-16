@@ -416,7 +416,11 @@
   // Wording follows the input the player actually uses, not the device's
   // primary pointer (a touch laptop is 'fine' but may be used by finger).
   function usingTouch() { return G.lastPtr ? touchy(G.lastPtr) : coarseMQ.matches; }
-  window.addEventListener('pointerdown', function (e) { G.lastPtr = e.pointerType || G.lastPtr; }, true);
+  window.addEventListener('pointerdown', function (e) {
+    G.lastPtr = e.pointerType || G.lastPtr;
+    // a tooltip stays until the next tap anywhere (the board handles its own taps)
+    if (!dom.tooltip.hidden && e.target !== dom.canvas) hideTooltip();
+  }, true);
   function announce(text) {
     dom.live.textContent = '';
     setTimeout(function () { dom.live.textContent = text; }, 30);
@@ -680,7 +684,8 @@
   }
   function updateSoundButton() { renderSettings(); }
   function openSettings() {
-    closeDialog(dom.helpDlg, true);
+    // from Help: Settings take its place, and closing them comes back to the game
+    if (!dom.helpDlg.hidden) { closeDialog(dom.helpDlg, true); if (G.screen === 'game') dom.help.focus({ preventScroll: true }); }
     renderSettings();
     dom.setGuides.textContent = 'Show again';
     dom.setGuides.disabled = false;
@@ -1223,7 +1228,8 @@
     if (opts.keep) return; // replaced, or the level is left: not read yet
     if (g.id === G.levelGuide) {
       markGuideSeen(g.id);
-      if (G.newTool) { G.newTool = null; updateTray(); }
+      // the new tool keeps its "New" label in the tray until it is first used
+      if (G.newTool) updateTray();
       // a new thing in the house: its goal chip says hello once
       if (g.intro && WB.OBJECTS[g.id]) helloGoal(g.id);
     }
@@ -2078,7 +2084,7 @@
   };
   function goalIdea(g) {
     switch (g.type) {
-      case 'pinwheel': return 'The pinwheel needs a breeze. How can air reach it?';
+      case 'pinwheel': return 'The pinwheel needs a breeze.';
       case 'candle': return 'The candle is being blown out. Keep every breeze away from it.';
       case 'stove': return g.state === 'bad' ? 'The smoke is blown into a wall. It needs a way outside.' : 'The smoke needs a breeze to carry it outside.';
       case 'laundry': return g.smoky ? 'Smoky air is reaching the laundry. Keep the smoke away from it.' : 'The laundry needs a stronger breeze: 2 or more.';
@@ -2140,7 +2146,7 @@
     var nx = plan.next;
     if (nx && TOOL_IDEA[nx.type] && remaining(nx.type) === (G.L.inventory[nx.type] || 0)) {
       text += ' Try your ' + lowerName(nx.type) + ': ' + TOOL_IDEA[nx.type] + '.';
-    }
+    } else if (g && g.type === 'pinwheel') text += ' How can air reach it?';
     return { text: text, focus: g };
   }
 
@@ -2171,7 +2177,7 @@
       if (!seenTip('hintfree')) {
         store.seenTips.push('hintfree');
         saveStore();
-        text = 'Hints are free, so ask any time! ' + text;
+        text = 'Hints are free! ' + text;
       }
       if (idea.focus) G.focus = { type: idea.focus.type, t0: performance.now() };
       showToast(text, 'Show me', function () { hint(); }, { kind: 'hint', ms: 14000, near: idea.focus || null });
@@ -3048,6 +3054,7 @@
 
   dom.back.addEventListener('click', goHome);
   dom.undo.addEventListener('click', undo);
+  dom.redo.addEventListener('click', redo);
   dom.reset.addEventListener('click', resetLevel);
   dom.hint.addEventListener('click', function () { Sound.unlock(); hint(); });
   dom.help.addEventListener('click', openHelp);
@@ -3104,9 +3111,9 @@
     // 1. the goal
     h.push('<p class="help-lead">Make <b>everyone</b> in the house happy, all at the same time.</p>');
     h.push('<ul class="help-goal">' +
-      '<li>' + cv('ui', 'inlet', 48) + '<span>The wind blows in through a window on the windy side.</span></li>' +
-      '<li>' + cv('ui', 'outlet', 48) + '<span>It needs a way out: another window.</span></li>' +
-      '<li>' + cv('object', 'pinwheel', 48) + '<span>Air reaches everyone, and they are happy!</span></li>' +
+      '<li>' + cv('ui', 'inlet', 46) + '<span>Wind blows in on the windy side.</span></li>' +
+      '<li>' + cv('ui', 'outlet', 46) + '<span>It needs a way out: another window.</span></li>' +
+      '<li>' + cv('object', 'pinwheel', 46) + '<span>Air makes everyone happy!</span></li>' +
       '</ul>');
     h.push('<p>' + tap + ' anything on the board to see how much air reaches it. Stuck? <b>Hints are free.</b></p>');
 
@@ -3375,7 +3382,11 @@
     if (w <= 0 || h <= 0) return;
     var before = board.T + ',' + board.ox + ',' + board.oy;
     board.layout(w, h, 0);
-    if (before !== board.T + ',' + board.ox + ',' + board.oy) { hideTooltip(); positionCoach(); }
+    if (before !== board.T + ',' + board.ox + ',' + board.oy) {
+      hideTooltip();
+      positionCoach();
+      if (G.pmenu) placeNear(dom.pmenu, G.pmenu.x, G.pmenu.y, true, 8);
+    }
     if (G.guide) G.guide.fade();
   }
 

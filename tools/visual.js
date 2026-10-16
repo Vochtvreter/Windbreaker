@@ -165,9 +165,14 @@ const SCENES = [
     name: 'select-window', url: '?unlock#903',
     setup: async (page, h) => { await page.evaluate(() => window.WBGame.select('window')); await h.hover(12, 6); },
   },
+  // hints go in two steps: an idea in words, then one piece (the ghost)
+  {
+    name: 'hint-idea', url: '?unlock#3', needs: 'js/guides.js',
+    setup: async (page) => { await page.evaluate(() => window.WBGame.hint()); },
+  },
   {
     name: 'hint', url: '?unlock#3',
-    setup: async (page) => { await page.evaluate(() => window.WBGame.hint()); },
+    setup: async (page) => { await page.evaluate(() => { window.WBGame.hint(); if (!window.WBGame.state.hint) window.WBGame.hint(); }); },
   },
   {
     name: 'help', url: '?unlock#901', sizes: ['phone', 'desktop'],
@@ -199,6 +204,29 @@ const SCENES = [
       await page.waitForSelector('#help:not([hidden])');
       await page.click('#help-body [data-guide="stove"]');
       await page.waitForSelector('#help-body .help-guide');
+    },
+  },
+  // friendlier controls: Settings, a tapped piece's menu, large text
+  {
+    name: 'settings', url: '', sizes: ['phone', 'desktop'], needs: 'js/guides.js',
+    setup: async (page) => { await page.click('#btn-settings-home'); await page.waitForSelector('#settings:not([hidden])'); },
+  },
+  {
+    name: 'piece-menu', url: '?unlock#4', needs: 'js/guides.js',
+    setup: async (page) => {
+      const w = await page.evaluate(() => { const p = window.WBGame.state.def.solution[0]; window.WBGame.place(p.type, p.x, p.y, 0); return p; });
+      await page.keyboard.press('Escape');
+      const c = await page.evaluate(([x, y]) => window.__wb.cell(x, y), [w.x, w.y]);
+      await page.mouse.click(c.x, c.y);
+      await page.mouse.move(2, 2);
+      await waitFor(page, () => !document.getElementById('pmenu').hidden, 'the piece menu');
+    },
+  },
+  {
+    name: 'large-text', url: '?unlock#26', sizes: ['phone'], needs: 'js/guides.js',
+    setup: async (page) => {
+      await page.evaluate(() => { document.querySelector('.seg-btn[data-text="large"]').click(); });
+      if (await page.isVisible('#guide')) { await page.click('#guide-go'); await page.waitForSelector('#guide', { state: 'hidden' }); }
     },
   },
   // the example art manifest (art/examples/art.js): images, layers, states, code, texture, tokens

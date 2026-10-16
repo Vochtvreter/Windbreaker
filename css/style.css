@@ -155,7 +155,9 @@ button {
 .btn-label { font-size: 0.75rem; font-weight: 600; line-height: 1.1; }
 .icon-btn.act { flex-direction: column; gap: 2px; min-width: 48px; height: 52px; padding: 0 3px; }
 .icon-btn.act .ico { width: 21px; height: 21px; }
+.btn:disabled { opacity: 0.45; cursor: default; transform: none; }
 .btn-quiet-danger { border-color: transparent; background: transparent; color: var(--bad-text); font-weight: 600; }
+.set-row .btn { white-space: nowrap; }
 .btn-quiet-danger:hover { background: var(--surface-2); border-color: transparent; }
 
 /* ------------------------------------------------------------------ screens */
@@ -625,8 +627,11 @@ button {
   line-height: 1.38;
   animation: toast-in .2s ease-out;
 }
-.toast > span { flex: 1; min-width: 0; }
-.toast .icon-btn-small { min-width: 40px; height: 40px; }
+.toast { flex-wrap: wrap; row-gap: 2px; }
+.toast > span { flex: 1 1 200px; min-width: 0; padding: 4px 0; }
+/* the close button stays on the first line; a long message puts its action below */
+.toast .icon-btn-small { order: 1; min-width: 40px; height: 40px; }
+.toast #toast-action { order: 2; margin-left: auto; }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 6px); } }
 .toast.at-top { top: 12px; bottom: auto; }
 
@@ -727,7 +732,7 @@ button {
   gap: 2px;
   flex: none;
 }
-.actions .icon-btn:disabled .btn-label { opacity: 0.9; }
+.icon-btn.act:disabled { opacity: 0.42; }
 .tray-wrap { grid-area: tray; position: relative; min-width: 0; }
 .tray-wrap.is-won .tray { visibility: hidden; }
 .next-pill {
@@ -813,6 +818,7 @@ button {
   align-items: center;
   justify-content: center;
   pointer-events: none;
+  box-shadow: 0 0 0 2px var(--surface);
 }
 .chip:hover { transform: translateY(-1px); }
 .chip:active { transform: scale(0.97); }
@@ -1432,7 +1438,7 @@ kbd {
 /* help: the basics first, the rest folded away */
 .help-body .help-lead { font-size: 1.0625rem; color: var(--ink); margin: 2px 0 10px; }
 .help-body .help-lead b { font-weight: 700; }
-.help-goal { list-style: none; margin: 4px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.help-goal { list-style: none; margin: 4px 0 14px; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .help-goal li { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; font-size: 0.875rem; line-height: 1.3; color: var(--ink); }
 .help-goal canvas { border-radius: 14px; background: var(--bg-2); display: block; }
 .help-more { border-top: 1px solid var(--line); margin-top: 14px; }

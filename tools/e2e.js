@@ -14,7 +14,7 @@
  *   node tools/e2e.js --full-motion          walk all levels without reduced motion (slower)
  *   node tools/e2e.js --headed               watch it
  *
- * Sections: home, walk, interact, touch, mobile, storage, file.
+ * Sections: home, walk, interact, touch, friendly, mobile, storage, file.
  * It starts its own static server (Node http, no dependencies) on a free port
  * and mounts the site under /windbreaker/, like GitHub Pages does, so any
  * absolute path in the game would 404 and fail the run. Needs Playwright with
@@ -52,7 +52,7 @@ const OPTS = {
   headed: flag('headed'),
   shots: !flag('no-shots'),
 };
-const SECTIONS = ['home', 'walk', 'interact', 'touch', 'mobile', 'storage', 'file'];
+const SECTIONS = ['home', 'walk', 'interact', 'touch', 'friendly', 'mobile', 'storage', 'file'];
 if (OPTS.only) {
   const bad = OPTS.only.filter((s) => !SECTIONS.includes(s));
   if (bad.length) { console.error('Unknown section(s): ' + bad.join(', ') + '. Known: ' + SECTIONS.join(', ')); process.exit(2); }
@@ -221,6 +221,11 @@ async function newPage(opts) {
       Object.defineProperty(window, 'sessionStorage', deny);
     });
   }
+  // "Stuck? A hint is free" shows once a visit; it would sit over cells the
+  // walk taps, so it is marked as shown already (sectionFriendly tests it)
+  if (!opts.hintOffer) {
+    await ctx.addInitScript(() => { try { sessionStorage.setItem('windbreaker.hintOffer', '1'); } catch (e) { /* no storage */ } });
+  }
   // a short log of the input events the page saw, printed when a step fails
   await ctx.addInitScript(() => {
     const log = window.__inputLog = [];
@@ -362,6 +367,8 @@ const SIDE = { north: 'top', east: 'right', south: 'bottom', west: 'left' };
 // (the walk plays with a mouse, so "tap" reads "click")
 function plainTip(t) {
   return String(t || '').replace(/\bfrom the (north|east|south|west)\b/gi, (m, d) => 'from the ' + SIDE[d.toLowerCase()])
+    .replace(/\bthe far side\b/gi, 'the other side')
+    .replace(/\b(north|east|south|west)(ern)?\b/gi, (m, d) => SIDE[d.toLowerCase()])
     .replace(/\bTap\b/g, 'Click').replace(/\btap\b/g, 'click');
 }
 async function guideUi(page) {
@@ -538,7 +545,7 @@ async function sectionWalk() {
         }));
         eq(ui.num, String(lv.id), title + ': level number in the top bar');
         eq(ui.hash, '#' + lv.id, title + ': URL hash');
-        const inv = WB.TOOL_ORDER.filter((tt) => (lv.inventory[tt] || 0) > 0).map((tt) => [tt, String(lv.inventory[tt])]);
+        const inv = WB.TOOL_ORDER.filter((tt) => (lv.inventory[tt] || 0) > 0).map((tt) => [tt, '\u00d7' + lv.inventory[tt]]);
         eq(ui.chips, inv, title + ': tray chips and counts');
         const L = WB.parseLevel(lv);
         eq(ui.goals, new Set(L.objects.map((o) => o.type)).size, title + ': goals strip has one entry per object type');
@@ -585,11 +592,18 @@ async function sectionWalk() {
           if (next) { unlocked = true; await page.goto(BASE + '?unlock#' + next.id); }
           continue;
         }
-        // the hint shows the first piece of the reference solution, at the right cell and rotation
+        // hints are gentle: the first press is an idea in words (no piece), the
+        // second ("Show me") shows one piece of the reference solution, at the right cell and rotation
         await page.click('#btn-hint');
-        const hs = await expectState(page, (s) => !!s.hint, title + ': hint shows a piece');
-        eq(key(hs.hint), key(sol[0]), title + ': hint ghost is the first solution piece');
-        assert(await page.isVisible('#toast'), title + ': hint text is shown');
+        await page.waitForSelector('#toast:not([hidden])', { timeout: 2000 }).catch(() => fail(title + ': hint text is shown'));
+        let hs = await state(page);
+        assert(!hs.hint && !hs.conflicts, title + ': the first hint is words only, no piece');
+        eq((await page.textContent('#toast-action')).trim(), 'Show me', title + ': the first hint offers the next step');
+        if (/\b(north|east|south|west|inlet|outlet)\b/i.test(await page.textContent('#toast-text'))) fail(title + ': no compass words in the hint: ' + await page.textContent('#toast-text'));
+        await page.click('#toast-action');
+        hs = await expectState(page, (st) => !!st.hint, title + ': "Show me" shows a piece');
+        assert(sol.some((p) => key(p) === key(hs.hint)), title + ': hint ghost ' + key(hs.hint) + ' is a solution piece');
+        if (/\b(north|east|south|west)\b/i.test(await page.textContent('#toast-text'))) fail(title + ': no compass words in the hint: ' + await page.textContent('#toast-text'));
         await page.keyboard.press('Escape');
         await expectState(page, (s) => !s.hint, title + ': Esc hides the hint');
 
@@ -714,7 +728,7 @@ async function sectionInteract() {
       await page.waitForSelector('#tooltip:not([hidden])', { timeout: 2000 });
       assert(/Pinwheel/.test(await page.textContent('#tooltip')), 'tooltip names the pinwheel');
       await clickCell(page, 0, 2);
-      await page.waitForFunction(() => /fixed/i.test(document.getElementById('tooltip').textContent) && !document.getElementById('tooltip').hidden, null, { timeout: 2000 });
+      await page.waitForFunction(() => /part of the house/i.test(document.getElementById('tooltip').textContent) && !document.getElementById('tooltip').hidden, null, { timeout: 2000 });
       await piecesAre([], 'a fixed piece cannot be picked up');
     });
     await step('right-click on a tool, tap on an object: their cards', async () => {
@@ -737,7 +751,7 @@ async function sectionInteract() {
       await mouseDrag(page, from, await at(1, 4));
       await piecesAre([{ type: 'fan', x: 1, y: 4, d: 1 }], 'fan dropped at 1,4 facing the wind (east)');
       eq((await state(page)).sel, null, 'dragging does not leave the tool selected');
-      eq(await page.textContent('.chip[data-tool="fan"] .chip-count'), '0', 'tray count drops to 0');
+      eq(await page.textContent('.chip[data-tool="fan"] .chip-count'), '\u00d70', 'tray count drops to 0');
       assert(await page.$eval('.chip[data-tool="fan"]', (b) => b.disabled), 'empty chip is disabled');
     });
     await step('drag a placed piece to move it', async () => {
@@ -753,7 +767,7 @@ async function sectionInteract() {
     await step('right-click removes a piece', async () => {
       await clickCell(page, 3, 4, { button: 'right' });
       await piecesAre([], 'fan removed by right-click');
-      eq(await page.textContent('.chip[data-tool="fan"] .chip-count'), '1', 'fan back in the tray');
+      eq(await page.textContent('.chip[data-tool="fan"] .chip-count'), '\u00d71', 'fan back in the tray');
     });
     await step('undo and redo (button, Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y)', async () => {
       await page.click('#btn-undo');
@@ -769,7 +783,7 @@ async function sectionInteract() {
       const s = await state(page);
       assert(s.redo === 1, 'one step left to redo');
     });
-    await step('number keys select tools, Esc and a second tap deselect', async () => {
+    await step('number keys select tools; tapping the selected tool again keeps it; Esc puts it down', async () => {
       await page.mouse.move(5, 5);
       await page.keyboard.press('1');
       await expectState(page, (s) => s.sel === 'window', 'key 1 selects the window');
@@ -778,7 +792,13 @@ async function sectionInteract() {
       await page.keyboard.press('3');
       await expectState(page, (s) => s.sel === 'deflector', 'key 3 selects the deflector');
       await page.click('.chip[data-tool="deflector"]');
-      await expectState(page, (s) => s.sel === null, 'tapping the selected chip deselects');
+      await sleep(80);
+      eq((await state(page)).sel, 'deflector', 'tapping the selected chip again keeps it selected');
+      await page.waitForSelector('#toast[data-kind="mount"]:not([hidden])', { timeout: 1500 });
+      assert(/glowing spot/.test(await page.textContent('#toast-text')), 'and says where it goes');
+      await page.keyboard.press('Escape');
+      await expectState(page, (s) => s.sel === null, 'Esc puts it down');
+      await page.keyboard.press('Escape');
     });
     await step('select a window and click a wall to place it; the tool stays selected while copies remain', async () => {
       await page.click('.chip[data-tool="window"]');
@@ -804,9 +824,12 @@ async function sectionInteract() {
       await mouseDrag(page, await at(3, 4), await center(page, '.chip[data-tool="deflector"]'));
       await piecesAre([{ type: 'window', x: 2, y: 0 }], 'fan dropped on the tray');
     });
-    await step('dropping a wall piece on the floor does nothing', async () => {
+    await step('dropping a wall piece on the floor: nothing placed, it says where it goes', async () => {
       await mouseDrag(page, await center(page, '.chip[data-tool="window"]'), await at(5, 3));
       await piecesAre([{ type: 'window', x: 2, y: 0 }], 'no window on the floor');
+      await page.waitForSelector('#toast[data-kind="mount"]:not([hidden])', { timeout: 1500 }).catch(() => fail('a missed drop says where the piece can go'));
+      assert(/outside wall/.test(await page.textContent('#toast-text')), 'the window goes in an outside wall: ' + await page.textContent('#toast-text'));
+      await page.keyboard.press('Escape');
     });
     await step('reset clears the board and is undoable', async () => {
       await page.click('#btn-reset');
@@ -820,11 +843,17 @@ async function sectionInteract() {
       await page.keyboard.press('Control+z');
       await piecesAre([{ type: 'window', x: 2, y: 0 }], 'Ctrl+Z restores it too');
     });
-    await step('hint flags a piece that is not in the solution and offers to remove it', async () => {
+    await step('hint: first an idea in words, then it flags the piece in the way and offers to put it back', async () => {
       await page.click('#btn-hint');
+      await page.waitForSelector('#toast:not([hidden])');
+      assert(/isn.t helping/.test(await page.textContent('#toast-text')), 'the first hint is an idea: ' + await page.textContent('#toast-text'));
+      assert(/Hints are free/.test(await page.textContent('#toast-text')), 'the first hint ever says hints are free');
+      eq((await state(page)).conflicts, null, 'no piece flagged yet');
+      await shot(page, 'interact-hint-idea');
+      await page.click('#btn-hint'); // a second press: the next step
       const s = await expectState(page, (st) => !!st.conflicts, 'conflicting pieces flagged');
       eq(s.conflicts, [{ x: 2, y: 0 }], 'the wrong window is flagged');
-      eq((await page.textContent('#toast-action')).trim(), 'Remove it', 'toast offers to remove it');
+      eq((await page.textContent('#toast-action')).trim(), 'Put it back', 'toast offers to put it back');
       await shot(page, 'interact-hint-conflict');
       await page.click('#toast-action');
       const h = await expectState(page, (st) => !!st.hint, 'then the hint shows the next piece');
@@ -900,13 +929,20 @@ async function sectionInteract() {
     });
     await step('hint on a turnable piece; turning it solves the last level', async () => {
       await page.click('#btn-hint');
+      await page.waitForSelector('#toast:not([hidden])');
+      assert(/Try your fan/.test(await page.textContent('#toast-text')), 'the idea names the tool not tried yet: ' + await page.textContent('#toast-text'));
+      eq((await state(page)).hint, null, 'no piece shown on the first press (a one-piece level keeps its answer)');
+      await page.click('#toast-action'); // "Show me"
       const h = await expectState(page, (s) => !!s.hint, 'hint');
-      eq(key(h.hint), 'fan@3,1/2', 'hint ghost: fan at 3,1 blowing south');
-      assert(/south/.test(await page.textContent('#toast-text')), 'hint says which way');
+      eq(key(h.hint), 'fan@3,1/2', 'hint ghost: fan at 3,1 blowing down');
+      assert(/blowing down/.test(await page.textContent('#toast-text')), 'hint says which way, in screen words');
       await page.keyboard.press('Escape');
       await page.click('.chip[data-tool="fan"]');
       await clickCell(page, 3, 1);
       await piecesAre([{ type: 'fan', x: 3, y: 1, d: 1 }], 'fan placed facing east (calm day default)');
+      await page.click('#btn-hint');
+      await page.waitForSelector('#toast:not([hidden])');
+      assert(/needs a turn/i.test(await page.textContent('#toast-text')), 'the board changed: words first again');
       await page.click('#btn-hint');
       await expectState(page, (s) => !!s.hint && !s.conflicts, 'hint for a wrongly turned piece');
       assert(/turning/i.test(await page.textContent('#toast-text')), 'hint suggests turning it');
@@ -942,16 +978,32 @@ async function sectionInteract() {
       await page.keyboard.press('Escape');
       await page.waitForSelector('#help', { state: 'hidden' });
     });
-    await step('sound setting and progress persist; reset progress asks first', async () => {
+    await step('settings: sound, text size and less motion persist; reset progress asks first', async () => {
       await page.click('#btn-back');
       await page.waitForSelector('#home:not([hidden])');
-      await page.click('#btn-sound');
-      eq(await page.getAttribute('#btn-sound', 'aria-pressed'), 'false', 'sound off');
+      await page.click('#btn-settings-home');
+      await page.waitForSelector('#settings:not([hidden])');
+      await shot(page, 'interact-settings');
+      await page.click('#set-sound');
+      eq(await page.getAttribute('#set-sound', 'aria-checked'), 'false', 'sound off');
+      await page.click('.seg-btn[data-text="large"]');
+      assert(await page.evaluate(() => document.documentElement.classList.contains('is-large-text')), 'large text applies at once');
+      await page.click('#set-motion');
+      assert(await page.evaluate(() => document.documentElement.classList.contains('motion-calm')), 'less motion applies at once');
+      await page.keyboard.press('Escape');
+      await page.waitForSelector('#settings', { state: 'hidden' });
       await page.reload();
       await page.waitForSelector('#home:not([hidden]) .lvl');
-      eq(await page.getAttribute('#btn-sound', 'aria-pressed'), 'false', 'sound stays off after reload');
+      const kept = await page.evaluate(() => ({ large: document.documentElement.classList.contains('is-large-text'), calm: document.documentElement.classList.contains('motion-calm') }));
+      eq(kept, { large: true, calm: true }, 'text size and motion stay after reload');
+      await page.click('#btn-settings-foot'); // the footer opens it too
+      await page.waitForSelector('#settings:not([hidden])');
+      eq(await page.getAttribute('#set-sound', 'aria-checked'), 'false', 'sound stays off after reload');
+      await page.click('#set-sound');
+      await page.click('.seg-btn[data-text="normal"]');
+      await page.click('#set-motion');
+      assert(await page.evaluate(() => !document.documentElement.className.match(/is-large-text|motion-calm/)), 'back to normal text and motion');
       eq(await page.$$eval('.lvl.is-done', (b) => b.length), 2, 'both levels still done after reload');
-      await page.click('#btn-sound');
       await page.click('#btn-reset-progress');
       await page.waitForSelector('#confirm:not([hidden])');
       await page.click('#confirm-no');
@@ -961,6 +1013,7 @@ async function sectionInteract() {
       await page.waitForSelector('#confirm:not([hidden])');
       await page.click('#confirm-yes');
       await page.waitForSelector('#confirm', { state: 'hidden' });
+      assert(await page.isHidden('#settings'), 'the settings close with it');
       eq(await page.$$eval('.lvl.is-done', (b) => b.length), 0, 'progress reset');
       eq(await page.$eval('.lvl[data-level="2"]', (b) => b.getAttribute('aria-disabled') === 'true'), true, 'level 2 locked again');
       eq((await page.textContent('#btn-play')).trim(), 'Play', 'Play');
@@ -1046,6 +1099,131 @@ async function sectionTouch() {
       await shot(page, 'touch-win');
       await page.tap('#win-next');
       await expectState(page, (s) => s.screen === 'game' && s.id === 2, 'level 2 opens');
+    });
+    await page.context().close();
+  });
+}
+
+// The friendly bits on a phone (fixture levels): labelled buttons and tool
+// names, a tapped piece shows a menu instead of vanishing, tooltips that stay
+// long enough to read, plain words, the goals bar, Help in layers, Settings
+// from the game, and the gentle "Stuck? A hint is free".
+async function sectionFriendly() {
+  await section('friendly', async (step) => {
+    const page = await newPage({ label: 'friendly', fixture: true, w: 390, h: 844, dpr: 2, touch: true, mobile: true, hintOffer: true });
+    const at = (x, y) => cellXY(page, x, y);
+    const tap = async (x, y) => { const p = await at(x, y); await assertBoardAt(page, p); await page.touchscreen.tap(p.x, p.y); await sleep(380); };
+    const piecesAre = (list, what) => expectState(page, (s) => JSON.stringify(keys(s.pieces)) === JSON.stringify(keys(list)), what + ' → ' + JSON.stringify(keys(list)));
+    const visible = (sel) => page.$eval(sel, (e) => !!e.offsetParent && e.getBoundingClientRect().width > 0 && getComputedStyle(e).visibility !== 'hidden');
+    await step('home: "How to play" opens Help, in layers', async () => {
+      await openHome(page);
+      await page.tap('#btn-howto');
+      await page.waitForSelector('#help:not([hidden])');
+      const h = await page.evaluate(() => ({
+        goal: document.querySelectorAll('#help-body .help-goal li').length,
+        folded: Array.from(document.querySelectorAll('#help-body details.help-more')).map((d) => d.open),
+        text: document.getElementById('help-body').textContent,
+      }));
+      eq(h.goal, 3, 'the goal in three small pictures first');
+      assert(h.folded.length >= 2 && h.folded.every((o) => !o), 'the fine print and the controls are folded away (' + JSON.stringify(h.folded) + ')');
+      assert(!/\b(north|east|south|west|inlet|outlet)\b/i.test(h.text), 'no compass words or inlet/outlet in Help');
+      await shot(page, 'friendly-help');
+      await page.tap('#help-close');
+      await page.waitForSelector('#help', { state: 'hidden' });
+    });
+    await step('in the game: labelled Undo, Redo, Clear, Hint; tool names; the goals bar in words', async () => {
+      await page.tap('#btn-play');
+      await expectState(page, (s) => s.screen === 'game' && s.id === 1, 'level 1');
+      await page.tap('#guide-go');
+      await page.waitForSelector('#guide', { state: 'hidden' });
+      await settle(page);
+      for (const [id, label] of [['btn-undo', 'Undo'], ['btn-redo', 'Redo'], ['btn-reset', 'Clear'], ['btn-hint', 'Hint']]) {
+        assert(await visible('#' + id + ' .btn-label'), label + ' has a visible label on a phone');
+        eq((await page.textContent('#' + id + ' .btn-label')).trim(), label, '#' + id + ' label');
+      }
+      assert(await visible('.chip[data-tool="fan"] .chip-name'), 'tool names show in the tray on a phone');
+      eq((await page.textContent('.chip[data-tool="window"] .chip-count')).trim(), '\u00d72', 'counts read "×2"');
+      eq((await page.textContent('#goals-say')).trim(), 'Make the pinwheel spin', 'the goals bar says what to do');
+      assert(/Wind/.test(await page.textContent('#wind')) && /gentle/.test(await page.textContent('#wind')), 'the wind badge says "Wind" and how strong');
+      await noHorizontalScroll(page, 'friendly 390x844');
+      await shot(page, 'friendly-game');
+    });
+    await step('nothing picked up: tapping a spot says which tool to pick first', async () => {
+      await tap(9, 2);
+      await page.waitForSelector('#tooltip:not([hidden])');
+      assert(/the window in your tray first/.test(await page.textContent('#tooltip')), 'tooltip: ' + await page.textContent('#tooltip'));
+      assert(await page.$eval('.chip[data-tool="window"]', (b) => b.classList.contains('is-coach')), 'and the window in the tray calls softly');
+      await piecesAre([], 'nothing is placed');
+    });
+    await step('a tooltip on touch stays long enough to read; a second tap closes it', async () => {
+      await tap(5, 3);
+      await page.waitForSelector('#tooltip:not([hidden])');
+      await sleep(3200);
+      assert(await page.isVisible('#tooltip'), 'still there after 3 s');
+      await tap(5, 3);
+      assert(await page.isHidden('#tooltip'), 'the same spot again closes it');
+    });
+    await step('tapping a placed window shows what it does and "Put back"; it is not removed', async () => {
+      await page.tap('.chip[data-tool="window"]');
+      await expectState(page, (s) => s.sel === 'window', 'window selected');
+      await page.tap('.chip[data-tool="window"]');
+      await sleep(120);
+      eq((await state(page)).sel, 'window', 'a second tap on the chip keeps it selected');
+      await tap(2, 0);
+      await piecesAre([{ type: 'window', x: 2, y: 0 }], 'window placed');
+      await page.keyboard.press('Escape');
+      await tap(2, 0);
+      await page.waitForSelector('#pmenu:not([hidden])');
+      assert(/Window/.test(await page.textContent('#pmenu-text')), 'the menu says what it is');
+      await piecesAre([{ type: 'window', x: 2, y: 0 }], 'still on the board after a tap');
+      await shot(page, 'friendly-piece-menu');
+      await page.tap('#pmenu-remove');
+      await piecesAre([], '"Put back" takes it off');
+      eq((await state(page)).sel, 'window', 'and picks it up, to put it somewhere else');
+      await page.keyboard.press('Escape');
+    });
+    await step('Undo and the on-screen Redo', async () => {
+      await page.tap('#btn-undo');
+      await piecesAre([{ type: 'window', x: 2, y: 0 }], 'Undo brings it back');
+      assert(!(await page.$eval('#btn-redo', (b) => b.disabled)), 'Redo is ready');
+      await page.tap('#btn-redo');
+      await piecesAre([], 'Redo does it again');
+      assert(await page.$eval('#btn-redo', (b) => b.disabled), 'nothing left to redo');
+    });
+    await step('a fan blowing straight into the wall says so', async () => {
+      await page.tap('.chip[data-tool="fan"]');
+      await tap(5, 1);
+      await piecesAre([{ type: 'fan', x: 5, y: 1, d: 1 }], 'fan placed');
+      for (let i = 0; i < 3; i++) await tap(5, 1); // right → down → left → up
+      await piecesAre([{ type: 'fan', x: 5, y: 1, d: 0 }], 'fan turned to blow up, into the wall');
+      await page.waitForSelector('#tooltip:not([hidden])');
+      assert(/blowing up/.test(await page.textContent('#tooltip')) && /into the wall/.test(await page.textContent('#tooltip')), 'tooltip: ' + await page.textContent('#tooltip'));
+      await shot(page, 'friendly-fan-wall');
+    });
+    await step('stuck: after 8 moves with nothing new happy, the Hint glows and says hints are free', async () => {
+      for (let i = 0; i < 5; i++) await tap(5, 1); // turning it round and round
+      await page.waitForSelector('#toast[data-kind="offer"]:not([hidden])', { timeout: 3000 }).catch(() => fail('no "a hint is free" offer'));
+      assert(/hint is free/i.test(await page.textContent('#toast-text')), 'the offer: ' + await page.textContent('#toast-text'));
+      assert(await page.$eval('#btn-hint', (b) => b.classList.contains('is-offer')), 'the Hint button glows');
+      eq((await state(page)).hint, null, 'it never shows the answer by itself');
+      await shot(page, 'friendly-stuck');
+      await page.tap('#toast-action'); // "Hint"
+      await page.waitForSelector('#toast[data-kind="hint"]:not([hidden])');
+      eq((await state(page)).hint, null, 'the first hint is an idea, not a piece');
+    });
+    await step('Settings from the game (in Help on a phone)', async () => {
+      await page.tap('#btn-help');
+      await page.waitForSelector('#help:not([hidden])');
+      await page.tap('#help-settings');
+      await page.waitForSelector('#settings:not([hidden])');
+      assert(await page.isHidden('#help'), 'Help makes way for Settings');
+      await page.tap('.seg-btn[data-text="large"]');
+      assert(await page.evaluate(() => document.documentElement.classList.contains('is-large-text')), 'large text');
+      await page.tap('#settings-close');
+      await page.waitForSelector('#settings', { state: 'hidden' });
+      await settle(page);
+      await noHorizontalScroll(page, 'large text 390x844');
+      await shot(page, 'friendly-large-text');
     });
     await page.context().close();
   });
@@ -1202,6 +1380,7 @@ async function sectionFile() {
     await sectionWalk();
     await sectionInteract();
     await sectionTouch();
+    await sectionFriendly();
     await sectionMobile();
     await sectionStorage();
     await sectionFile();

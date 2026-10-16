@@ -280,7 +280,7 @@
         'A gentle breeze stops right at the curtain, so a curtain can shield a candle.',
         'A breeze stopped by a curtain has not found a way out, so a window breeze still needs another path outside.'
       ],
-      controls: 'Tap the curtain in your tray, then a glowing spot on the floor. Tap it on the board to put it back.',
+      controls: 'Tap the curtain in your tray, then a glowing spot on the floor. Drag it to move it, or tap it to put it back.',
       recap: 'You can soften a breeze with a curtain.',
       demo: {
         wind: { from: 'W', strength: 1 },
