@@ -657,7 +657,8 @@
         var def = levelById(id);
         var al = 'Level ' + id + (def && def.name ? ', ' + def.name : '');
         var locked = !isUnlocked(id);
-        if (isDone(id)) { b.classList.add('is-done'); al += ', solved'; }
+        // solved: a small tick in the corner too (never colour alone)
+        if (isDone(id)) { b.classList.add('is-done'); b.insertAdjacentHTML('beforeend', '<span class="lvl-tick" aria-hidden="true">' + CHECK_SVG + '</span>'); al += ', solved'; }
         else if (!locked) { b.classList.add(id === nextId ? 'is-next' : 'is-open'); }
         // locked buttons stay tappable (aria-disabled), so a tap can say why
         if (locked) { b.classList.add('is-locked'); b.setAttribute('aria-disabled', 'true'); al += ', locked'; }
@@ -777,10 +778,11 @@
   dom.setMotion.addEventListener('click', function () {
     var calm = !reducedMotion();
     // back to "follow the device" when that is what the device wants anyway
-    store.motion = calm === reducedMQ.matches ? null : calm ? 'calm' : 'full';
+    store.motion = calm === reducedMotionDevice() ? null : calm ? 'calm' : 'full';
     saveStore();
     applySettings();
     G.lastSig = '';
+    rebuildDemos();
   });
   dom.settings.addEventListener('click', function (e) {
     var b = e.target && e.target.closest ? e.target.closest('[data-text]') : null;
@@ -802,7 +804,22 @@
     dom.setGuides.disabled = true;
   });
   dom.settingsClose.addEventListener('click', function () { closeDialog(dom.settings); });
-  onMQ(reducedMQ, function () { renderSettings(); G.lastSig = ''; });
+  onMQ(reducedMQ, function () { renderSettings(); G.lastSig = ''; rebuildDemos(); });
+  function reducedMotionDevice() { return reducedMQ.matches; }
+  // Less motion switched while a card is open: its demo changes to the still,
+  // side-by-side view (or back) at once.
+  function rebuildDemos() {
+    if (G.guide && G.guide.built.demo && G.guide.built.demo.still !== reducedMotion()) {
+      var focusIn = dom.guide.contains(document.activeElement);
+      openGuide(G.guide.id, { intro: G.guide.intro, at: G.guide.at, focus: focusIn, keepScroll: true });
+      if (!dom.helpDlg.hidden && G.guide && G.guide.built.demo) G.guide.built.demo.stop(); // Help is over it: it waits
+    }
+    if (G.helpGuide && G.helpGuide.built.demo && G.helpGuide.built.demo.still !== reducedMotion()) {
+      var top = dom.helpBody.scrollTop;
+      showHelpGuide(G.helpGuide.id, G.helpGuide.scroll);
+      dom.helpBody.scrollTop = top;
+    }
+  }
   [dom.homeGear, dom.footGear, dom.gear, dom.helpGear].forEach(function (b) { b.addEventListener('click', openSettings); });
   dom.howto.addEventListener('click', function () { openHelp(); });
 
@@ -1122,11 +1139,16 @@
       wrap.appendChild(el('p', 'sr-only', 'Before: ' + caps[0] + ' After: ' + caps[1]));
     }
     var running = false, raf = 0, t0 = 0, cur = -1, ro = null;
+    // As wide as there is room for, but never taller than the box's max-height
+    // (css: on a phone sheet the demo must leave room for the words below it).
     function layout() {
       views.forEach(function (v) {
-        var w = Math.floor(v.box.clientWidth);
+        var room = Math.floor(v.box.parentNode.clientWidth);
+        var cap = parseFloat(getComputedStyle(v.box).maxHeight);
+        var w = isFinite(cap) && cap > 0 ? Math.min(room, Math.floor(cap * (L.w + 1.5) / (L.h + 1.5))) : room;
         if (w < 40) return;
-        v.board.layout(w, Math.round(w * (L.h + 1.5) / (L.w + 1.5)), 0);
+        v.box.style.width = w + 'px';
+        v.board.layout(w, Math.round(w * (L.h + 1.5) / (L.w + 1.5)), 0, 0.75);
       });
     }
     function paint(v, si, now) {
@@ -1166,6 +1188,7 @@
     function flip() { t0 = performance.now() - (cur === 0 ? DEMO_MS : 0); }
     return {
       el: wrap,
+      still: still,
       start: function () {
         if (running) return;
         running = true;
@@ -1174,7 +1197,7 @@
         layout();
         if (window.ResizeObserver && !ro) {
           ro = new ResizeObserver(function () { layout(); kick(); });
-          views.forEach(function (v) { ro.observe(v.box); });
+          views.forEach(function (v) { ro.observe(v.box.parentNode); });
         }
         kick();
       },
@@ -1225,17 +1248,30 @@
     }
     var demo = makeDemo(card);
     if (demo) main.appendChild(demo.el);
-    if (card.points && card.points.length) {
-      var ul = el('ul', 'gcard-points');
-      card.points.forEach(function (p) { ul.appendChild(el('li', null, tapWords(p))); });
-      main.appendChild(ul);
-    }
+    // how to use it comes right after the demo, before the fine points, so a
+    // small screen shows it without scrolling
     if (card.controls) {
       var ctl = el('p', 'gcard-controls');
       ctl.innerHTML = HAND_SVG + '<span>' + esc(tapWords(card.controls)) + '</span>';
       main.appendChild(ctl);
     }
+    if (card.points && card.points.length) {
+      var ul = el('ul', 'gcard-points');
+      card.points.forEach(function (p) { ul.appendChild(el('li', null, tapWords(p))); });
+      main.appendChild(ul);
+    }
     root.appendChild(main);
+    // more to read below: a small "More" that scrolls to it
+    var more = null;
+    if (opts.buttons) {
+      more = el('button', 'gcard-more');
+      more.type = 'button';
+      more.hidden = true;
+      more.innerHTML = '<span>More</span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 9.5L12 15l5.5-5.5"/></svg>';
+      more.setAttribute('aria-label', 'Show more of this card');
+      more.addEventListener('click', function () { main.scrollBy({ top: Math.max(80, main.clientHeight * 0.7), behavior: reducedMotion() ? 'auto' : 'smooth' }); });
+      root.appendChild(more);
+    }
     if (opts.buttons && opts.buttons.length) {
       var bar = el('div', 'gcard-buttons');
       opts.buttons.forEach(function (b) {
@@ -1247,7 +1283,7 @@
       });
       root.appendChild(bar);
     }
-    return { el: root, demo: demo, status: status, icon: ic };
+    return { el: root, demo: demo, status: status, icon: ic, more: more };
   }
 
   // ---------------------------------------------------------------- field guide: on the game screen
@@ -1263,6 +1299,8 @@
     opts = opts || {};
     var card = guideFor(id);
     if (!card || G.screen !== 'game' || boardLocked()) return;
+    // the same card rebuilt (Less motion switched): it stays where it was read
+    var oldScroll = opts.keepScroll && G.guide ? G.guide.built.el.querySelector('.gcard-main').scrollTop : 0;
     closeGuide({ silent: true, keep: true });
     hideTooltip();
     hidePieceMenu();
@@ -1284,15 +1322,20 @@
     dom.game.classList.add('is-guiding');
     // more to read below? the last lines fade out
     var main = built.el.querySelector('.gcard-main');
-    var fade = function () { main.classList.toggle('can-scroll', main.scrollHeight - main.scrollTop - main.clientHeight > 6); };
+    var fade = function () {
+      var below = main.scrollHeight - main.scrollTop - main.clientHeight > 6;
+      main.classList.toggle('can-scroll', below);
+      if (built.more) built.more.hidden = !below;
+    };
     main.addEventListener('scroll', fade, { passive: true });
     G.guide = { id: id, intro: !!opts.intro, at: at, built: built, fade: fade };
     renderCoach();
     updateGuideLine();
     if (built.demo) built.demo.start();
+    if (oldScroll) main.scrollTop = oldScroll;
     fade();
     if (opts.focus) { var go = $('guide-go'); if (go) go.focus({ preventScroll: true }); }
-    announce((opts.intro ? 'Meet the ' + card.title.toLowerCase() : card.title) + '. ' + tapWords(card.oneLiner));
+    if (!opts.keepScroll) announce((opts.intro ? 'Meet the ' + card.title.toLowerCase() : card.title) + '. ' + tapWords(card.oneLiner));
   }
 
   // how: 'go' (Let's try it), 'show' (Show me), 'close' (× or Esc).
@@ -2635,7 +2678,7 @@
   // After a drop that missed, the spots where it fits stay lit for a moment.
   function lingerSpots(type, valid) {
     if (!valid || !valid.length) return;
-    G.linger = { valid: valid, wall: isWallMount(type), t0: performance.now() };
+    G.linger = { valid: valid, wall: isWallMount(type), type: type, t0: performance.now() };
     G.pulse = performance.now();
     clearTimeout(G.lingerTimer);
     G.lingerTimer = setTimeout(function () { G.linger = null; }, 1700);
@@ -3418,10 +3461,11 @@
   }
 
   // A card from the field guide, inside the help sheet (with a way back).
-  function showHelpGuide(id) {
+  // backScroll: where the list was (when the card is only being rebuilt)
+  function showHelpGuide(id, backScroll) {
     var card = guideFor(id);
     if (!card) return;
-    var scroll = dom.helpBody.scrollTop;
+    var scroll = backScroll != null ? backScroll : dom.helpBody.scrollTop;
     stopHelpGuide();
     var built = buildCard(card, {});
     dom.helpBody.textContent = '';
@@ -3507,7 +3551,8 @@
     if (dlg) {
       if (e.key === 'Escape') { e.preventDefault(); closeDialog(dlg); }
       else if (e.key === 'Tab') {
-        var f = Array.prototype.filter.call(dlg.querySelectorAll('button, [href], [tabindex]:not([tabindex="-1"])'), function (x) { return !x.disabled && !x.hidden && x.offsetParent !== null; });
+        // (summary: the folded sections of Help; a closed one's insides have no offsetParent)
+        var f = Array.prototype.filter.call(dlg.querySelectorAll('button, [href], summary, [tabindex]:not([tabindex="-1"])'), function (x) { return !x.disabled && !x.hidden && x.offsetParent !== null; });
         if (f.length) {
           var i = f.indexOf(document.activeElement);
           if (e.shiftKey && (i <= 0)) { e.preventDefault(); f[f.length - 1].focus(); }
@@ -3664,6 +3709,7 @@
       sim: sim,
       valid: valid,
       validWall: I.drag ? I.drag.wall : lg ? lg.wall : G.validWall,
+      validType: I.drag ? I.drag.type : G.sel ? G.sel : lg ? lg.type : null,
       ghost: G.ghost,
       hint: G.hint,
       conflicts: G.conflicts,

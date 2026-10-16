@@ -420,11 +420,14 @@
     this.streaks = [];
     this.streakSeeded = false;
     this.lay = null;
+    this.cueKey = null;
   };
 
   // Fill availW x availH CSS pixels with the scene. The house is fitted with at
   // least ~0.75 tile of garden around it, below `reserveTop` px kept free for a card.
-  Board.prototype.layout = function (availW, availH, reserveTop) {
+  // margin: a fixed strip of garden, in tiles (a card's demo keeps 0.75, so
+  // the wind's mark always has room); otherwise it shrinks on small screens.
+  Board.prototype.layout = function (availW, availH, reserveTop, margin) {
     var L = this.L;
     if (!L) return null;
     availW = Math.max(60, Math.floor(availW)); availH = Math.max(60, Math.floor(availH));
@@ -432,21 +435,21 @@
     // the whole stage is repainted every frame: 2x is crisp and spares 3x phones
     var dpr = Math.min(root.devicePixelRatio || 1, 2);
     var lay = this.lay, maxT = N('max-tile');
-    if (lay && lay.L === L && lay.w === availW && lay.h === availH && lay.r === reserveTop && lay.dpr === dpr && lay.maxT === maxT) {
+    if (lay && lay.L === L && lay.w === availW && lay.h === availH && lay.r === reserveTop && lay.dpr === dpr && lay.maxT === maxT && lay.mg === margin) {
       return { w: this.cssW, h: this.cssH, T: this.T };
     }
-    var sizeChanged = !lay || lay.L !== L || lay.w !== availW || lay.h !== availH || lay.r !== reserveTop || lay.maxT !== maxT;
-    this.lay = { L: L, w: availW, h: availH, r: reserveTop, dpr: dpr, maxT: maxT };
+    var sizeChanged = !lay || lay.L !== L || lay.w !== availW || lay.h !== availH || lay.r !== reserveTop || lay.maxT !== maxT || lay.mg !== margin;
+    this.lay = { L: L, w: availW, h: availH, r: reserveTop, dpr: dpr, maxT: maxT, mg: margin };
     var hAvail = Math.max(60, availH - reserveTop);
-    var m = 1;
+    var m = margin != null ? margin : 1;
     var T = Math.min(availW / (L.w + 2 * m), hAvail / (L.h + 2 * m));
-    if (T < 40) {
+    if (T < 40 && margin == null) {
       m = 0.75;
       T = Math.min(availW / (L.w + 2 * m), hAvail / (L.h + 2 * m));
     }
     // still small (a big house on a phone): a slimmer strip of garden, so the
     // house, and every spot to tap, gets bigger
-    if (T < 34) {
+    if (T < 34 && margin == null) {
       m = 0.35;
       T = Math.min(availW / (L.w + 2 * m), hAvail / (L.h + 2 * m));
     }
@@ -842,6 +845,55 @@
     ctx.restore();
   };
 
+  // --------------------------------------------- the wind's mark in the garden
+  //
+  // Two or three soft chevrons in the garden along the windy side, pointing
+  // into the house: where the wind comes from, always in view (the streaks
+  // drift and fade). Spaced along the wall, off the corners and off windows
+  // that are part of the house. Calm days have none.
+  Board.prototype.windCueSpots = function () {
+    var L = this.L, w = L.wind;
+    if (!(w.strength > 0)) return [];
+    var key = this.T + ',' + this.ox + ',' + this.oy + ',' + this.cssW + ',' + this.cssH;
+    if (this.cueKey === key && this.cueSpots) return this.cueSpots;
+    var from = w.from, T = this.T;
+    var along = from === 1 || from === 3 ? L.h : L.w;
+    // how far out into the garden: about half the strip of garden there
+    var room = from === 3 ? this.ox : from === 1 ? this.cssW - this.ox - L.w * T : from === 0 ? this.oy : this.cssH - this.oy - L.h * T;
+    var dist = clamp(room / T * 0.5, 0.18, 0.62);
+    var cands = [];
+    for (var k = 1; k < along - 1; k++) {
+      var ex = from === 3 ? 0 : from === 1 ? L.w - 1 : k, ey = from === 0 ? 0 : from === 2 ? L.h - 1 : k;
+      var busy = L.fixed.some(function (p) { return p.x === ex && p.y === ey; });
+      if (!busy) cands.push(k);
+    }
+    var n = Math.min(cands.length, along - 2 >= 5 ? 3 : 2), spots = [];
+    for (var i = 0; i < n; i++) {
+      var c = cands[Math.min(cands.length - 1, Math.round((i + 1) * (cands.length + 1) / (n + 1)) - 1)];
+      if (spots.some(function (s) { return s.k === c; })) continue;
+      var sx = from === 3 ? -dist : from === 1 ? L.w + dist : c + 0.5, sy = from === 0 ? -dist : from === 2 ? L.h + dist : c + 0.5;
+      spots.push({ k: c, x: sx, y: sy });
+    }
+    this.cueKey = key;
+    this.cueSpots = spots;
+    return spots;
+  };
+  Board.prototype.drawWindCue = function (ctx, t) {
+    var spots = this.windCueSpots();
+    if (!spots.length) return;
+    var T = this.T, d = this.L.wind.dir, o = WIND_OPT;
+    o.kind = 'cue'; o.d = d; o.px = 1 / T;
+    for (var i = 0; i < spots.length; i++) {
+      // a slow, small drift the way the wind blows
+      var dr = t ? Math.sin(t * 1.3 + i * 1.7) * 0.05 : 0;
+      ctx.save();
+      ctx.translate(this.ox + (spots[i].x + DX[d] * dr) * T, this.oy + (spots[i].y + DY[d] * dr) * T);
+      ctx.scale(T, T);
+      SPR.draw('ui.wind', ctx, o);
+      ctx.restore();
+    }
+  };
+
   // --------------------------------------------- animation state per object/piece
 
   Board.prototype.animFor = function (key, initFn, arg) {
@@ -861,7 +913,7 @@
     };
   }
   var NO_GOAL = { flow: 0, state: 'idle', ok: false };
-  var GLYPH_OPT = {}, PIP_OPT = {}, STALL_OPT = {};
+  var GLYPH_OPT = {}, PIP_OPT = {}, STALL_OPT = {}, WIND_OPT = {};
 
   // ------------------------------------------------------------------ draw
 
@@ -869,7 +921,8 @@
    * S = {
    *   pieces: [{type,x,y,d,fixed}],   // everything to draw (lifted piece excluded)
    *   sim: Result,                    // simulation to visualise
-   *   valid: [{x,y}] | null,          // placement cells; validWall: true for wall mounts
+   *   valid: [{x,y}] | null,          // placement cells; validWall: true for wall mounts;
+   *                                   // validType: the tool (a window marks each spot in or out)
    *   ghost: {type,x,y,d,ok,ring} | null,  // preview under the pointer (ring: dragged by a finger)
    *   hint: {type,x,y,d,from?:{x,y}} | null,  // from: a hinted move, drawn with an arrow
    *   conflicts: [{x,y,soft?}] | null,         // soft: it helps right now (no ×)
@@ -907,6 +960,7 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.stepStreaks(dt, motion);
     this.drawStreaks(ctx, motion ? t * N('wind-speed') : 0);
+    this.drawWindCue(ctx, motion ? t : 0);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(this.houseLayer, 0, 0);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -931,12 +985,34 @@
         ctx.stroke();
       }
       ctx.globalAlpha = S.validWall ? 1 : 0.85 + 0.15 * pk;
+      // a window picked up on a windy day: each spot says what a window there
+      // would do (chevrons in: lets the wind in; an arrow out: lets air out)
+      var marks = S.validType === 'window' && L.wind.strength > 0;
       ctx.beginPath();
       var dr = Math.max(2, T * 0.06) * (1 + 0.6 * pk);
-      for (i = 0; i < S.valid.length; i++) circle(ctx, (S.valid[i].x + 0.5) * T, (S.valid[i].y + 0.5) * T, dr);
+      for (i = 0; i < S.valid.length; i++) {
+        if (marks && WB.outwardDir(L, S.valid[i].x, S.valid[i].y) >= 0) continue;
+        circle(ctx, (S.valid[i].x + 0.5) * T, (S.valid[i].y + 0.5) * T, dr);
+      }
       ctx.fillStyle = S.validWall ? P('surface') : P('hl-edge');
       ctx.fill();
       ctx.restore();
+      if (marks) {
+        var wo = WIND_OPT;
+        wo.px = 1 / T;
+        for (i = 0; i < S.valid.length; i++) {
+          var vc = S.valid[i], out = WB.outwardDir(L, vc.x, vc.y);
+          if (out < 0) continue;
+          var inl = out === L.wind.from;
+          wo.kind = inl ? 'in' : 'out';
+          wo.d = inl ? (out + 2) % 4 : out;
+          ctx.save();
+          ctx.translate((vc.x + 0.5) * T, (vc.y + 0.5) * T);
+          ctx.scale(T * (1 + 0.12 * pk), T * (1 + 0.12 * pk));
+          SPR.draw('ui.wind', ctx, wo);
+          ctx.restore();
+        }
+      }
     }
     // filled tile under the ghost; dragged by a finger, also a clear ring a
     // little wider than the cell, so it shows around the fingertip

@@ -852,6 +852,34 @@
     ctx.restore();
   }
 
+  // The wind's own mark: soft chevrons pointing the way it blows, the same
+  // mark as on a window that lets the wind in. kind 'cue': in the garden along
+  // the windy side; 'in': on a window spot that would let the wind in (while a
+  // window is picked up); 'out': a small arrow on a spot that would let air
+  // out. Unit space (1 = a tile), o.d: the direction (0 N, 1 E, 2 S, 3 W).
+  function windMark(ctx, o) {
+    var d = o.d | 0, kind = o.kind || 'cue';
+    var ux = DX[d], uy = DY[d];
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    if (kind === 'out') {
+      line(ctx, -ux * 0.11, -uy * 0.11, ux * 0.1, uy * 0.1);
+      chevron(ctx, ux * 0.08, uy * 0.08, d, 0.08);
+      ctx.strokeStyle = alpha(P('air-deep'), 0.55);
+      ctx.lineWidth = minW(o, 0.045, 1.2);
+    } else {
+      var k = kind === 'in' ? 1.15 : 1;
+      chevron(ctx, -ux * 0.1 * k, -uy * 0.1 * k, d, 0.12 * k);
+      chevron(ctx, ux * 0.1 * k, uy * 0.1 * k, d, 0.12 * k);
+      ctx.strokeStyle = kind === 'in' ? P('air-deep') : alpha(P('air-deep'), 0.7);
+      ctx.lineWidth = minW(o, kind === 'in' ? 0.075 : 0.06, 1.6);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
   // ------------------------------------------------------------------ tray icons
   // id: a tool. Drawn in unit space scaled to the icon (see WBRender.icon).
 
@@ -1704,6 +1732,16 @@
     stateNotes: { happy: 'the object is happy', bad: 'unhappy', dirty: 'unhappy: smoky air reached it', idle: 'waiting' },
     unit: function (o) { return o.r || 6; }, box: [-1.3, -1.3, 2.6, 2.6],
     samples: ['happy', 'bad', 'dirty', 'idle'].map(function (s) { return { label: s, o: { state: s } }; })
+  });
+
+  var WIND_KEYS = keyed(['cue', 'in', 'out']);
+  define('ui.wind', {
+    group: 'ui', draw: windMark,
+    note: 'the wind\'s mark: chevrons in the garden on the windy side (cue), and on window spots while a window is picked up (in: lets the wind in; out: lets air out). o.d: the way it points. Art points north.',
+    states: ['cue', 'in', 'out'], state: function (o) { return WIND_KEYS[o.kind] || WIND_KEYS.cue; },
+    stateNotes: { cue: 'in the garden, on the windy side', in: 'a window here lets the wind in', out: 'a window here lets air out' },
+    turn: function (o) { return (o.d | 0) * QUARTER; },
+    samples: [{ label: 'cue', o: { kind: 'cue', d: 1 } }, { label: 'in', o: { kind: 'in', d: 2 } }, { label: 'out', o: { kind: 'out', d: 0 } }]
   });
 
   var STALL_KEYS = keyed(['stalled', 'quiet']);

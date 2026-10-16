@@ -369,6 +369,23 @@ button {
   color: var(--accent-text);
 }
 .lvl.is-done:hover { border-color: var(--accent); }
+/* the tick on a solved level: the same mark as the solved check by the level title */
+.lvl-tick {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent-fill);
+  color: var(--accent-ink);
+  box-shadow: 0 0 0 2px var(--surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.lvl-tick .ico { width: 12px; height: 12px; stroke-width: 3; }
 .lvl.is-next {
   border: 2px solid var(--accent);
   color: var(--accent-text);
@@ -822,24 +839,25 @@ button {
   pointer-events: none;
   line-height: 1.1;
 }
+/* the count sits on the chip's corner, outside the icon (at any text size) */
 .chip-count {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  min-width: 20px;
-  height: 20px;
+  top: -6px;
+  right: -6px;
+  min-width: 22px;
+  height: 22px;
   padding: 0 5px;
   border-radius: 999px;
   background: var(--surface-2);
   color: var(--ink-soft);
-  font-size: 0.75rem;
+  font-size: min(0.75rem, 13px);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  box-shadow: 0 0 0 2px var(--surface);
+  box-shadow: 0 0 0 2px var(--bg);
 }
 .chip:hover { transform: translateY(-1px); }
 .chip:active { transform: scale(0.97); }
@@ -860,7 +878,7 @@ button {
   border-radius: 999px;
   background: var(--accent-fill);
   color: var(--accent-ink);
-  font-size: 0.6875rem;
+  font-size: min(0.6875rem, 12px);
   font-weight: 700;
   line-height: 1.35;
   letter-spacing: 0.02em;
@@ -1047,17 +1065,43 @@ button {
   border-radius: 50%;
   background: var(--air);
 }
+/* how to use it: right under the demo, so it shows without scrolling */
 .gcard-controls {
   display: flex;
   gap: 8px;
   align-items: flex-start;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid var(--line);
+  margin-top: 10px;
+  padding: 8px 12px 8px 10px;
+  border-radius: 14px;
+  background: var(--surface-2);
   color: var(--ink);
   font-size: 0.9375rem;
   line-height: 1.4;
 }
+/* more to read below: a small "More" over the fading last lines */
+.gcard { position: relative; }
+.gcard-more {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: -36px auto 6px;
+  min-height: 32px;
+  padding: 0 10px 0 14px;
+  border: none;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  color: var(--accent-text);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  animation: fade-in .3s ease-out;
+}
+.gcard-more .ico { width: 17px; height: 17px; stroke-width: 2.2; }
 .gcard-controls .ico { width: 20px; height: 20px; margin-top: 1px; color: var(--accent-text); }
 .gcard-buttons {
   flex: none;
@@ -1070,15 +1114,19 @@ button {
 .gcard-buttons .btn { min-width: 0; }
 .gcard-buttons .btn-primary { padding: 0 24px; }
 
-/* the demo: a tiny house drawn by the board renderer */
+/* the demo: a tiny house drawn by the board renderer (its width is set from
+   the room there is and the box's max-height: see makeDemo in js/game.js) */
 .gdemo { margin: 12px auto 2px; max-width: 300px; }
 .gdemo-box {
+  margin: 0 auto;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 0 0 1px var(--line);
   cursor: pointer;
   line-height: 0;
 }
+/* on the game screen the demo leaves room for the words below it */
+.guide .gdemo-box { max-height: min(30vh, 210px); max-height: min(30dvh, 210px); }
 .gdemo-canvas { display: block; }
 .gdemo-cap {
   margin-top: 8px;
@@ -1484,7 +1532,8 @@ kbd {
 
 /* ------------------------------------------------------------------ responsive */
 
-@media (min-width: 900px) and (min-height: 600px) {
+/* wide screens (not as short as a landscape phone): the card is a panel beside the board */
+@media (min-width: 900px) and (min-height: 521px) {
   .icon-btn.act { flex-direction: row; gap: 6px; height: 44px; padding: 0 12px 0 10px; }
   .btn-label { font-size: 0.84375rem; }
   /* the card is a panel beside the board; tray and buttons stay in reach */
@@ -1496,6 +1545,8 @@ kbd {
   .game.is-guiding .hud { display: flex; }
   .game.is-guiding .tray-wrap { display: block; }
   .guide { align-self: start; justify-self: stretch; width: auto; max-height: 100%; margin: 6px 16px 16px 4px; border-radius: 24px; }
+  /* a short panel (a laptop at 125%): a smaller demo, so the points show too */
+  .guide .gdemo-box { max-height: min(32vh, 230px); max-height: min(32dvh, 230px); }
 }
 
 /* Settings sit in the top bar where there is room; on phones they are in Help */
@@ -1511,7 +1562,7 @@ kbd {
   .chip { min-width: 62px; height: 66px; padding: 5px 7px 6px; gap: 2px; border-radius: 17px; }
   .chip canvas { width: 32px; height: 32px; }
   .chip-name { font-size: 0.75rem; }
-  .chip-count { top: 3px; right: 3px; min-width: 19px; height: 19px; font-size: 0.71875rem; padding: 0 4px; }
+  .chip-count { top: -5px; right: -5px; min-width: 20px; height: 20px; font-size: min(0.71875rem, 12.5px); padding: 0 4px; }
   /* six or seven tools: smaller chips (never below 48 px); the tray scrolls if they still don't fit */
   .tray.is-many { gap: 5px; padding-left: 10px; padding-right: 10px; }
   .tray.is-many .chip { min-width: 48px; height: 60px; padding: 4px 4px 5px; border-radius: 15px; }
@@ -1528,6 +1579,9 @@ kbd {
   .tray { padding-left: 12px; padding-right: 12px; min-height: 90px; }
   .guide { max-height: min(66vh, 620px); max-height: min(66dvh, 620px); }
   .gdemo { max-width: 250px; }
+  /* a phone's sheet: the demo stays small enough for the words to show */
+  .guide .gdemo-box { max-height: min(24vh, 170px); max-height: min(24dvh, 170px); }
+  .gdemo-cap { min-height: 2.6em; margin-top: 6px; }
   .gcard-head { padding-left: 16px; }
   .gcard-main { padding-left: 16px; padding-right: 16px; }
 }
@@ -1566,10 +1620,36 @@ kbd {
   .tip-line { order: 0; justify-content: flex-start; padding: 0 4px; margin: 0; }
   .tip { text-align: left; font-size: 0.875rem; }
   .tray-wrap { order: 1; flex: none; }
-  .hud { order: 2; }
   .stage { padding: 4px 4px 8px 12px; }
   .board { border-radius: 18px; box-shadow: var(--shadow); }
-  .hud { flex-wrap: wrap; padding: 0; gap: 6px; }
+  /* goals, Undo, Redo, Clear and Hint stay pinned at the bottom of the
+     column, always in view; the tip and the tray scroll above them */
+  .hud {
+    order: 2;
+    flex-wrap: wrap;
+    gap: 4px 6px;
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin-top: auto;
+    padding: 4px 0 0;
+    background: var(--bg);
+  }
+  .hud::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -14px;
+    height: 14px;
+    background: linear-gradient(transparent, var(--bg));
+    pointer-events: none;
+  }
+  .goals-say { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.75rem; }
+  .goal { height: 34px; }
+  .icon-btn.act { height: 46px; min-width: 44px; }
+  .icon-btn.act .ico { width: 19px; height: 19px; }
+  .btn-label { font-size: 0.6875rem; }
   .tray {
     flex-wrap: wrap;
     align-content: flex-start;
@@ -1584,7 +1664,7 @@ kbd {
   .chip, .tray.is-many .chip { min-width: 54px; height: 58px; padding: 4px 5px 5px; gap: 1px; border-radius: 15px; touch-action: none; }
   .chip canvas, .tray.is-many .chip canvas { width: 28px; height: 28px; }
   .chip-name, .tray.is-many .chip-name { font-size: 0.6875rem; }
-  .chip-count { top: 2px; right: 2px; min-width: 19px; height: 19px; font-size: 0.6875rem; padding: 0 4px; }
+  .chip-count { top: -5px; right: -5px; min-width: 19px; height: 19px; font-size: min(0.6875rem, 12px); padding: 0 4px; }
   /* the card takes the whole side column while it is open */
   .game.is-guiding {
     grid-template-columns: minmax(0, 1fr) minmax(280px, 42%);
@@ -1609,6 +1689,8 @@ kbd {
   .gcard-one { font-size: 0.9375rem; }
   .gcard-buttons { padding: 8px 10px; }
   .gdemo { max-width: 240px; margin-top: 8px; }
+  .guide .gdemo-box { max-height: 34vh; max-height: 34dvh; }
+  .gcard-more { margin-top: -32px; }
   .coach { max-width: min(220px, calc(100% - 16px)); font-size: 0.84375rem; }
   /* toasts float in the top bar, over the level title, never over the house */
   .toast, .toast.at-top {
@@ -1627,6 +1709,20 @@ kbd {
 }
 
 @keyframes toast-in-top { from { opacity: 0; transform: translateY(-6px); } }
+
+/* a short, wide screen with a mouse (a laptop zoomed in): the same column
+   beside the board, but roomier: full-size tools, spaced out */
+@media (max-height: 520px) and (min-aspect-ratio: 4/3) and (pointer: fine) {
+  .game { grid-template-columns: minmax(0, 1fr) minmax(300px, 32%); }
+  .side { gap: 12px; padding-right: 16px; }
+  .tray { gap: 10px; padding: 8px 0 4px; }
+  .chip, .tray.is-many .chip { min-width: 74px; height: 70px; padding: 6px 9px 7px; gap: 3px; border-radius: 18px; }
+  .chip canvas, .tray.is-many .chip canvas { width: 34px; height: 34px; }
+  .chip-name, .tray.is-many .chip-name { font-size: 0.8125rem; }
+  .icon-btn.act { height: 50px; min-width: 52px; }
+  .btn-label { font-size: 0.75rem; }
+  .goals-say { font-size: 0.8125rem; }
+}
 
 /* less motion: the device asks for it (unless switched off in Settings), or Settings does */
 @media (prefers-reduced-motion: reduce) {
