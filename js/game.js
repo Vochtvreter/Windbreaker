@@ -22,12 +22,22 @@
     papers: 'a breeze of 1 at most', fern: 'wants a breeze of exactly 1', stove: ''
   };
   function breezeWord(f) { return f > 0 ? 'breeze ' + f : 'still air'; }
-  // Things that arrive without a new tool get the same "New" card on the first
-  // level they appear in (the key is stored in seenTools, next to the tools).
-  // Objects are described by the engine; tables are map cells, described here.
-  var NEW_THINGS = ['candle', 'stove', 'table', 'laundry', 'papers', 'fern'];
-  var TABLE_DESC = 'Air passes over it, but nothing can be placed on it.';
-  function thingDesc(k) { return WB.TOOLS[k] ? WB.TOOLS[k].desc : WB.OBJECTS[k] ? WB.OBJECTS[k].desc : k === 'table' ? TABLE_DESC : ''; }
+
+  // The field guide (js/guides.js): a "Meet the …" card for every tool, object
+  // and twist. A card shows by itself on the level that introduces its thing;
+  // seen cards are remembered in store.seenTools (by id).
+  var GUIDES = WB.GUIDES || {};
+  var GUIDE_ORDER = WB.GUIDE_ORDER || [];
+  var TWIST_ICON = { courtyard: 'courtyard', calm: 'calm', solid: 'solid', table: 'table', wind2: 'lanes-2', wind3: 'lanes-3' };
+  var KIND_NEW = { tool: 'New tool', object: 'New in the house', twist: 'Something new' };
+  var KIND_WORD = { tool: 'Tool', object: 'In the house', twist: 'Good to know' };
+  var KIND_GROUP = { tool: 'Tools', object: 'Things in the house', twist: 'Weather and rooms' };
+  var DEMO_MS = 2600; // each scene of a card's little demo
+  // Compass words in level tips, said the way the board shows them.
+  var SCREEN_SIDE = { north: 'top', east: 'right', south: 'bottom', west: 'left' };
+  function plainTip(s) {
+    return String(s || '').replace(/\bfrom the (north|east|south|west)\b/gi, function (m, d) { return 'from the ' + SCREEN_SIDE[d.toLowerCase()]; });
+  }
 
   // ================================================================== helpers
 
@@ -153,13 +163,15 @@
     return sigCache[id];
   }
 
+  var INDEX = {};
+  LEVELS.forEach(function (l, i) { INDEX[l.id] = i; });
   function levelById(id) {
-    for (var i = 0; i < LEVELS.length; i++) if (LEVELS[i].id === id) return LEVELS[i];
-    return null;
+    var i = INDEX[id];
+    return i == null ? null : LEVELS[i];
   }
   function levelIndex(id) {
-    for (var i = 0; i < LEVELS.length; i++) if (LEVELS[i].id === id) return i;
-    return -1;
+    var i = INDEX[id];
+    return i == null ? -1 : i;
   }
   function chapterOf(id) {
     for (var i = 0; i < CHAPTERS.length; i++) if (id >= CHAPTERS[i].first && id <= CHAPTERS[i].last) return CHAPTERS[i];
@@ -167,13 +179,26 @@
   }
   function isDone(id) { return store.completed.indexOf(id) >= 0; }
   function markDone(id) { if (!isDone(id)) store.completed.push(id); }
+  // The furthest solved level, as an index into LEVELS (-1: none).
+  function furthestDone() {
+    var f = -1;
+    store.completed.forEach(function (id) { var i = levelIndex(id); if (i > f) f = i; });
+    return f;
+  }
   // Level n is playable when it is the first level, is solved, or the level
   // before it in the list is solved (ids are 1..100; a gap never locks the rest).
+  // Players coming back from an older version can have solved levels here and
+  // there (the levels were reordered): every level before their furthest
+  // solved one is open too. Playing in order, that changes nothing.
   function isUnlocked(id) {
     if (UNLOCK_ALL) return true;
     var i = levelIndex(id);
     if (i < 0) return false;
-    return i === 0 || isDone(id) || isDone(LEVELS[i - 1].id);
+    return i === 0 || isDone(id) || isDone(LEVELS[i - 1].id) || i < furthestDone();
+  }
+  function chapterDone(ch) {
+    for (var n = ch.first; n <= ch.last; n++) if (levelById(n) && !isDone(n)) return false;
+    return true;
   }
   function nextPlayableId() {
     for (var i = 0; i < LEVELS.length; i++) {
@@ -274,12 +299,14 @@
     home: $('home'), game: $('game'), chapters: $('chapters'), play: $('btn-play'), progress: $('home-progress'),
     sound: $('btn-sound'), soundLabel: $('sound-label'), resetProgress: $('btn-reset-progress'), homeToast: $('home-toast'),
     back: $('btn-back'), lvlNum: $('lvl-num'), lvlName: $('lvl-name'), lvlDone: $('lvl-done'), wind: $('wind'), help: $('btn-help'),
-    tip: $('tip'), stage: $('stage'), canvas: $('board'), tooltip: $('tooltip'), live: $('sr-live'),
+    tip: $('tip'), guideLine: $('guide-line'), tipIcon: $('tip-icon'), tipMore: $('tip-more'), guide: $('guide'),
+    coach: $('coach'), coachText: $('coach-text'), coachArrow: document.querySelector('#coach .coach-arrow'),
+    stage: $('stage'), canvas: $('board'), tooltip: $('tooltip'), live: $('sr-live'),
     toast: $('toast'), toastText: $('toast-text'), toastAction: $('toast-action'), toastClose: $('toast-close'),
-    newtool: $('newtool'), newtoolIcon: $('newtool-icon'), newtoolTitle: $('newtool-title'), newtoolDesc: $('newtool-desc'), newtoolOk: $('newtool-ok'),
     goals: $('goals'), undo: $('btn-undo'), reset: $('btn-reset'), hint: $('btn-hint'), next: $('btn-next'), nextLabel: $('btn-next-label'),
     tray: $('tray'), trayWrap: document.querySelector('.tray-wrap'), side: document.querySelector('.side'), avatar: $('drag-avatar'),
-    win: $('win'), winSub: $('win-sub'), winDots: $('win-dots'), winTeaser: $('win-teaser'), winTeaserIcon: $('win-teaser-icon'),
+    win: $('win'), winTitle: $('win-title'), winSub: $('win-sub'), winDots: $('win-dots'), winTeaser: $('win-teaser'), winTeaserIcon: $('win-teaser-icon'),
+    winChapter: $('win-chapter'), winChapterIcon: $('win-chapter-icon'), winChapterName: $('win-chapter-name'), winRecap: $('win-recap'),
     winTeaserText: $('win-teaser-text'), winFinal: $('win-final'), winNext: $('win-next'), winLevels: $('win-levels'),
     helpDlg: $('help'), helpBody: $('help-body'), helpClose: $('help-close'), helpSound: $('help-sound'),
     confirm: $('confirm'), confirmYes: $('confirm-yes'), confirmNo: $('confirm-no')
@@ -299,10 +326,13 @@
     ghost: null, hint: null, conflicts: null, lifted: null,
     previewSim: null, previewKey: null, dragBaseSim: null,
     // all pointer state lives here and is cleared by resetInput()
-    input: { press: null, drag: null, tray: null, suppressClick: false, cancelledPointer: null },
+    input: { press: null, drag: null, tray: null, suppressClick: false, cancelledPointer: null, chipLong: null, infoDown: null },
     pops: {}, shake: null, flash: null, pulse: null, focus: null,
-    won: false, winAt: null, winTimer: 0, winCardTimer: 0,
-    newTool: null, newToolUsed: false, reserve: 0, lastPtr: null, sawKeys: false,
+    won: false, winAt: null, winTimer: 0, winCardTimer: 0, chapterDoneBefore: false,
+    newTool: null, newToolUsed: false, lastPtr: null, sawKeys: false,
+    // the field guide: the card this level introduces, the card on screen,
+    // the coach bubble (and its ring on the board), the first level's steps
+    levelGuide: null, guide: null, helpGuide: null, coach: null, spot: null, c1: null, coachGoal: null, coachHide: 0,
     drawPieces: [], raf: 0, toastTimer: 0, tipTimer: 0, hoverTimer: 0, coachTimer: 0,
     pushedFromHome: false, lastSig: '', settleUntil: 0, paletteVersion: 0,
     openedAt: -1e9, focusBoardOnOpen: false
@@ -431,6 +461,21 @@
   }
   function pairKey(k) { return k.split('+').sort().join('+'); }
 
+  // What a challenge chapter (no new thing) is about, in a few words.
+  function chapterTheme(ch, pair) {
+    var lvls = [];
+    for (var n = ch.first; n <= ch.last; n++) if (levelById(n)) lvls.push(levelById(n));
+    function all(f) { return lvls.length > 0 && lvls.every(f); }
+    function has(c) { return function (l) { return (l.map || []).join('').indexOf(c) >= 0; }; }
+    if (all(function (l) { return (l.wind.strength | 0) === 0; })) return 'no wind at all';
+    if (all(function (l) { return (l.wind.strength | 0) >= 3; })) return 'gale days';
+    if (ch === CHAPTERS[CHAPTERS.length - 1]) return 'everything you know';
+    if (all(has('s')) && all(has('l'))) return 'smoke and washing';
+    if (all(has('s'))) return 'smoky kitchens';
+    var ids = pair.split('+');
+    return ids.map(function (t) { return WB.TOOLS[t] ? WB.TOOLS[t].name.toLowerCase() + 's' : t; }).join(' and ');
+  }
+
   function renderHome() {
     var frag = document.createDocumentFragment();
     var nextId = nextPlayableId();
@@ -444,11 +489,21 @@
       var label = 'Chapter ' + ch.n + ': ' + ch.title;
       var ic = el('canvas', 'ch-icon');
       ic.setAttribute('aria-hidden', 'true');
-      if (ch.tool) R.icon(ic, 'tool', ch.tool, 40);
-      else {
+      // a chapter that brings something new shows it (a tool, or an object:
+      // never a tool that has not arrived yet); a challenge chapter shows the
+      // two tools it leans on most
+      var intro = chapterIntro(ch), tag = null;
+      if (intro) {
+        guideIcon(ic, intro.id, 40);
+        tag = '<b>New:</b> ' + esc(thingTitle(intro.id));
+        label += ', new: ' + thingTitle(intro.id);
+      } else {
         var pair = chapterPair(ch, usedPairs);
         usedPairs[pairKey(pair)] = true;
         R.icon(ic, 'pair', pair, 40);
+        var theme = chapterTheme(ch, pair);
+        tag = '<b>Challenge:</b> ' + esc(theme);
+        label += ', challenge: ' + theme;
       }
 
       if (!anyOpen && shownLocked) {
@@ -473,6 +528,12 @@
       var titles = el('div', 'ch-titles');
       titles.appendChild(el('div', 'ch-kicker', 'Chapter ' + ch.n));
       titles.appendChild(el('div', 'ch-title', ch.title));
+      if (tag) {
+        var tg = el('div', 'ch-new');
+        tg.innerHTML = tag;
+        tg.setAttribute('aria-hidden', 'true'); // said in the section label
+        titles.appendChild(tg);
+      }
       head.appendChild(titles);
       var cnt = el('div', 'ch-count' + (done === ids.length && ids.length ? ' is-done' : ''));
       if (!anyOpen) cnt.innerHTML = LOCK_SVG;
@@ -609,6 +670,10 @@
     clearTimeout(G.winTimer); // a cancelled drag re-checks the win
     hideTooltip();
     hideToast();
+    closeGuide({ silent: true, keep: true });
+    hideCoach();
+    clearTimeout(G.c1Timer);
+    G.c1 = null;
     closeDialog(dom.win, true);
     closeDialog(dom.helpDlg, true);
   }
@@ -643,21 +708,31 @@
     dom.lvlName.textContent = def.name || 'Level ' + id;
     dom.lvlDone.hidden = !isDone(id);
     renderWind();
-    if (def.tip) { dom.tip.textContent = def.tip; dom.tip.hidden = false; } else { dom.tip.hidden = true; }
-    renderNewTool();
+    // the card this level introduces: shown by itself the first time, then
+    // folded into the guidance line above the board
+    G.levelGuide = levelGuideId(id);
+    var autoGuide = !!G.levelGuide && store.seenTools.indexOf(G.levelGuide) < 0;
+    var intro = chapterIntro(G.chapter);
+    G.newTool = autoGuide && intro && intro.kind === 'tool' && intro.id === G.levelGuide ? intro.id : null;
+    G.newToolUsed = false;
+    // the very first level: three soft steps pinned to the board
+    G.c1 = firstLevelCoach();
+    G.coachGoal = G.c1 ? goalLine() : null;
     renderTray();
     renderGoals();
     updateButtons();
     board.setLevel(G.L, id);
-    G.reserve = 0;
+    if (autoGuide) openGuide(G.levelGuide, { intro: true, focus: G.focusBoardOnOpen });
+    else updateGuideLine();
     layoutBoard();
     startLoop();
     window.scrollTo(0, 0);
     G.openedAt = performance.now();
     // "Next" (win card or pill) disappears with the old level: keep keyboard
-    // focus on the board instead of letting it fall back to the page
-    if (G.focusBoardOnOpen) dom.canvas.focus({ preventScroll: true });
+    // focus on the board (or the new card) instead of letting it fall back to the page
+    if (G.focusBoardOnOpen && !G.guide) dom.canvas.focus({ preventScroll: true });
     G.focusBoardOnOpen = false;
+    if (!G.guide) startCoachSoon();
     // a saved board that already solves the level (closed mid-celebration, or
     // a redesigned level): let the normal win run so progress is recorded
     if (G.sim.solved && !isDone(id)) checkWin();
