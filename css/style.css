@@ -246,6 +246,27 @@ button {
   font-size: 0.875rem;
   min-height: 1.4em;
 }
+/* levels left open here and there (progress from an older version) */
+.catchup { margin-top: 2px; color: var(--accent-text); font-weight: 600; }
+.catchup:hover { color: var(--accent-text); }
+/* once: "Welcome back! The levels have a new, gentler order …" */
+.home-note {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 12px 12px 12px 16px;
+  max-width: 440px;
+  border-radius: 18px;
+  background: var(--accent-soft);
+  color: var(--ink);
+  text-align: left;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  animation: fade-in .35s ease-out;
+}
+.home-note p { flex: 1; min-width: 0; }
+.home-note .btn { flex: none; }
 
 .chapters {
   display: grid;
@@ -874,7 +895,8 @@ button {
 /* the first level's coach: "this one!" */
 .chip.is-coach { border-color: var(--accent); animation: chip-call 1.8s ease-in-out infinite; }
 @keyframes chip-call { 50% { box-shadow: 0 0 0 7px var(--accent-soft), var(--shadow); } }
-.chip:disabled {
+/* every copy is on the board: a dashed outline (still pressable: it can say so, and open its card) */
+.chip.is-used {
   opacity: 0.5;
   cursor: default;
   box-shadow: none;
@@ -882,8 +904,9 @@ button {
   border: 1.5px dashed var(--line-strong);
   transform: none;
 }
-.chip:disabled canvas { opacity: 0.6; }
-.chip:disabled .chip-count { background: transparent; }
+.chip.is-used:hover, .chip.is-used:active { transform: none; }
+.chip.is-used canvas { opacity: 0.6; }
+.chip.is-used .chip-count { background: transparent; }
 .chip.is-shake { animation: shake .36s ease; }
 @keyframes shake {
   20% { translate: -3px 0; }

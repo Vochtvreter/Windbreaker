@@ -30,13 +30,14 @@
     pinwheel: 'Make the pinwheel spin', candle: 'Keep the candle lit', stove: 'Get the smoke outside',
     laundry: 'Dry the laundry', papers: 'Keep the papers in place', fern: 'Give the fern a gentle breeze'
   };
-  function breezeWord(f) { return f > 0 ? 'breeze ' + f : 'still air'; }
+  function breezeWord(f) { return f <= 0 ? 'still air' : f === 1 ? 'a gentle breeze of 1' : f === 2 ? 'a strong breeze of 2' : 'a gale of ' + f; }
   function dirWords(d) { return DIR_WORD[d] + ' ' + DIR_ARROW[d]; }
 
   // The field guide (js/guides.js): a "Meet the …" card for every tool, object
   // and twist. A card shows by itself on the level that introduces its thing;
   // seen cards are remembered in store.seenTools (by id).
   var GUIDES = WB.GUIDES || {};
+  var Hints = WB.Hints; // js/hints.js: what the Hint button thinks
   var GUIDE_ORDER = WB.GUIDE_ORDER || [];
   var TWIST_ICON = { courtyard: 'courtyard', calm: 'calm', solid: 'solid', table: 'table', wind2: 'lanes-2', wind3: 'lanes-3' };
   var KIND_NEW = { tool: 'New tool', object: 'New in the house', twist: 'Something new' };
@@ -46,11 +47,18 @@
   // Compass words in level tips, said the way the board shows them (the
   // level files keep their own wording: this happens when the tip is shown).
   var SCREEN_SIDE = { north: 'top', east: 'right', south: 'bottom', west: 'left' };
+  // A few phrases are said the way the cards say them, in plainer words.
   function plainTip(s) {
     return String(s || '')
       .replace(/\bfrom the (north|east|south|west)\b/gi, function (m, d) { return 'from the ' + SCREEN_SIDE[d.toLowerCase()]; })
       .replace(/\bthe far side\b/gi, 'the other side')
-      .replace(/\b(north|east|south|west)(ern)?\b/gi, function (m, d) { return SCREEN_SIDE[d.toLowerCase()]; });
+      .replace(/\b(north|east|south|west)(ern)?\b/gi, function (m, d) { return SCREEN_SIDE[d.toLowerCase()]; })
+      .replace(/\bon the side facing the wind\b/gi, 'on the windy side')
+      .replace(/\b(?:that )?(?:faces|facing) the wind\b/gi, 'on the windy side')
+      .replace(/\bby 90 degrees\b/gi, 'round a corner')
+      .replace(/\bflip between \/ and \\\./g, 'flip it the other way.')
+      .replace(/\s*\(half, rounded down\)/gi, '')
+      .replace(/\bthe way it faces\b/gi, 'the way it points');
   }
 
   // ================================================================== helpers
@@ -119,6 +127,8 @@
     return s;
   }
   function loadStore() {
+    // progress js/migrate.js translated but could not write back: that, not the old numbers
+    if (WB.migratedStore && !UNLOCK_ALL) return parseStore(JSON.stringify(WB.migratedStore));
     var raw = null;
     try { raw = window.localStorage.getItem(STORE_KEY); } catch (e) { /* storage unavailable: play without saving */ }
     return parseStore(raw);
@@ -144,7 +154,8 @@
   // tab never erases progress. `replace` (reset progress) writes as is.
   function saveStore(replace) {
     try {
-      if (!replace) {
+      // (what storage holds is the untranslated v1.0 progress when js/migrate.js could not write: never merged)
+      if (!replace && !(WB.migratedStore && !UNLOCK_ALL)) {
         var raw = window.localStorage.getItem(STORE_KEY);
         if (raw) {
           var o = parseStore(raw);
@@ -155,6 +166,8 @@
         }
       }
       window.localStorage.setItem(STORE_KEY, JSON.stringify(store));
+      // saved in today's level numbering (js/migrate.js must never translate it again)
+      if (!UNLOCK_ALL && WB.LEVELSET) window.localStorage.setItem('windbreaker.levelset', WB.LEVELSET);
     } catch (e) { /* ignore */ }
   }
   // Another tab saved: take its view (it already merged ours), keep our board.
@@ -236,7 +249,41 @@
     }
     return null;
   }
+  // Where "Continue" goes: the first open level after the furthest solved one
+  // (players coming back from an older version can have gaps before it: those
+  // are offered apart, as "Catch up"), else the first open level.
+  function continueId() {
+    for (var i = furthestDone() + 1; i < LEVELS.length; i++) {
+      var id = LEVELS[i].id;
+      if (isUnlocked(id) && !isDone(id)) return id;
+    }
+    return nextPlayableId();
+  }
+  // Open levels left unsolved before the furthest solved one.
+  function gapIds() {
+    var out = [], f = furthestDone();
+    for (var i = 0; i < f; i++) if (isUnlocked(LEVELS[i].id) && !isDone(LEVELS[i].id)) out.push(LEVELS[i].id);
+    return out;
+  }
   function seenTip(k) { return store.seenTips.indexOf(k) >= 0; }
+
+  // Progress carried over from v1.0 (js/migrate.js): { from, solved, furthest, noted }.
+  var MIGRATED_KEY = 'windbreaker.migrated';
+  function migratedInfo() {
+    if (UNLOCK_ALL) return null;
+    try {
+      var r = window.localStorage.getItem(MIGRATED_KEY);
+      if (r) { var o = JSON.parse(r); if (o && typeof o === 'object') return o; }
+    } catch (e) { /* no storage */ }
+    return WB.migratedInfo || null;
+  }
+  function noteMigrated() {
+    var m = migratedInfo();
+    if (!m || m.noted) return;
+    m.noted = true;
+    WB.migratedInfo = m;
+    try { window.localStorage.setItem(MIGRATED_KEY, JSON.stringify(m)); } catch (e) { /* no storage */ }
+  }
 
   // ================================================================== audio
 
@@ -326,6 +373,7 @@
 
   var dom = {
     home: $('home'), game: $('game'), chapters: $('chapters'), play: $('btn-play'), progress: $('home-progress'),
+    catchup: $('btn-catchup'), homeNote: $('home-note'), homeNoteText: $('home-note-text'), homeNoteOk: $('home-note-ok'),
     howto: $('btn-howto'), homeGear: $('btn-settings-home'), footGear: $('btn-settings-foot'), resetProgress: $('btn-reset-progress'), homeToast: $('home-toast'),
     back: $('btn-back'), lvlNum: $('lvl-num'), lvlName: $('lvl-name'), lvlDone: $('lvl-done'), wind: $('wind'), help: $('btn-help'),
     tip: $('tip'), guideLine: $('guide-line'), tipIcon: $('tip-icon'), tipMore: $('tip-more'), guide: $('guide'),
@@ -335,6 +383,7 @@
     goals: $('goals'), goalsSay: $('goals-say'), undo: $('btn-undo'), redo: $('btn-redo'), reset: $('btn-reset'), hint: $('btn-hint'),
     next: $('btn-next'), nextLabel: $('btn-next-label'), gear: $('btn-settings'),
     pmenu: $('pmenu'), pmenuText: $('pmenu-text'), pmenuTurn: $('pmenu-turn'), pmenuRemove: $('pmenu-remove'),
+    pmenuAbout: $('pmenu-about'), pmenuAboutLabel: $('pmenu-about-label'),
     tray: $('tray'), trayWrap: document.querySelector('.tray-wrap'), side: document.querySelector('.side'), avatar: $('drag-avatar'),
     win: $('win'), winTitle: $('win-title'), winSub: $('win-sub'), winDots: $('win-dots'), winTeaser: $('win-teaser'), winTeaserIcon: $('win-teaser-icon'),
     winChapter: $('win-chapter'), winChapterIcon: $('win-chapter-icon'), winChapterName: $('win-chapter-name'), winRecap: $('win-recap'),
@@ -374,7 +423,9 @@
     // hints go one step at a time: words first, then one piece
     hintStep: 0, hintBoard: null, hintFollowed: false,
     // "Stuck? A hint is free": progress (most things happy at once), moves and time since
-    best: 0, sinceMoves: 0, sinceAt: 0, offered: false, stuckTimer: 0
+    best: 0, sinceMoves: 0, sinceAt: 0, offered: false, stuckTimer: 0,
+    // how many things are happy in the empty house (the goals bar praises only progress)
+    startHappy: 0
   };
   var sessionOffered = false; // the "a hint is free" toast: once per visit
   var I = G.input;
@@ -537,7 +588,7 @@
 
   function renderHome() {
     var frag = document.createDocumentFragment();
-    var nextId = nextPlayableId();
+    var nextId = continueId();
     var shownLocked = false;
     CHAPTERS.forEach(function (ch) {
       var ids = [];
@@ -635,7 +686,32 @@
     dom.progress.textContent = solved === 0
       ? LEVELS.length + ' levels · ' + WB.TOOL_ORDER.length + ' tools'
       : (solved === LEVELS.length ? 'All ' + LEVELS.length + ' levels solved — lovely.' : solved + ' of ' + LEVELS.length + ' levels solved');
+    // levels skipped here and there, offered quietly
+    var gaps = gapIds();
+    dom.catchup.hidden = !gaps.length;
+    if (gaps.length) dom.catchup.textContent = 'Catch up: ' + gaps.length + ' open level' + (gaps.length === 1 ? '' : 's');
+    // once: progress from an older version was carried over
+    var m = migratedInfo();
+    dom.homeNote.hidden = !m || !!m.noted || !solved;
+    if (!dom.homeNote.hidden) {
+      var lastOpen = 0;
+      LEVELS.forEach(function (l) { if (isUnlocked(l.id)) lastOpen = l.id; });
+      dom.homeNoteText.textContent = 'Welcome back! The levels have a new, gentler order. Your ' + solved + ' solved house' + (solved === 1 ? ' is' : 's are') +
+        ' kept, and levels 1\u2013' + lastOpen + ' are open.';
+    }
   }
+  dom.catchup.addEventListener('click', function () {
+    var g = gapIds();
+    if (!g.length) return;
+    Sound.unlock();
+    noteMigrated();
+    navigate(g[0]);
+  });
+  dom.homeNoteOk.addEventListener('click', function () {
+    noteMigrated();
+    dom.homeNote.hidden = true;
+    dom.play.focus();
+  });
 
   var homeToastTimer = 0;
   function lockedTap(b, id) {
@@ -646,7 +722,7 @@
     var prev = i > 0 ? LEVELS[i - 1].id : null;
     var msg = prev != null && isUnlocked(prev)
       ? 'Solve level ' + prev + ' to unlock level ' + id + '.'
-      : 'Level ' + id + ' is locked' + (nextPlayableId() != null ? ' — level ' + nextPlayableId() + ' is next.' : '.');
+      : 'Level ' + id + ' is locked' + (continueId() != null ? ' — level ' + continueId() + ' is next.' : '.');
     dom.homeToast.textContent = msg;
     dom.homeToast.hidden = false;
     clearTimeout(homeToastTimer);
@@ -732,7 +808,8 @@
 
   dom.play.addEventListener('click', function () {
     Sound.unlock();
-    var id = nextPlayableId();
+    noteMigrated();
+    var id = continueId();
     if (id == null && LEVELS.length) id = LEVELS[0].id;
     if (id != null) navigate(id);
   });
@@ -745,6 +822,8 @@
     store.seenTools = [];
     store.seenTips = [];
     saveStore(true);
+    try { window.localStorage.removeItem(MIGRATED_KEY); } catch (e) { /* no storage */ }
+    WB.migratedInfo = null;
     closeDialog(dom.confirm, true);
     closeDialog(dom.settings, true);
     G.lastId = null;
@@ -821,6 +900,8 @@
     G.pops = {}; G.shake = null; G.flash = null; G.pulse = null; G.focus = null; G.winAt = null;
     G.hintStep = 0; G.hintBoard = null; G.hintFollowed = false; G.tipAt = null;
     G.sim = WB.simulate(G.L, allPieces());
+    // how many are happy in the empty house: the goals bar praises only progress past this
+    G.startHappy = happyCount(G.pieces.length ? WB.simulate(G.L, G.fixed) : G.sim);
     G.best = happyCount(G.sim); G.sinceMoves = 0; G.sinceAt = performance.now(); G.offered = false;
     G.won = G.sim.solved && isDone(id);
     G.version++;
@@ -1188,8 +1269,10 @@
     if (!dom.toast.hidden && dom.toast.getAttribute('data-kind') !== 'reset') hideToast();
     var at = opts.at || null;
     var buttons = [];
-    if (showMeTarget(id)) buttons.push({ id: 'guide-show', label: 'Show me', cls: 'btn btn-quiet', fn: function () { closeGuide({ how: 'show' }); } });
-    buttons.push({ id: 'guide-go', label: 'Let’s try it', cls: 'btn btn-primary', fn: function () { closeGuide({ how: 'go' }); } });
+    // the first time: "Let's try it" (and "Show me"); opened again mid-level, it
+    // is a reminder: "Got it" (a tool keeps "Show me": where it can go)
+    if (showMeTarget(id) && (opts.intro || WB.TOOLS[id])) buttons.push({ id: 'guide-show', label: 'Show me', cls: 'btn btn-quiet', fn: function () { closeGuide({ how: 'show' }); } });
+    buttons.push({ id: 'guide-go', label: opts.intro ? 'Let’s try it' : 'Got it', cls: 'btn btn-primary', fn: function () { closeGuide({ how: 'go' }); } });
     var built = buildCard(card, {
       intro: !!opts.intro, titleId: 'guide-title', status: at ? describe(at.x, at.y) : null, buttons: buttons,
       close: function () { closeGuide({ how: 'close' }); }
@@ -1363,7 +1446,9 @@
     in: 'The wind blows in here. The dashed line shows where it wants to go.',
     out: 'But it stops at this wall, at the red ×: no way out yet. Put a window here!',
     move: 'But it stops at this wall, at the red \u00d7: no way out yet. Drag your window here!',
-    offpath: 'Breezes blow in straight lines. Try where the dashed line ends.',
+    offpath: 'Breezes blow in straight lines. Try where the dashed line ends, at the red \u00d7.',
+    offpathMove: 'Breezes blow in straight lines. Drag your window to where the dashed line ends.',
+    inside: 'Inside walls stop a breeze. Line your window up with a doorway.',
     flow: 'The breeze flows! Now let it reach the pinwheel.',
     done: 'In one window, out the other: that’s a breeze! The pinwheel is happy.'
   };
@@ -1373,6 +1458,24 @@
     return inlet ? { step: null, inlet: { x: inlet.source.x, y: inlet.source.y } } : null;
   }
   function stalledInlets(sim) { return sim.trees.filter(function (t) { return t.kind === 'inlet' && !t.active; }); }
+  // The tip for a window just placed off the breeze's path: pinned to the red
+  // × it talks about, and only where the advice works (a window can go there,
+  // moved or from the tray). A breeze stopped by an inside wall gets its own words.
+  function offpathTip(placed) {
+    var cells = stallInfo(G.sim).cells, wp = placed ? playerAt(placed.x, placed.y) : null;
+    for (var i = 0; i < cells.length; i++) {
+      var c = cells[i];
+      if (WB.canPlace(G.L, allPieces(wp), 'window', c.x, c.y)) {
+        return { x: c.x, y: c.y, text: remaining('window') > 0 ? C1_TEXT.offpath : C1_TEXT.offpathMove };
+      }
+    }
+    for (var j = 0; j < cells.length; j++) {
+      var d = cells[j], inner = WB.cellAt(G.L, d.x, d.y) === '#';
+      for (var k = 0; k < 4 && inner; k++) if (WB.isOutside(WB.cellAt(G.L, d.x + WB.DX[k], d.y + WB.DY[k]))) inner = false;
+      if (inner) return { x: d.x, y: d.y, text: C1_TEXT.inside };
+    }
+    return null;
+  }
   // the wall cell where a stalled breeze stops (its red ×)
   function stallCell(sim) { return stallInfo(sim).first; }
   function goalLine() {
@@ -1403,7 +1506,8 @@
       showCoach(sc.x, sc.y, remaining('window') > 0 ? C1_TEXT.out : C1_TEXT.move);
       if (G.sel !== 'window' && remaining('window') > 0) markChipCoach('window');
     } else if (step === 'offpath') {
-      showCoach(c1.placed.x, c1.placed.y, C1_TEXT.offpath);
+      var tip = c1.tip;
+      showCoach(tip.x, tip.y, tip.text);
       G.c1Timer = setTimeout(function () { if (G.c1 === c1 && c1.step === 'offpath') c1Step('out'); }, 4500);
     } else if (step === 'flow') {
       var g = null;
@@ -1416,10 +1520,11 @@
     var c1 = G.c1;
     if (!c1 || !c1.step || c1.step === 'wait' || G.sim.solved) return;
     if (!stalledInlets(G.sim).length) { c1Step('flow'); return; }
-    if (placed && placed.type === 'window' && !seenTip('offpath')) {
+    var tip = placed && placed.type === 'window' && !seenTip('offpath') ? offpathTip(placed) : null;
+    if (tip) {
       store.seenTips.push('offpath');
       saveStore();
-      c1.placed = placed;
+      c1.tip = tip;
       c1Step('offpath');
       return;
     }
@@ -1497,7 +1602,10 @@
       var b = chips[i], type = b.getAttribute('data-tool');
       var n = remaining(type);
       b.querySelector('.chip-count').textContent = '\u00d7' + n;
-      b.disabled = n <= 0 && G.sel !== type;
+      // used up: still pressable (press and hold opens its card; a tap says where they all are)
+      var used = n <= 0 && G.sel !== type;
+      b.classList.toggle('is-used', used);
+      if (used) b.setAttribute('aria-disabled', 'true'); else b.removeAttribute('aria-disabled');
       b.classList.toggle('is-selected', G.sel === type);
       b.classList.toggle('is-new', G.newTool === type && !G.newToolUsed);
       b.classList.toggle('is-coach', G.chipCoach === type && G.sel !== type);
@@ -1517,6 +1625,8 @@
     if (boardLocked()) return;
     if (e.detail > 1 && performance.now() - G.openedAt < 700) return;
     Sound.unlock();
+    // all of this tool's copies are on the board: say so (and where to find them)
+    if (remaining(type) <= 0 && G.sel !== type) { usedChip(this, type); return; }
     // tapping the selected tool again keeps it (a little bounce, and where it goes)
     if (G.sel === type && e.detail !== 0) { againChip(this, type); return; }
     if (G.sel !== type) select(type);
@@ -1530,6 +1640,18 @@
         showTooltipAt(c.x, c.y, describe(c.x, c.y) + '<span class="tt-act">Arrows to move · Enter to place</span>', 0);
       }
     }
+  }
+
+  // A used-up tool, tapped: a little shake, and where its pieces are.
+  function usedChip(chip, type) {
+    chip.classList.remove('is-shake');
+    void chip.offsetWidth;
+    chip.classList.add('is-shake');
+    Sound.nope();
+    var on = G.pieces.filter(function (p) { return p.type === type; });
+    if (on.length) G.focus = { cell: { x: on[0].x, y: on[0].y }, t0: performance.now() };
+    var nm = lowerName(type), many = (G.L.inventory[type] || 0) > 1;
+    if (!G.guide) showToast((many ? 'All your ' + (ABOUT_NAME[type] || nm + 's') + ' are' : 'Your ' + nm + ' is') + ' on the board. Drag ' + (many ? 'one' : 'it') + ' to move ' + (many ? 'it' : 'it') + '.', null, null, { ms: 4000, kind: 'mount' });
   }
 
   // The selected tool, picked again: it stays selected. Say where it goes.
@@ -1638,18 +1760,35 @@
       b.setAttribute('aria-label', name + ': ' + ok + ' of ' + mine.length + ' happy' + (bad && !all ? ', ' + (mine.length > 1 ? 'one is unhappy' : 'unhappy') : '') + '. Show on the board');
       b.title = name + ' — ' + WB.OBJECTS[type].desc;
     }
-    // the goals bar says it in words
+    // the goals bar says it in words: what everyone wants, until the player's
+    // moves make more of them happy than were happy at the start
     var okAll = goals.filter(function (g) { return g.ok; }).length, n = goals.length;
+    var progress = okAll > G.startHappy;
     var say, cls = '';
     if (n && okAll === n) { say = n > 1 ? 'Everyone is happy!' : 'Happy!'; cls = 'is-done'; }
     else if (n === 1) say = WANT_ONE[goals[0].type] || 'Make it happy';
-    else if (okAll === 0) say = 'Make everyone happy';
-    else if (n - okAll === 1) { say = 'Almost! One more to go'; cls = 'is-almost'; }
-    else say = okAll + ' of ' + n + ' happy';
+    else if (progress && n - okAll === 1) { say = 'Almost! One more to go'; cls = 'is-almost'; }
+    else if (progress) say = okAll + ' of ' + n + ' happy';
+    else say = wantLine(goals);
     if (dom.goalsSay.textContent !== say) dom.goalsSay.textContent = say;
     dom.goalsSay.className = 'goals-say' + (cls ? ' ' + cls : '');
   }
   function happyCount(sim) { return sim.goals.filter(function (g) { return g.ok; }).length; }
+  // "Spin the pinwheel and keep the candle lit": what each kind of thing wants
+  // (two kinds at most; more than that is "Make everyone happy")
+  var WANT_SHORT = {
+    pinwheel: ['spin the pinwheel', 'spin the pinwheels'], candle: ['keep the candle lit', 'keep the candles lit'],
+    stove: ['clear the smoke', 'clear the smoke'], laundry: ['dry the laundry', 'dry the laundry'],
+    papers: ['keep the papers still', 'keep the papers still'], fern: ['a gentle breeze for the fern', 'a gentle breeze for the ferns']
+  };
+  function wantLine(goals) {
+    var count = {}, kinds = [];
+    goals.forEach(function (g) { if (!count[g.type]) { count[g.type] = 0; kinds.push(g.type); } count[g.type]++; });
+    if (!kinds.length || kinds.length > 2) return 'Make everyone happy';
+    kinds.sort(function (a, b) { return WB.OBJECT_ORDER.indexOf(a) - WB.OBJECT_ORDER.indexOf(b); });
+    var s = kinds.map(function (t) { return WANT_SHORT[t] ? WANT_SHORT[t][count[t] > 1 ? 1 : 0] : ''; }).join(' and ');
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Make everyone happy';
+  }
   // a goal chip says hello once (a new thing in the house)
   function helloGoal(type) {
     var b = dom.goals.querySelector('.goal[data-type="' + type + '"]');
@@ -1659,10 +1798,25 @@
     b.classList.add('is-hello');
   }
 
-  var DIRTY = 'dirty: smoky air is blowing through it (filter the smoke or keep it away)';
-  function stoveWord(g, sim) {
-    return g.state === 'happy' ? 'smoke is cleared' : g.state === 'bad' ? 'smoke is trapped: ' + trapReason(g, sim) : 'smoke needs a way out';
+  // How a thing in the house is doing, in words: "blown out: a breeze crosses it".
+  function objWords(g, sim) {
+    var f = g.flow;
+    switch (g.type) {
+      case 'pinwheel': return g.ok ? 'spinning: a breeze reaches it' : 'still: it needs a breeze';
+      case 'candle': return g.ok ? 'lit: the air is still' : 'blown out: a breeze crosses it';
+      case 'stove':
+        return g.state === 'happy' ? 'the smoke goes outside' : g.state === 'bad' ? 'smoke trapped: ' + trapReason(g, sim)
+          : 'smoky: the smoke needs a breeze to carry it out';
+      case 'laundry':
+        return g.smoky ? 'dirty: smoky air blows through it' : g.ok ? 'drying: it gets ' + f : 'damp: it needs 2, and gets ' + (f || 'none');
+      case 'papers': return g.ok ? 'in place: ' + (f ? 'a gentle breeze of 1' : 'still air') : 'scattered: 1 at most, and it gets ' + f;
+      case 'fern':
+        return g.ok ? 'happy: a gentle breeze of 1' : g.state === 'bad' ? 'battered: it needs 1, and gets ' + f : 'droopy: it needs a breeze of 1';
+    }
+    return g.ok ? 'happy' : 'not happy yet';
   }
+  // what a kind of thing is called in "About candles ›"
+  var ABOUT_NAME = { pinwheel: 'pinwheels', candle: 'candles', stove: 'stoves', laundry: 'laundry', papers: 'papers', fern: 'ferns' };
   // Why a stove's smoke counts as trapped: where its smoky air is stopped.
   function trapReason(g, sim) {
     var cx = g.x + 0.5, cy = g.y + 0.5, why = null;
@@ -1686,11 +1840,7 @@
     });
     return why || 'it goes round in circles';
   }
-  function goalText(g) {
-    var name = WB.OBJECTS[g.type].name;
-    if (g.type === 'stove') return name + ' — ' + stoveWord(g, G.sim);
-    return name + ' — ' + (g.smoky ? DIRTY : NEED[g.type]) + ' · ' + breezeWord(g.flow);
-  }
+  function goalText(g) { return WB.OBJECTS[g.type].name + ' — ' + objWords(g, G.sim); }
   function focusGoal(type) {
     var goals = G.sim.goals.filter(function (g) { return g.type === type; });
     var off = goals.filter(function (g) { return !g.ok; });
@@ -1700,9 +1850,9 @@
     var txt = goalText(g);
     if (!off.length) txt = (goals.length > 1 ? 'All ' + goals.length + ' ' + WB.OBJECTS[type].name.toLowerCase() + ' are happy' : WB.OBJECTS[type].name + ' is happy') + ' · ' + NEED[type].replace(/^$/, 'smoke is cleared');
     else if (off.length > 1) txt += ' (' + off.length + ' unhappy)';
-    // nearly there: say so
+    // nearly there (thanks to the player's moves, not because it started that way): say so
     var left = G.sim.goals.filter(function (x) { return !x.ok; }).length;
-    if (off.length && left === 1 && G.sim.goals.length > 1) txt += '. Close! Just this one to go.';
+    if (off.length && left === 1 && G.sim.goals.length > 1 && happyCount(G.sim) > G.startHappy) txt += '. Close! Just this one to go.';
     showToast(txt, null, null, { ms: usingTouch() ? 6000 : 4200, near: g });
   }
 
@@ -1768,15 +1918,17 @@
     checkWin();
     noteDirty();
     // a tip pinned to a piece goes with it
-    if (G.coach && /^(turn|move|offpath)$/.test(G.coach.key || '') && !playerAt(G.coach.x, G.coach.y)) hideCoach();
+    if (G.coach && /^(turn|move)$/.test(G.coach.key || '') && !playerAt(G.coach.x, G.coach.y)) hideCoach();
+    // a tip about a red × goes with the ×
+    if (G.coach && G.coach.key === 'offpath' && !stallInfo(G.sim).end[G.coach.x + ',' + G.coach.y]) hideCoach();
     if (G.c1) c1Update(opts.placed || null);
     // progress, for the gentle "stuck? a hint is free"
     var hc = happyCount(G.sim);
     if (hc > G.best) { G.best = hc; G.sinceMoves = 0; G.sinceAt = performance.now(); }
     else if (++G.sinceMoves >= 8) maybeOfferHint();
-    // the piece menu stays with its piece
+    // the piece menu stays with its piece (a thing's menu says how it is doing now)
     if (G.pmenu) {
-      var mp = playerAt(G.pmenu.x, G.pmenu.y);
+      var mp = G.pmenu.obj ? G.pmenu : playerAt(G.pmenu.x, G.pmenu.y);
       if (!mp || mp.type !== G.pmenu.type) hidePieceMenu(); else refreshPieceMenu();
     }
     // a card opened from an object says how that object is doing right now
@@ -1832,9 +1984,12 @@
     p = livePiece(p);
     if (!p) return;
     var nd = d == null ? p.d : d;
+    // moved right onto the hint ghost: take the hinted rotation too
+    var onHint = !!(G.hint && G.hint.x === x && G.hint.y === y && G.hint.type === p.type);
+    if (onHint) nd = G.hint.d | 0;
     var np = G.pieces.map(function (q) { return q === p ? { type: q.type, x: x, y: y, d: nd } : q; });
     if (nd !== p.d) G.rot[p.type] = nd;
-    commit(np);
+    commit(np, { followed: onHint });
     G.pops[x + ',' + y] = performance.now();
     Sound.tick();
     announce(toolName(p.type) + ' moved. ' + goalSummary());
@@ -1910,11 +2065,13 @@
   function coach(type, x, y, firstOnBoard, stalledBefore, onHint) {
     if (G.sim.solved || G.c1) return;
     var touch = usingTouch();
-    var msg = null, key = null;
+    var msg = null, key = null, at = null;
     var wp = type === 'window' ? playerAt(x, y) : null;
-    if (wp && WB.windowRole(G.L, wp) === 'outlet' && !seenTip('offpath') && stalledBefore > 0 && stalledInlets(G.sim).length >= stalledBefore) {
+    var off = wp && WB.windowRole(G.L, wp) === 'outlet' && !seenTip('offpath') && stalledBefore > 0 && stalledInlets(G.sim).length >= stalledBefore ? offpathTip(wp) : null;
+    if (off) {
       key = 'offpath';
-      msg = C1_TEXT.offpath;
+      msg = off.text;
+      at = off;
     } else if (rotations(type) > 1 && !seenTip('turn') && !onHint) {
       key = 'turn';
       msg = (touch ? 'Tap' : 'Click') + ' it to turn it.';
@@ -1928,9 +2085,10 @@
       if (G.screen !== 'game' || G.sim.solved || G.won || G.guide || !dom.toast.hidden) return;
       var p = playerAt(x, y);
       if (!p || p.type !== type) return; // already moved or gone
+      if (at && !stallInfo(G.sim).end[at.x + ',' + at.y]) return; // that breeze found its way out meanwhile
       store.seenTips.push(key);
       saveStore();
-      showCoach(x, y, msg, { key: key, ms: 6000 });
+      showCoach(at ? at.x : x, at ? at.y : y, msg, { key: key, ms: 6000 });
     }, key === 'offpath' ? 250 : 500);
   }
 
@@ -2069,85 +2227,17 @@
   // a hint (placing or turning the hinted piece), the next press goes straight
   // to the next piece. Hints are free: nothing counts against the player.
 
-  // what a tool can do, said as an idea (step 1)
-  var TOOL_IDEA = {
-    window: 'it lets the wind in on the windy side',
-    fan: 'it makes its own breeze, the way it points',
-    deflector: 'it turns a breeze round a corner',
-    curtain: 'it makes a breeze 1 weaker',
-    vent: 'it lets air through an inside wall',
-    splitter: 'it sends a breeze out to both sides',
-    extractor: 'it lets air out of any outside wall, and pulls a gentle breeze',
-    skylight: 'it lets air out through the roof',
-    filter: 'it cleans the smoke out of the air',
-    ceilingfan: 'it blows a gentle breeze every way at once'
-  };
-  function goalIdea(g) {
-    switch (g.type) {
-      case 'pinwheel': return 'The pinwheel needs a breeze.';
-      case 'candle': return 'The candle is being blown out. Keep every breeze away from it.';
-      case 'stove': return g.state === 'bad' ? 'The smoke is blown into a wall. It needs a way outside.' : 'The smoke needs a breeze to carry it outside.';
-      case 'laundry': return g.smoky ? 'Smoky air is reaching the laundry. Keep the smoke away from it.' : 'The laundry needs a stronger breeze: 2 or more.';
-      case 'papers': return 'Too much air on the papers: they can only take a breeze of 1.';
-      case 'fern': return g.state === 'bad' ? 'Too much air on the fern: it wants exactly 1.' : 'The fern needs a gentle breeze: exactly 1.';
-    }
-    return 'Something in the house is not happy yet.';
-  }
+  // The thinking (what differs from the reference solution, and the idea to
+  // say first) is in js/hints.js (WB.Hints); this part shows it.
   function boardKey() { return G.pieces.map(function (p) { return key4(p); }).sort().join(';'); }
   function key4(p) { return p.type + '@' + p.x + ',' + p.y + '/' + (p.d | 0); }
-
-  // What the reference solution says about the board right now.
-  function hintPlan() {
-    var sol = (G.def.solution || []).map(norm);
-    function same(a, b) {
-      return a.type === b.type && a.x === b.x && a.y === b.y && (rotations(a.type) < 2 || a.d === b.d);
-    }
-    var mine = G.pieces;
-    var conflicts = mine.filter(function (p) { return !sol.some(function (s) { return same(s, p); }); });
-    var missing = sol.filter(function (s) { return !mine.some(function (p) { return same(s, p); }); });
-    // A piece on a solution cell that is only turned the wrong way is not a
-    // conflict: it needs a turn, and turning comes first.
-    var turns = [];
-    conflicts = conflicts.filter(function (p) {
-      for (var i = 0; i < missing.length; i++) {
-        var s = missing[i];
-        if (s.type === p.type && s.x === p.x && s.y === p.y && turns.indexOf(s) < 0) { turns.push(s); return false; }
-      }
-      return true;
-    });
-    // The next piece: of those that fit now, the one that leaves the fewest
-    // things unhappy (so following the hints rarely makes something go red);
-    // the solution's order breaks ties.
-    var best = null, here = allPieces();
-    missing.forEach(function (sp, i) {
-      if (remaining(sp.type) <= 0 || !WB.canPlace(G.L, here, sp.type, sp.x, sp.y)) return;
-      var sim = WB.simulate(G.L, here.concat([sp]));
-      var bad = sim.goals.filter(function (g) { return g.state === 'bad'; }).length;
-      var score = bad * 100 - happyCount(sim) * 10 + i * 0.01;
-      if (!best || score < best.score) best = { p: sp, sim: sim, score: score };
-    });
-    return { conflicts: conflicts, missing: missing, turns: turns, next: best ? best.p : missing[0] || null, nextSim: best ? best.sim : null };
-  }
-
-  // Step 1: an idea in words, about what is wrong right now.
-  function hintIdea(plan) {
-    if (plan.conflicts.length) return { text: plan.conflicts.length === 1 ? 'One of your pieces isn\u2019t helping here.' : 'Some of your pieces aren\u2019t helping here.' };
-    if (plan.turns.length) return { text: 'Almost! One of your pieces just needs a turn.' };
-    var sim = G.sim;
-    var stuck = stalledInlets(sim).length > 0 && !sim.trees.some(function (t) { return t.active; });
-    if (stuck) return { text: 'The breeze needs a way out. Follow the dashed line to where it stops.' };
-    // the thing the next piece helps, else the first unhappy one (a harmed one first)
-    var g = null, after = plan.nextSim;
-    if (after) sim.goals.forEach(function (x, i) { if (!g && !x.ok && after.goals[i].ok) g = x; });
-    if (!g) sim.goals.forEach(function (x) { if (!g && x.state === 'bad') g = x; });
-    if (!g) sim.goals.forEach(function (x) { if (!g && !x.ok) g = x; });
-    var text = g ? goalIdea(g) : 'Something in the house is not happy yet.';
-    // a tool the answer uses that has not been tried yet
-    var nx = plan.next;
-    if (nx && TOOL_IDEA[nx.type] && remaining(nx.type) === (G.L.inventory[nx.type] || 0)) {
-      text += ' Try your ' + lowerName(nx.type) + ': ' + TOOL_IDEA[nx.type] + '.';
-    } else if (g && g.type === 'pinwheel') text += ' How can air reach it?';
-    return { text: text, focus: g };
+  function hintPlan() { return Hints.plan(G.L, G.def, G.pieces); }
+  function hintIdea(plan) { return Hints.idea(G.L, G.pieces, G.sim, plan, { name: lowerName }); }
+  // which way a piece points, for the hint's words
+  function hintHow(p) {
+    if (p.type === 'fan') return ', blowing ' + dirWords(p.d);
+    if (p.type === 'deflector') return p.d === 0 ? ', slanted like /' : ', slanted like \\';
+    return '';
   }
 
   function hint() {
@@ -2179,8 +2269,10 @@
         saveStore();
         text = 'Hints are free! ' + text;
       }
+      // ring what the words are about: a thing in the house, or the spot where a breeze stops
       if (idea.focus) G.focus = { type: idea.focus.type, t0: performance.now() };
-      showToast(text, 'Show me', function () { hint(); }, { kind: 'hint', ms: 14000, near: idea.focus || null });
+      else if (idea.at) G.focus = { cell: { x: idea.at.x, y: idea.at.y }, t0: performance.now() };
+      showToast(text, 'Show me', function () { hint(); }, { kind: 'hint', ms: 14000, near: idea.focus || idea.at || null });
       return;
     }
 
@@ -2192,14 +2284,25 @@
       showToast('Try turning this ' + lowerName(tp.type) + '. ' + tap + ' it to turn it.', null, null, { kind: 'hint', ms: 9000, near: tp });
       return;
     }
+    // a piece the answer needs, in the wrong spot: where it goes, with an arrow from where it is
+    if (plan.moves.length) {
+      var mv = plan.moves[0];
+      G.hint = { type: mv.to.type, x: mv.to.x, y: mv.to.y, d: mv.to.d, from: { x: mv.from.x, y: mv.from.y } };
+      G.conflicts = null;
+      showToast('Move your ' + lowerName(mv.to.type) + ' here' + hintHow(mv.to) + '. Drag it, or ' + tap.toLowerCase() + ' this spot.', null, null,
+        { kind: 'hint', ms: 10000, near: mv.to });
+      return;
+    }
     if (plan.conflicts.length) {
       var conflicts = plan.conflicts;
+      // a piece that makes something happy right now is never marked like a mistake
+      var helps = conflicts.filter(function (p) { return plan.helping.indexOf(p) >= 0; }).length === conflicts.length;
       G.hint = null;
-      G.conflicts = conflicts.map(function (p) { return { x: p.x, y: p.y }; });
-      showToast(conflicts.length === 1
-        ? 'That one isn\u2019t needed here. Put it back?'
-        : 'These ' + conflicts.length + ' aren\u2019t needed here. Put them back?',
-      conflicts.length === 1 ? 'Put it back' : 'Put them back', function () {
+      G.conflicts = conflicts.map(function (p) { return { x: p.x, y: p.y, soft: plan.helping.indexOf(p) >= 0 }; });
+      var say = conflicts.length === 1
+        ? (helps ? 'You won\u2019t need that one in the end. Put it back?' : 'That one isn\u2019t needed here. Put it back?')
+        : (helps ? 'You won\u2019t need these ' + conflicts.length + ' in the end. Put them back?' : 'These ' + conflicts.length + ' aren\u2019t needed here. Put them back?');
+      showToast(say, 'Put back', function () {
         commit(G.pieces.filter(function (p) { return conflicts.indexOf(p) < 0; }), { followed: true });
         Sound.whoosh();
         hint();
@@ -2210,13 +2313,10 @@
     if (nextP) {
       G.hint = nextP;
       G.conflicts = null;
-      var how = '';
-      if (nextP.type === 'fan') how = ', blowing ' + dirWords(nextP.d);
-      else if (nextP.type === 'deflector') how = nextP.d === 0 ? ', slanted like /' : ', slanted like \\';
       var canTap = remaining(nextP.type) > 0 && WB.canPlace(G.L, allPieces(), nextP.type, nextP.x, nextP.y);
       // following it makes something unhappy for a moment: say so first
       var worse = plan.nextSim && plan.nextSim.goals.some(function (g, i) { return g.state === 'bad' && G.sim.goals[i].state !== 'bad'; });
-      showToast('Try a ' + lowerName(nextP.type) + ' here' + how + '.' + (canTap ? ' ' + tap + ' it to place it.' : '') +
+      showToast('Try a ' + lowerName(nextP.type) + ' here' + hintHow(nextP) + '.' + (canTap ? ' ' + tap + ' it to place it.' : '') +
         (worse ? ' It may look wrong until the next piece.' : ''), null, null, { kind: 'hint', ms: 9000, near: nextP });
     }
   }
@@ -2278,14 +2378,27 @@
     dom.toast.classList.toggle('at-top', top);
     dom.toast.hidden = false;
     renderCoach(); // a coach bubble waits while a toast speaks
-    G.toastTimer = setTimeout(hideToast, opts.ms || (actionLabel ? 9000 : 5000));
+    armToast(opts.ms || (actionLabel ? 9000 : 5000));
+  }
+  // A toast fades after a while, but never from under keyboard focus or a
+  // hovering pointer: it waits, and tries again.
+  function armToast(ms) {
+    clearTimeout(G.toastTimer);
+    G.toastTimer = setTimeout(function () {
+      if (dom.toast.hidden) return;
+      if (dom.toast.contains(document.activeElement) || dom.toast.matches(':hover')) { armToast(3000); return; }
+      hideToast();
+    }, ms);
   }
   function hideToast() {
     clearTimeout(G.toastTimer);
     var was = !dom.toast.hidden;
+    var hadFocus = was && dom.toast.contains(document.activeElement);
     dom.toast.hidden = true;
     G.conflicts = null;
     if (was) renderCoach();
+    // focus was on its button: back to the board, not to the top of the page
+    if (hadFocus && G.screen === 'game') dom.canvas.focus({ preventScroll: true });
   }
   dom.toastClose.addEventListener('click', function () { hideToast(); G.hint = null; });
 
@@ -2326,17 +2439,15 @@
   // (its red ×), cached on the simulation result.
   function stallInfo(sim) {
     if (sim._wbStall) return sim._wbStall;
-    var out = { path: {}, end: {}, first: null };
+    var out = { path: {}, end: {}, first: null, cells: [] };
     var A = R.analyze(sim, G.L);
     A.stalled.forEach(function (st) {
       out.path[Math.floor((st.hx + WB.DX[st.d] * 0.5) / 2) + ',' + Math.floor((st.hy + WB.DY[st.d] * 0.5) / 2)] = true;
     });
-    // the red × sits just inside the wall (or window) that stops the breeze (see render.js)
-    A.stallEnds.forEach(function (e) {
-      var c = { x: Math.floor(e.x + e.dx * 0.32), y: Math.floor(e.y + e.dy * 0.32) };
-      out.end[c.x + ',' + c.y] = true;
-      if (!out.first) out.first = c;
-    });
+    // the red × sits just inside the wall (or window) that stops the breeze (see js/hints.js)
+    out.cells = Hints.stallCells(G.L, sim);
+    out.cells.forEach(function (c) { out.end[c.x + ',' + c.y] = true; });
+    out.first = out.cells[0] || null;
     sim._wbStall = out;
     return out;
   }
@@ -2385,27 +2496,45 @@
     var oi = objectAt(x, y);
     if (oi >= 0) {
       var ob = L.objects[oi], g = sim.goals[oi];
-      var oname = WB.OBJECTS[ob.type].name;
-      if (ob.type === 'stove') return '<b>' + oname + '</b> — ' + stoveWord(g, sim);
-      return '<b>' + oname + '</b> — ' + (g.smoky ? DIRTY : NEED[ob.type]) + ' <span class="tt-dim">· ' + breezeWord(g.flow) + '</span>';
+      return '<b>' + WB.OBJECTS[ob.type].name + '</b> — ' + esc(objWords(g, sim)) +
+        (withActions ? '<span class="tt-act">click to learn more</span>' : '');
     }
     // where a breeze is stuck: the dashed line and its red ×, explained
     var stuck = stallInfo(sim);
+    var outFit = ch === '#' && WB.outwardDir(L, x, y) >= 0 ? wallTools() : '';
     if (stuck.end[x + ',' + y]) {
       return '<b>No way out</b> — the breeze stops at this wall' +
-        (ch === '#' && WB.outwardDir(L, x, y) >= 0 ? ' <span class="tt-dim">· a window here would let it out</span>' : '');
+        (outFit ? ' <span class="tt-dim">· ' + outFit + ' here would let it out</span>' : '');
+    }
+    // smoky air blown into this wall
+    if (WB.isWall(ch) && smokeHits(sim, x, y)) {
+      return '<b>' + (ch === '%' ? 'Hatched wall' : 'Wall') + '</b> — the smoke hits this wall: no way out' +
+        (outFit ? ' <span class="tt-dim">· ' + outFit + ' here would let it out</span>' : '');
     }
     if (ch === '.') return '<b>Floor</b> — ' + breezeWord(f) + (stuck.path[x + ',' + y] && !f ? ' <span class="tt-dim">· the dashed breeze is waiting for a way out</span>' : '');
     if (ch === 'o') return '<b>Table</b> — air passes over <span class="tt-dim">· ' + breezeWord(f) + ' · nothing can be placed here</span>';
     if (ch === '%') return '<b>Hatched wall</b> <span class="tt-dim">· nothing fits in it</span>';
     if (ch === '#') {
-      if (WB.outwardDir(L, x, y) >= 0) return '<b>Outside wall</b> <span class="tt-dim">· a window fits here</span>';
+      if (WB.outwardDir(L, x, y) >= 0) return '<b>Outside wall</b>' + (outFit ? ' <span class="tt-dim">· ' + outFit + ' fits here</span>' : '');
       var inner = true;
       for (var d = 0; d < 4; d++) if (WB.isOutside(WB.cellAt(L, x + WB.DX[d], y + WB.DY[d]))) inner = false;
       return inner ? '<b>Inside wall</b>' : '<b>Wall</b>';
     }
     var w = L.wind;
     return '<b>Garden</b> — ' + (w.strength > 0 ? 'the wind blows from ' + FROM_SIDE[w.from] + ' <span class="tt-dim">· ' + STRENGTH_WORD[Math.min(3, w.strength)] + '</span>' : 'a calm day, no wind');
+  }
+
+  // "a window", "a window or an extractor": what of this level's tools fits in an outside wall
+  function wallTools() {
+    var ts = trayTypes().filter(function (t) { return WB.TOOLS[t].mount === 'exterior'; });
+    return ts.map(function (t) { return (/^[aeiou]/i.test(t) ? 'an ' : 'a ') + lowerName(t); }).join(' or ');
+  }
+  // Does smoky air run into the wall at (x,y)?
+  function smokeHits(sim, x, y) {
+    var A = R.analyze(sim, G.L);
+    return A.blockEnds.some(function (be) {
+      return be.smoke && be.d >= 0 && Math.floor(be.x + be.dx * 0.25) === x && Math.floor(be.y + be.dy * 0.25) === y;
+    });
   }
 
   // Places a floating box (the tooltip or a coach bubble) next to cell (x,y):
@@ -2524,28 +2653,52 @@
   // what it does and "Put back" (Delete, a right-click, a long-press or a drag
   // off the board still take a piece away at once).
 
+  // p: a placed piece, or { x, y, type, obj: true } for a thing in the house
   function showPieceMenu(p, ms) {
     if (!p || G.guide) return;
     hideTooltip();
-    G.pmenu = { x: p.x, y: p.y, type: p.type };
-    dom.pmenuTurn.hidden = rotations(p.type) < 2;
+    // one voice: the menu speaks now (a hint about this piece would say the same with another button)
+    if (!dom.toast.hidden && dom.toast.getAttribute('data-kind') !== 'reset') hideToast();
+    hideCoachTip();
+    var obj = !!p.obj;
+    G.pmenu = { x: p.x, y: p.y, type: p.type, obj: obj };
+    dom.pmenuTurn.hidden = obj || rotations(p.type) < 2;
+    dom.pmenuRemove.hidden = obj;
+    dom.pmenuAbout.hidden = !obj;
+    dom.pmenu.setAttribute('aria-label', obj ? WB.OBJECTS[p.type].name : toolName(p.type));
+    if (obj) {
+      dom.pmenuAboutLabel.textContent = 'About ' + (ABOUT_NAME[p.type] || lowerName(p.type));
+      dom.pmenuAbout.setAttribute('aria-label', 'About ' + (ABOUT_NAME[p.type] || lowerName(p.type)) + ': open its card');
+    }
     refreshPieceMenu();
     dom.pmenu.hidden = false;
     placeNear(dom.pmenu, p.x, p.y, true, 8);
+    armPieceMenu(ms || 9000);
+  }
+  // The menu fades after a while, but never from under keyboard focus or a
+  // hovering pointer: it waits, and tries again.
+  function armPieceMenu(ms) {
     clearTimeout(G.pmenuTimer);
-    G.pmenuTimer = setTimeout(hidePieceMenu, ms || 9000);
+    G.pmenuTimer = setTimeout(function () {
+      if (!G.pmenu) return;
+      if (dom.pmenu.contains(document.activeElement) || dom.pmenu.matches(':hover')) { armPieceMenu(3000); return; }
+      hidePieceMenu();
+    }, ms);
   }
   function refreshPieceMenu() {
     if (!G.pmenu) return;
     var html = describe(G.pmenu.x, G.pmenu.y);
     if (dom.pmenuText.innerHTML !== html) dom.pmenuText.innerHTML = html;
-    dom.pmenuRemove.setAttribute('aria-label', 'Put the ' + lowerName(G.pmenu.type) + ' back in the tray');
+    if (!G.pmenu.obj) dom.pmenuRemove.setAttribute('aria-label', 'Put the ' + lowerName(G.pmenu.type) + ' back in the tray');
   }
   function hidePieceMenu() {
     clearTimeout(G.pmenuTimer);
     if (!G.pmenu && dom.pmenu.hidden) return;
+    var hadFocus = dom.pmenu.contains(document.activeElement);
     G.pmenu = null;
     dom.pmenu.hidden = true;
+    // focus was in the menu: it goes back to the board, not to the top of the page
+    if (hadFocus && G.screen === 'game') dom.canvas.focus({ preventScroll: true });
   }
   dom.pmenuRemove.addEventListener('click', function () {
     var m = G.pmenu;
@@ -2554,6 +2707,13 @@
     if (!p || boardLocked()) return;
     removePiece(p, true);
     showTooltipAt(m.x, m.y, '<b>' + toolName(p.type) + '</b> — back in your tray', tipMs(1600));
+  });
+  dom.pmenuAbout.addEventListener('click', function () {
+    var m = G.pmenu;
+    if (!m || !m.obj || boardLocked()) return;
+    var kb = dom.pmenu.contains(document.activeElement);
+    hidePieceMenu();
+    openGuide(m.type, { at: { x: m.x, y: m.y }, focus: kb });
   });
   dom.pmenuTurn.addEventListener('click', function () {
     var m = G.pmenu;
@@ -2683,10 +2843,11 @@
     var pp = c.inMap ? playerAt(c.x, c.y) : null, fp = c.inMap ? fixedAt(c.x, c.y) : null;
     // a tap on the hint ghost places the hinted piece, turned the hinted way
     var hp = G.hint;
-    if (hp && c.inMap && c.x === hp.x && c.y === hp.y && !pp && !fp && (!G.sel || G.sel === hp.type) &&
-        remaining(hp.type) > 0 && WB.canPlace(G.L, allPieces(), hp.type, hp.x, hp.y)) {
-      place(hp.type, hp.x, hp.y, hp.d);
-      return;
+    if (hp && c.inMap && c.x === hp.x && c.y === hp.y && !pp && !fp && (!G.sel || G.sel === hp.type)) {
+      // a hinted move: the piece comes over from where it is
+      var mp = hp.from ? playerAt(hp.from.x, hp.from.y) : null;
+      if (mp && mp.type === hp.type && WB.canPlace(G.L, allPieces(mp), hp.type, hp.x, hp.y)) { movePiece(mp, hp.x, hp.y, hp.d); return; }
+      if (!hp.from && remaining(hp.type) > 0 && WB.canPlace(G.L, allPieces(), hp.type, hp.x, hp.y)) { place(hp.type, hp.x, hp.y, hp.d); return; }
     }
     if (G.sel && !pp && !fp) {
       var tgt = snapTarget(c, G.valid);
@@ -2723,28 +2884,56 @@
       }
       return;
     }
-    // an object: its card, with how this one is doing right now
+    // an object: how it is doing, in words, with a way to its card
     var oi = objectAt(c.x, c.y);
     if (oi >= 0) {
       if (G.guide && G.guide.at && G.guide.at.x === c.x && G.guide.at.y === c.y) { closeGuide({ how: 'close' }); return; }
-      hideCoachTip();
-      openGuide(G.L.objects[oi].type, { at: { x: c.x, y: c.y }, focus: ptype === 'keyboard' });
+      if (G.pmenu && G.pmenu.obj && G.pmenu.x === c.x && G.pmenu.y === c.y) { hidePieceMenu(); return; } // a second tap closes it
+      showPieceMenu({ x: c.x, y: c.y, type: G.L.objects[oi].type, obj: true });
       return;
     }
+    // nothing picked up, on a spot where a tool of yours would fit
+    var left = G.sel ? [] : trayTypes().filter(function (t) { return remaining(t) > 0; });
+    var fits = left.filter(function (t) { return WB.canPlace(G.L, allPieces(), t, c.x, c.y); });
+    // only one kind of tool in the tray: there is nothing to choose, so it goes right here
+    if (left.length === 1 && fits.length === 1) { place(fits[0], c.x, c.y, defaultRot(fits[0])); return; }
     if (hadTip) return; // the same spot again: the tooltip closes
     var html = describe(c.x, c.y);
-    // nothing picked up, on a spot where a tool of yours would fit: say which one to pick
-    var fits = G.sel ? [] : trayTypes().filter(function (t) { return remaining(t) > 0 && WB.canPlace(G.L, allPieces(), t, c.x, c.y); });
     if (fits.length) {
       var tap = usingTouch() ? 'Tap' : 'Click';
       html += '<span class="tt-act">' + (fits.length === 1 ? tap + ' the ' + lowerName(fits[0]) + ' in your tray first' : tap + ' a tool in your tray first') + '</span>';
-      if (fits.length === 1 && !G.c1) {
+      if (fits.length === 1) {
         markChipCoach(fits[0]);
         clearTimeout(G.chipCoachTimer);
-        G.chipCoachTimer = setTimeout(function () { if (!G.c1 && G.chipCoach === fits[0]) markChipCoach(null); }, 3500);
+        G.chipCoachTimer = setTimeout(function () { if (G.chipCoach === fits[0] && !(G.c1 && G.c1.step === 'out')) markChipCoach(null); }, 3500);
+      }
+    } else if (!G.sel) {
+      // all of them are on the board already: one of yours could come here
+      var mover = null;
+      trayTypes().forEach(function (t) {
+        if (mover || remaining(t) > 0) return;
+        G.pieces.forEach(function (p) { if (!mover && p.type === t && WB.canPlace(G.L, allPieces(p), t, c.x, c.y)) mover = p; });
+      });
+      if (mover) {
+        html += '<span class="tt-act">Drag your ' + lowerName(mover.type) + ' here</span>';
+        G.focus = { cell: { x: mover.x, y: mover.y }, t0: performance.now() };
       }
     }
+    // a coach bubble is speaking about this very spot: it says it again, instead of a tooltip
+    if (coachShowing()) { nudgeCoach(); return; }
     showTooltipAt(c.x, c.y, html, tipMs(2600, html));
+  }
+  // The coach bubble says its words again (a tap on the spot it points at).
+  function nudgeCoach() {
+    dom.coach.classList.remove('is-in');
+    void dom.coach.offsetWidth;
+    dom.coach.classList.add('is-in');
+    G.spot = G.coach ? { x: G.coach.x, y: G.coach.y, t0: performance.now() } : G.spot;
+    if (G.c1 && G.c1.step === 'out' && remaining('window') > 0) {
+      markChipCoach('window');
+      var chip = dom.tray.querySelector('.chip[data-tool="window"]');
+      if (chip) { chip.classList.remove('is-bounce'); void chip.offsetWidth; chip.classList.add('is-bounce'); }
+    }
   }
   // a one-time tip gives way to what the player asked for
   function hideCoachTip() { if (G.coach && G.coach.key) hideCoach(); }
@@ -2849,9 +3038,10 @@
     updateCursorStyle();
   }
 
-  // Where the dragged piece is, in client coords. A moved piece stays anchored
-  // where it was grabbed; on touch it only lifts above the finger once the
-  // drag is clearly under way, so a sloppy tap never shifts it a cell.
+  // Where the dragged piece floats, in client coords. A moved piece stays
+  // anchored where it was grabbed; on touch it only lifts above the finger
+  // once the drag is clearly under way, so a sloppy tap never shifts it a cell.
+  // (This is where the piece is drawn; where it lands is dropTarget's call.)
   function dragPoint(e) {
     var d = I.drag;
     var T = board.T;
@@ -2867,24 +3057,60 @@
     return { x: e.clientX, y: e.clientY - lift };
   }
 
+  // Where a dragged piece lands. With a mouse: the cell under the pointer.
+  // With a finger, where the player is pointing: the cell under the finger
+  // (its touch point sits a little below what it aims at), as long as tiles
+  // are big enough to see past a fingertip; on small tiles the cell the
+  // floating piece is over, unless the finger itself is on a spot where the
+  // piece fits. A spot the coach or the hint points at wins when the finger is
+  // within about a tile of it.
+  function dropTarget(e, pt) {
+    var d = I.drag, T = board.T;
+    var c = board.pick(pt.x, pt.y);
+    if (!touchy(d.ptype)) {
+      var t0 = snapTarget(c, d.valid);
+      return { c: c, tgt: t0 && t0.d <= snapTol(c) ? t0 : null };
+    }
+    var fc = board.pick(e.clientX, e.clientY - Math.min(12, T * 0.3));
+    var tol = function (q) { return q.inMap ? 0.6 : 0.75; };
+    // the coach's ring or the hint's ghost, if this piece fits there
+    var magnets = [];
+    if (G.spot) magnets.push(G.spot);
+    if (G.hint && G.hint.type === d.type) magnets.push(G.hint);
+    for (var i = 0; i < magnets.length; i++) {
+      var m = magnets[i];
+      if (!isValidCell(d.valid, m.x, m.y)) continue;
+      var mt = snapTarget(fc, [m]);
+      if (mt && mt.d <= 0.6) return { c: fc, tgt: mt };
+    }
+    var ft = snapTarget(fc, d.valid);
+    if (T >= 40) return { c: fc, tgt: ft && ft.d <= tol(fc) ? ft : null };
+    // small tiles: the finger on a spot where it fits, else where the piece floats
+    if (ft && ft.d === 0) return { c: fc, tgt: ft };
+    var lt = snapTarget(c, d.valid);
+    return { c: c, tgt: lt && lt.d <= tol(c) ? lt : null };
+  }
+
   function updateDrag(e) {
     var d = I.drag;
     var pt = dragPoint(e);
-    var c = board.pick(pt.x, pt.y);
+    var drop = dropTarget(e, pt);
+    var c = drop.c, tgt = drop.tgt;
     d.last = c;
-    var tgt = snapTarget(c, d.valid);
-    var near = c.inMap || (tgt && tgt.d <= 1);
-    // a finger is less precise than a mouse: snap to a slot from further away
-    var tol = touchy(d.ptype) ? (c.inMap ? 0.6 : 0.75) : snapTol(c);
-    if (tgt && tgt.d <= tol) {
-      G.ghost = { type: d.type, x: tgt.x, y: tgt.y, d: d.d | 0, ok: true };
+    var near = c.inMap || !!tgt || (snapTarget(c, d.valid) || { d: 9 }).d <= 1;
+    var finger = touchy(d.ptype);
+    if (tgt) {
+      // on touch, a clear ring around the cell it lands in (the finger hides the cell itself)
+      G.ghost = { type: d.type, x: tgt.x, y: tgt.y, d: d.d | 0, ok: true, ring: finger };
       d.target = tgt;
     } else {
       d.target = null;
       G.ghost = c.inMap ? { type: d.type, x: c.x, y: c.y, d: d.d | 0, ok: false } : null;
     }
     updatePreview();
-    dom.avatar.hidden = !!(G.ghost && G.ghost.ok);
+    // with a mouse the piece snaps into its spot; a finger keeps it floating
+    // in view above it
+    dom.avatar.hidden = !!(G.ghost && G.ghost.ok) && !finger;
     if (!dom.avatar.hidden) {
       dom.avatar.style.transform = 'translate(' + pt.x + 'px,' + pt.y + 'px)';
       dom.avatar.style.opacity = d.kind === 'move' && !near ? '0.6' : '0.95';
@@ -2978,8 +3204,8 @@
     var type = this.getAttribute('data-tool');
     I.infoDown = e.target && e.target.closest && e.target.closest('.chip-info') ? type : null;
     Sound.unlock();
-    if (remaining(type) <= 0) return;
-    var tp = I.tray = { type: type, x0: e.clientX, y0: e.clientY, pointerId: e.pointerId, el: this, ptype: e.pointerType };
+    // a used-up tool cannot be dragged out, but press and hold still opens its card
+    var tp = I.tray = { type: type, x0: e.clientX, y0: e.clientY, pointerId: e.pointerId, el: this, ptype: e.pointerType, used: remaining(type) <= 0 };
     try { this.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
     // press and hold (finger or pen): the tool's card
     if (e.pointerType !== 'mouse') {
@@ -3003,7 +3229,9 @@
       var dx = e.clientX - tp.x0, dy = e.clientY - tp.y0;
       var dist = Math.hypot(dx, dy);
       var intent = tp.ptype === 'mouse' || landscapeMQ.matches || Math.abs(dy) > Math.abs(dx) * 0.8;
-      if (dist > 8 && intent) {
+      if (tp.used) {
+        if (dist > 14) I.tray = null; // nothing to drag out: a scroll of the tray, or nothing
+      } else if (dist > 8 && intent) {
         I.tray = null;
         I.infoDown = null;
         startDrag({ kind: 'new', type: tp.type, d: defaultRot(tp.type), pointerId: e.pointerId, ptype: e.pointerType }, e);
@@ -3317,7 +3545,7 @@
         var type = chip.getAttribute('data-tool');
         if (G.sel === type) againChip(chip, type); // the same key again keeps it, like a second tap
         else if (remaining(type) > 0) select(type);
-        else { Sound.nope(); chip.classList.remove('is-shake'); void chip.offsetWidth; chip.classList.add('is-shake'); }
+        else usedChip(chip, type);
       }
       return;
     }
@@ -3394,7 +3622,7 @@
     var gh = G.ghost, hv = G.hover, cu = G.cursor;
     return [
       G.version, G.sel, gh ? gh.type + gh.x + ',' + gh.y + gh.d + gh.ok : '', hv && G.hoverMouse && !G.sel ? hv.x + ',' + hv.y : '',
-      cu ? cu.x + ',' + cu.y : '', G.hint ? G.hint.x + ',' + G.hint.y : '', G.conflicts ? G.conflicts.length : 0,
+      cu ? cu.x + ',' + cu.y : '', G.hint ? G.hint.x + ',' + G.hint.y + (G.hint.from ? '<' + G.hint.from.x + ',' + G.hint.from.y : '') : '', G.conflicts ? G.conflicts.length : 0,
       G.flash ? G.flash.t0 : 0, G.shake ? G.shake.t0 : 0, G.pulse || 0, G.focus ? G.focus.t0 : 0, G.winAt || 0,
       G.previewKey, I.drag ? 1 : 0, board.T, board.cssW, board.cssH, board.dpr, G.paletteVersion,
       G.spot ? G.spot.x + ',' + G.spot.y + ',' + G.spot.t0 : '',
@@ -3556,7 +3784,8 @@
         pieces: G.pieces.map(norm), fixed: G.fixed.map(norm),
         undo: G.history.length, redo: G.future.length,
         solved: !!(G.sim && G.sim.solved), won: G.won, celebrating: !!G.winCardTimer,
-        hint: G.hint ? norm(G.hint) : null, conflicts: G.conflicts ? G.conflicts.slice() : null,
+        hint: G.hint ? norm(G.hint) : null, hintFrom: G.hint && G.hint.from ? { x: G.hint.from.x, y: G.hint.from.y } : null,
+        conflicts: G.conflicts ? G.conflicts.map(function (c) { return { x: c.x, y: c.y }; }) : null,
         cursor: G.cursor ? { x: G.cursor.x, y: G.cursor.y } : null,
         dragging: !!I.drag, newTool: G.newTool, T: board.T,
         // the field guide: the card on screen, this level's card, the coach bubble

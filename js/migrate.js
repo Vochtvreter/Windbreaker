@@ -37,27 +37,60 @@
     "full-circle", "linen-passage", "pushback", "long-draw", "spring-cleaning"
   ];
 
+  var MIGRATED_KEY = 'windbreaker.migrated'; // { from, solved, furthest }: for the "welcome back" note
+  var WB = window.WB = window.WB || {};
+  WB.LEVELSET = LEVELSET; // js/game.js marks every save with it
+
   var ls;
   try { ls = window.localStorage; if (!ls || ls.getItem(MARK_KEY) === LEVELSET) return; } catch (e) { return; }
-  try {
-    var raw = ls.getItem(STORE_KEY);
-    if (raw) {
-      var d = JSON.parse(raw);
-      if (d && typeof d === 'object' && Array.isArray(d.completed)) {
-        var byKey = {};
-        ((window.WB && window.WB.LEVELS) || []).forEach(function (l) { if (l.key) byKey[l.key] = l.id; });
-        var out = [];
-        d.completed.forEach(function (n) {
-          var id = typeof n === 'number' ? byKey[V1_KEYS[n - 1]] : null;
-          if (id && out.indexOf(id) < 0) out.push(id);
-        });
-        out.sort(function (a, b) { return a - b; });
-        d.completed = out;
-        d.boards = {};
-        d.boardSigs = {};
-        ls.setItem(STORE_KEY, JSON.stringify(d));
-      }
+  var raw = null;
+  try { raw = ls.getItem(STORE_KEY); } catch (e) { return; }
+  var d = null;
+  // unreadable progress: the game starts afresh, and saves in today's numbering,
+  // so it is marked as migrated below all the same (a later load must not
+  // "translate" those new numbers as if they were v1.0's)
+  try { d = raw ? JSON.parse(raw) : null; } catch (e) { d = null; }
+  if (d && typeof d === 'object' && Array.isArray(d.completed)) {
+    var byKey = {}, levels = WB.LEVELS || [];
+    levels.forEach(function (l) { if (l.key) byKey[l.key] = l.id; });
+    var out = [];
+    d.completed.forEach(function (n) {
+      var id = typeof n === 'number' ? byKey[V1_KEYS[n - 1]] : null;
+      if (id && out.indexOf(id) < 0) out.push(id);
+    });
+    out.sort(function (a, b) { return a - b; });
+    var furthest = out.length ? out[out.length - 1] : 0;
+    d.completed = out;
+    d.boards = {};
+    d.boardSigs = {};
+    // A save without the cards seen (made outside the game): every card of
+    // something met by the furthest solved level counts as seen, so replaying
+    // an old level does not bring its "Meet the …" card back.
+    if (!Array.isArray(d.seenTools) && furthest) d.seenTools = metBy(levels, furthest);
+    var info = { from: '1.0', solved: out.length, furthest: furthest };
+    try {
+      ls.setItem(STORE_KEY, JSON.stringify(d));
+      if (out.length) ls.setItem(MIGRATED_KEY, JSON.stringify(info));
+    } catch (e) {
+      // storage reads but cannot write: the game plays this translated
+      // progress (for this visit) instead of the old numbers
+      WB.migratedStore = d;
+      if (out.length) WB.migratedInfo = info;
     }
-    ls.setItem(MARK_KEY, LEVELSET);
-  } catch (e) { /* unreadable progress: leave it for the game to handle */ }
+  }
+  try { ls.setItem(MARK_KEY, LEVELSET); } catch (e) { /* the game marks its own saves too */ }
+
+  // Ids of the tools, objects and twists met by level n (what the field guide calls them).
+  function metBy(levels, n) {
+    var ids = [];
+    (WB.TOOL_ORDER || []).forEach(function (t) { if (WB.TOOLS[t].intro <= n) ids.push(t); });
+    (WB.OBJECT_ORDER || []).forEach(function (o) { if (WB.OBJECTS[o].intro <= n) ids.push(o); });
+    if (WB.levelConditions) {
+      levels.forEach(function (l) {
+        if (l.id > n) return;
+        WB.levelConditions(l).forEach(function (c) { if (ids.indexOf(c) < 0) ids.push(c); });
+      });
+    }
+    return ids;
+  }
 })();

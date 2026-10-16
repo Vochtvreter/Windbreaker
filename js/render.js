@@ -870,9 +870,10 @@
    *   pieces: [{type,x,y,d,fixed}],   // everything to draw (lifted piece excluded)
    *   sim: Result,                    // simulation to visualise
    *   valid: [{x,y}] | null,          // placement cells; validWall: true for wall mounts
-   *   ghost: {type,x,y,d,ok} | null,  // preview under the pointer
-   *   hint: {type,x,y,d} | null, conflicts: [{x,y}] | null,
-   *   hover: {x,y} | null, cursor: {x,y} | null, focus: {type,t0} | null, spot: {x,y,t0} | null,
+   *   ghost: {type,x,y,d,ok,ring} | null,  // preview under the pointer (ring: dragged by a finger)
+   *   hint: {type,x,y,d,from?:{x,y}} | null,  // from: a hinted move, drawn with an arrow
+   *   conflicts: [{x,y,soft?}] | null,         // soft: it helps right now (no ×)
+   *   hover: {x,y} | null, cursor: {x,y} | null, focus: {type|cell,t0} | null, spot: {x,y,t0} | null,
    *   pops: {key: t0}, shake: {x,y,t0} | null, flash: {x,y,t0} | null, pulse: t0 | null,
    *   win: t0 | null, reduced: bool
    * }
@@ -937,11 +938,21 @@
       ctx.fill();
       ctx.restore();
     }
-    // filled tile under the ghost
+    // filled tile under the ghost; dragged by a finger, also a clear ring a
+    // little wider than the cell, so it shows around the fingertip
     if (S.ghost && S.ghost.ok) {
       ctx.beginPath(); rr(ctx, S.ghost.x * T + T * 0.06, S.ghost.y * T + T * 0.06, T * 0.88, T * 0.88, T * 0.22);
       ctx.fillStyle = P('hl');
       ctx.fill();
+      if (S.ghost.ring) {
+        var ro = T * 0.14;
+        ctx.save();
+        ctx.beginPath(); rr(ctx, S.ghost.x * T - ro, S.ghost.y * T - ro, T + 2 * ro, T + 2 * ro, T * 0.32);
+        ctx.strokeStyle = P('accent');
+        ctx.lineWidth = Math.max(2.5, T * 0.07);
+        ctx.stroke();
+        ctx.restore();
+      }
     }
 
     // ---------------- piece bases (floor tools)
@@ -1076,9 +1087,10 @@
         ctx.globalAlpha = Math.min(1, (1 - fa) * 2.5);
         var grow = motion ? 0.06 * Math.sin(fa * Math.PI * 4) : 0;
         ctx.beginPath();
-        for (i = 0; i < L.objects.length; i++) {
-          if (L.objects[i].type !== S.focus.type) continue;
-          rr(ctx, (L.objects[i].x - grow) * T + T * 0.02, (L.objects[i].y - grow) * T + T * 0.02, T * (0.96 + 2 * grow), T * (0.96 + 2 * grow), T * 0.26);
+        // a kind of object (a goal chip, a hint about it), or one cell (where a hint points)
+        var fc = S.focus.cell ? [S.focus.cell] : L.objects.filter(function (o) { return o.type === S.focus.type; });
+        for (i = 0; i < fc.length; i++) {
+          rr(ctx, (fc[i].x - grow) * T + T * 0.02, (fc[i].y - grow) * T + T * 0.02, T * (0.96 + 2 * grow), T * (0.96 + 2 * grow), T * 0.26);
         }
         ctx.stroke();
         ctx.restore();
@@ -1112,18 +1124,25 @@
       ctx.restore();
     }
 
-    // ---------------- conflicting pieces (hint)
+    // ---------------- conflicting pieces (hint): a dashed outline and a small ×;
+    // a piece that makes something happy right now (soft) gets a quiet outline only
     if (S.conflicts && S.conflicts.length) {
       ctx.save();
       ctx.lineWidth = Math.max(1.6, T * 0.05);
-      ctx.strokeStyle = P('accent-2');
       ctx.setLineDash([T * 0.12, T * 0.08]);
       ctx.lineDashOffset = motion ? -t * T * 0.25 : 0;
-      ctx.beginPath();
-      for (i = 0; i < S.conflicts.length; i++) rr(ctx, S.conflicts[i].x * T + T * 0.02, S.conflicts[i].y * T + T * 0.02, T * 0.96, T * 0.96, T * 0.22);
-      ctx.stroke();
+      for (var soft = 0; soft < 2; soft++) {
+        ctx.beginPath();
+        for (i = 0; i < S.conflicts.length; i++) {
+          if (!!S.conflicts[i].soft !== !!soft) continue;
+          rr(ctx, S.conflicts[i].x * T + T * 0.02, S.conflicts[i].y * T + T * 0.02, T * 0.96, T * 0.96, T * 0.22);
+        }
+        ctx.strokeStyle = soft ? alpha(P('ink'), 0.4) : P('accent-2');
+        ctx.stroke();
+      }
       ctx.setLineDash([]);
       for (i = 0; i < S.conflicts.length; i++) {
+        if (S.conflicts[i].soft) continue;
         var kx = (S.conflicts[i].x + 0.92) * T, ky = (S.conflicts[i].y + 0.08) * T, kr = Math.max(5, T * 0.13);
         ctx.beginPath(); circle(ctx, kx, ky, kr);
         ctx.fillStyle = P('accent-2'); ctx.fill();
@@ -1138,10 +1157,11 @@
       ctx.restore();
     }
 
-    // ---------------- hint ghost
+    // ---------------- hint ghost (a hinted move: with a soft arrow from where the piece is)
     if (S.hint) {
       var hp = motion ? 0.5 + 0.5 * Math.sin(t * 4) : 0.6;
       var hx = S.hint.x, hy = S.hint.y;
+      if (S.hint.from) this.drawMoveArrow(ctx, S.hint.from, S.hint, T, motion ? t : 0);
       ctx.save();
       ctx.beginPath(); rr(ctx, hx * T + T * 0.03, hy * T + T * 0.03, T * 0.94, T * 0.94, T * 0.2);
       ctx.lineWidth = Math.max(1.5, T * 0.05);
@@ -1230,6 +1250,39 @@
         }
       }
     }
+  };
+
+  // A dashed arrow from one cell to another (a hinted move), stopping at the
+  // edges of both so the pieces stay clear.
+  Board.prototype.drawMoveArrow = function (ctx, a, b, T, t) {
+    var ax = (a.x + 0.5) * T, ay = (a.y + 0.5) * T, bx = (b.x + 0.5) * T, by = (b.y + 0.5) * T;
+    var dx = bx - ax, dy = by - ay, len = Math.hypot(dx, dy);
+    if (len < T * 1.2) return;
+    var ux = dx / len, uy = dy / len, px = -uy, py = ux;
+    // a gentle bow, so an arrow along a wall does not sit on the wall line
+    var bow = Math.min(len * 0.18, T * 0.9);
+    var sx = ax + ux * T * 0.5, sy = ay + uy * T * 0.5, ex = bx - ux * T * 0.56, ey = by - uy * T * 0.56;
+    var cx = (sx + ex) / 2 + px * bow, cy = (sy + ey) / 2 + py * bow;
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = P('accent');
+    ctx.lineWidth = Math.max(2, T * 0.06);
+    ctx.globalAlpha = 0.85;
+    ctx.setLineDash([T * 0.14, T * 0.12]);
+    ctx.lineDashOffset = -t * T * 0.4;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(cx, cy, ex, ey); ctx.stroke();
+    ctx.setLineDash([]);
+    // the head, along the curve's last stretch
+    var hx = ex - cx, hy = ey - cy, hl = Math.hypot(hx, hy) || 1;
+    hx /= hl; hy /= hl;
+    var hs = Math.max(6, T * 0.2);
+    ctx.beginPath();
+    ctx.moveTo(ex - hx * hs - hy * hs * 0.7, ey - hy * hs + hx * hs * 0.7);
+    ctx.lineTo(ex, ey);
+    ctx.lineTo(ex - hx * hs + hy * hs * 0.7, ey - hy * hs - hx * hs * 0.7);
+    ctx.stroke();
+    ctx.restore();
   };
 
   Board.prototype.drawPieceAt = function (ctx, p, T, t) {

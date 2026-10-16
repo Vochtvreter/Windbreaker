@@ -362,14 +362,18 @@ function levelGuides(data) {
   });
   return out;
 }
-// The level's tip as the guidance line says it (screen words, not compass words).
-const SIDE = { north: 'top', east: 'right', south: 'bottom', west: 'left' };
+// The level's tip as the guidance line says it (screen words, not compass
+// words): the game's own plainTip(), taken from js/game.js.
+const gamePlainTip = (function () {
+  const src = fs.readFileSync(path.join(ROOT, 'js', 'game.js'), 'utf8');
+  const start = src.indexOf('  var SCREEN_SIDE = ');
+  const end = src.indexOf('\n  }\n', src.indexOf('function plainTip', start)) + 4;
+  if (start < 0 || end < start) throw new Error('plainTip() not found in js/game.js');
+  return new Function(src.slice(start, end) + '\nreturn plainTip;')();
+})();
 // (the walk plays with a mouse, so "tap" reads "click")
 function plainTip(t) {
-  return String(t || '').replace(/\bfrom the (north|east|south|west)\b/gi, (m, d) => 'from the ' + SIDE[d.toLowerCase()])
-    .replace(/\bthe far side\b/gi, 'the other side')
-    .replace(/\b(north|east|south|west)(ern)?\b/gi, (m, d) => SIDE[d.toLowerCase()])
-    .replace(/\bTap\b/g, 'Click').replace(/\btap\b/g, 'click');
+  return gamePlainTip(t).replace(/\bTap\b/g, 'Click').replace(/\btap\b/g, 'click');
 }
 async function guideUi(page) {
   return page.evaluate(() => {
