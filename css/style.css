@@ -1553,6 +1553,7 @@ kbd {
   .tip { font-size: 0.9375rem; }
   /* two lines at most above the board; a tap shows the rest */
   .tip { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+  html.is-large-text .tip { -webkit-line-clamp: 3; line-clamp: 3; } /* larger words: a line more */
   .tip-line.is-open .tip { display: block; -webkit-line-clamp: none; line-clamp: none; }
   .tip-line.is-clamped { cursor: pointer; }
   .tip-line.has-guide .tip { font-size: 0.9375rem; }

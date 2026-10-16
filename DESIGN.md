@@ -380,6 +380,7 @@ js/theme.js           every colour (light + dark), size and speed: the visual to
 js/version.js         version shown on the level-select screen (bumped per release)
 js/engine.js          rules + simulation (UMD, shared with Node tools)
 js/levels.js          generated from levels/src by tools/build-levels.js
+js/hints.js           what the Hint button thinks (idea in words, next piece, moves), no DOM
 js/migrate.js         translates saved progress when the level order changes
 js/guides.js          the field guide: a "Meet the …" card (text + demo) per tool, object and twist
 js/sprites.js         sprite registry: every tool, object and mark drawing
@@ -416,6 +417,11 @@ sooty grey with a grey smoke badge. Rounded shapes, gentle animations
 (pinwheels spin, candle flames flicker, laundry sways). System font stack.
 Works with mouse and touch, scales from phone to desktop, supports dark mode.
 Player-facing text uses screen words ("up", "from the left"), never compass
-words or inlet/outlet; hints go one step at a time (an idea, then one piece);
-Settings offer larger text and less motion.
+words or inlet/outlet; hints go one step at a time (an idea, then one piece:
+a piece the answer needs elsewhere is shown as a move, with an arrow, never as
+"not needed"; "follow the dashed line" only when the way out really is where it
+stops); Settings offer larger text and less motion. Soft chevrons in the garden
+along the windy side always show where the wind comes from; with a window
+picked up, each spot shows chevrons in (lets the wind in) or a small arrow out
+(lets air out).
 All of it is tunable without touching game code — see GRAPHICS.md.

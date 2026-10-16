@@ -28,7 +28,8 @@ screen.
   Finishing a chapter gets a small "Chapter complete" moment and says what
   is next ("Next: meet the candle").
 * Players coming back from v1.0 (solved levels here and there after the
-  reorder) find every level up to their furthest solved one open.
+  reorder) find every level up to their furthest solved one open. Unreadable
+  saved progress no longer gets "translated" on a later load.
 * Gentle hints: the first press gives an idea in words about what is wrong
   ("The breeze needs a way out", "Try your fan: …"), never the answer;
   "Show me" (or a second press) shows one piece, picked so that following it
@@ -64,6 +65,24 @@ screen.
   ever means a breeze with no way out.
 * Big houses on phones: a slimmer garden strip around the house (bigger
   tiles), more forgiving taps on small tiles, slightly bigger meters.
+* From the playtests: dragging with a finger drops the piece where the
+  finger is (a clear ring shows the spot; the coach's or hint's spot pulls it
+  in); with one kind of tool in the tray a tap on a spot places it; soft
+  chevrons in the garden show the windy side, and a picked-up window marks
+  each spot "in" or "out". Hints (now js/hints.js) never point at the dashed
+  line when the way out is elsewhere or would blow out a candle, and a
+  needed piece in the wrong spot is a move with an arrow, not "not needed".
+  Tapping a thing in the house says how it is doing in words ("blown out: a
+  breeze crosses it") with "About candles ›"; reopened cards say "Got it".
+  The goals bar praises only progress ("Spin the pinwheel and keep the
+  candle lit" at the start). Off-path tips sit on the red × they talk about.
+  Phone cards keep the demo small, put "how to use it" right after it and
+  offer "More"; laptops zoomed in get the side panel; landscape phones keep
+  Undo, Redo, Clear and Hint pinned in view; tray badges sit on the chip's
+  corners; solved levels show a tick. Players back from v1.0 get a one-time
+  note, Continue after their furthest solved level and "Catch up". Help's
+  folded sections are reachable with Tab; menus and toasts wait while they
+  have keyboard focus; Less motion updates an open card at once.
 
 ## v1.1 — One new thing at a time, and graphics you can restyle
 

@@ -90,7 +90,7 @@
       id: 'air', title: 'Air and smoke', note: 'Streams, ripples and puffs. To recolour the air, change air, air-deep and streak together.',
       tokens: [
         ['air', '#6aaee0', '#79bdeb', 'airflow streams; also the wind streaks in the garden (with streak), the title logo, the win swirl, "no way out" lines and the wind icon in help'],
-        ['air-deep', '#3f8bc6', '#a6d6f7', 'blocked-stream ripples, window wind-mouths, water drops, meter dots, reduced-motion chevrons; the wind badge at the top'],
+        ['air-deep', '#3f8bc6', '#a6d6f7', 'blocked-stream ripples, window wind-mouths, water drops, meter dots, reduced-motion chevrons, the wind\'s chevrons in the garden and on window spots; the wind badge at the top'],
         ['smoke', '#9a8f83', '#8d867e', 'smoky streams, puffs and soot']
       ]
     },
