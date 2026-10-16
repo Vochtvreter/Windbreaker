@@ -16,7 +16,9 @@ WBArt({
 
   sprites: {
     // Two layers in one tile: the stick stays put, the head spins (around the
-    // centre of its own box) as fast as the breeze turns it.
+    // centre of its own box) as fast as the breeze turns it. A head drawn on
+    // the full tile would say where it turns instead: { src: '...', pivot: [50, 40] }
+    // (in its own pixels), and spin: 0.5 would turn it at half speed.
     'object.pinwheel': {
       layers: [
         { src: 'art/examples/pinwheel-stick.svg' },
@@ -26,6 +28,8 @@ WBArt({
 
     // States: the flame layer becomes a curl of smoke once the candle is
     // blown out ("lit" / "out"; the studio lists every sprite's states).
+    // fade: true would crossfade them; { src: 'a.svg', dark: 'a-dark.svg' }
+    // gives any file a dark-mode twin; states: { icon: '...' } a goal-strip icon.
     'object.candle': {
       layers: [
         { src: 'art/examples/candle.svg' },
@@ -58,6 +62,9 @@ WBArt({
       }
     }
   },
+
+  // Speeds and sizes (1 = as designed), e.g. { 'spin-fan': 0.5, 'object-scale': 1.1 }
+  tuning: {},
 
   // A repeating image over the floor: the file covers 2 x 2 tiles.
   textures: {

@@ -893,6 +893,7 @@
   var TILE = [-0.5, -0.5, 1, 1];
   var NONE = [];
   var listeners = [];
+  var hasOwn = function (o, k) { return Object.prototype.hasOwnProperty.call(o, k); };
 
   /*
    * define(name, spec) registers (or replaces) a built-in sprite.
@@ -900,7 +901,10 @@
    *   group             'tool' | 'object' | 'icon' | 'ui'
    *   note              one line for the studio and GRAPHICS.md
    *   states            state names an image override may give (see state)
+   *   stateNotes        { state: 'what it means' } for the studio
    *   state(o)          -> state names that apply to o, most specific first
+   *   blend(o)          -> { a: states, b: states, k: 0..1 }: how far o is from a
+   *                     to b, for images with fade: true (optional)
    *   turn(o)           -> radians: how far an image override turns (art faces north)
    *   box               [x, y, w, h] an image fills by default (units; default the tile)
    *   unit(o)           ui sprites: CSS px per box unit
@@ -919,12 +923,26 @@
   }
 
   // Draws a sprite: its override when one is ready, else the built-in art.
+  // An override that throws (a mistake in a draw function) is switched off,
+  // reported, and the built-in art is drawn instead, this frame and after.
   function draw(name, ctx, o, t) {
     var s = REG[name];
     if (!s) return false;
     var ov = s.ov;
-    if (ov !== null && ov.ready) drawOverride(s, ov, ctx, o || {}, t || 0);
-    else s.draw(ctx, o || {}, t || 0);
+    o = o || {}; t = t || 0;
+    if (ov !== null && ov.ready) {
+      ctx.save();
+      try {
+        drawOverride(s, ov, ctx, o, t);
+      } catch (e) {
+        ctx.restore();
+        ctx.save();
+        failed(s, ov, e);
+        s.draw(ctx, o, t);
+      } finally {
+        ctx.restore();
+      }
+    } else s.draw(ctx, o, t);
     return true;
   }
   function drawBuiltin(name, ctx, o, t) {
@@ -933,10 +951,25 @@
     s.draw(ctx, o || {}, t || 0);
     return true;
   }
+  function failed(s, ov, e) {
+    ov.ready = false;
+    ov.error = (ov.kind === 'code' ? 'its draw function failed: ' : 'drawing failed: ') + (e && e.message ? e.message : String(e));
+    var where = lineOf(e);
+    report('error', s.name + ': ' + ov.error + (where ? ' (' + where + ')' : '') + ', so the built-in art is shown', {
+      sprite: s.name,
+      hint: ov.kind === 'code' ? 'Fix that line of the draw function in your art.js and reload. A word like a colour or a name usually needs quotes; api.kit.P(\'token\') gives a theme colour.' : null
+    });
+    changed('sprites');
+  }
+  // "art/x/art.js line 12" from an error's stack, if the mistake is in a manifest
+  function lineOf(e) {
+    var m = e && e.stack && /(art\/(?:[\w-]+\/)?art\.js)(?:\?[^:]*)?:(\d+)/.exec(String(e.stack));
+    return m ? m[1] + ' line ' + m[2] : '';
+  }
 
   // ------------------------------------------------------------------ images
 
-  var IMG = {};          // src -> { src, img, ok, err }
+  var IMG = {};          // src -> { src, img, w, h, ok, err }
   var RASTER = {}, rasterN = 0;
   var loading = 0;       // images on their way
 
@@ -946,28 +979,48 @@
       if (im.ok || im.err) done(im); else im.waiters.push(done);
       return im;
     }
-    im = IMG[src] = { src: src, img: null, ok: false, err: null, waiters: [done] };
+    im = IMG[src] = { src: src, img: null, w: 0, h: 0, ok: false, err: null, waiters: [done] };
     loading++;
     function settle() {
       loading--;
       var w = im.waiters; im.waiters = [];
       w.forEach(function (f) { f(im); });
     }
-    if (!root || !root.Image) { im.err = 'images need a browser'; settle(); return im; }
+    if (!root || !root.Image) { im.err = 'could not load ' + src + ' (images need a browser)'; settle(); return im; }
     var img = new root.Image();
     img.onload = function () {
-      if (!(img.naturalWidth > 0)) im.err = 'the image has no size (give an SVG width, height and viewBox)';
-      else { im.ok = true; im.img = img; }
+      if (!(img.naturalWidth > 0)) im.err = src + ' has no size (give the SVG width, height and viewBox)';
+      else { im.ok = true; im.img = img; im.w = img.naturalWidth; im.h = img.naturalHeight; checkSvgSize(src); }
       settle();
     };
     img.onerror = function () { im.err = 'could not load ' + src; settle(); };
     img.src = src;
     return im;
   }
+  // An SVG without width and height draws in Chrome but may not in Firefox
+  // or Safari. Only checkable over http(s) (a file:// page cannot read files).
+  function checkSvgSize(src) {
+    if (!/\.svg(?:[?#]|$)/i.test(src) || !root.fetch || !root.location || !/^https?:$/.test(root.location.protocol)) return;
+    root.fetch(src).then(function (r) { return r.ok ? r.text() : ''; }).then(function (text) {
+      var tag = /<svg\b[^>]*>/i.exec(text || '');
+      if (!tag) return;
+      var w = /\swidth\s*=\s*["']\s*([\d.]+)\s*(px)?\s*["']/i.test(tag[0]), h = /\sheight\s*=\s*["']\s*([\d.]+)\s*(px)?\s*["']/i.test(tag[0]);
+      if (w && h) return;
+      report('warn', src + ' has no width and height in pixels on its <svg> tag: Firefox and Safari may not draw it', {
+        file: src, hint: 'Add width="100" height="100" (plain numbers, the same as its viewBox) to the <svg ...> line.'
+      });
+      changed('sprites');
+    }).catch(function () { /* nothing to say */ });
+  }
+  // a fake loaded image (unit tests in Node; nothing else should need it)
+  function fakeImage(src, w, h) {
+    IMG[src] = { src: src, img: { src: src, naturalWidth: w || 100, naturalHeight: h || 100, fake: true }, w: w || 100, h: h || 100, ok: true, err: null, waiters: [] };
+  }
 
   // Draws a loaded image into the box, through a bitmap cached at the size it
   // lands on screen (so an SVG is rasterised once, not every frame).
   function blit(ctx, im, x, y, w, h) {
+    if (!doc || im.img.fake) { ctx.drawImage(im.img, x, y, w, h); return; }
     var m = ctx.getTransform ? ctx.getTransform() : null;
     var sx = m ? Math.hypot(m.a, m.b) : 1, sy = m ? Math.hypot(m.c, m.d) : 1;
     var pw = Math.min(1024, Math.max(4, Math.ceil(w * sx / 4) * 4));
@@ -988,104 +1041,233 @@
 
   // ------------------------------------------------------------------ overrides
 
-  function warn(msg) { if (typeof console !== 'undefined') console.warn('Windbreaker art: ' + msg); }
+  var report = Theme.report;
+  function warn(msg, more) { report('warn', msg, more); }
+  var PATH_HINT = 'Check the file name, its folder and its capitals (Candle.svg is not candle.svg). ' +
+    'A path that starts with art/ starts from the game folder; any other path is next to the art.js it is in.';
 
-  function pickSrc(layer, keys) {
+  // Paths in a manifest: 'art/...', '/...', './...', '../...' and URLs are
+  // relative to the page; any other path is relative to the manifest's own
+  // folder (so art/autumn/art.js can just say 'candle.svg').
+  var base = '';
+  function path(p) {
+    p = String(p).trim();
+    if (!base || /^(art\/|\/|\.\.?\/|[a-z][a-z0-9+.-]*:)/i.test(p)) return p;
+    return base + p;
+  }
+  function folder(file) { var i = file.lastIndexOf('/'); return i >= 0 ? file.slice(0, i + 1) : ''; }
+
+  // A file in a manifest: 'file.svg' or { src: 'file.svg', dark: 'file-dark.svg' } -> { src, dark }
+  function fileRef(v, where) {
+    if (v == null || v === false) return null;
+    if (typeof v === 'string') { if (!v.trim()) throw new Error(where + ' is an empty file name'); return { src: path(v), dark: null }; }
+    if (typeof v === 'object' && typeof v.src === 'string' && v.src.trim()) {
+      return { src: path(v.src), dark: typeof v.dark === 'string' && v.dark.trim() ? path(v.dark) : null };
+    }
+    throw new Error(where + ' must be a file name in quotes, such as \'art/candle.svg\' (or { src: \'...\', dark: \'...\' })');
+  }
+
+  // For one set of state names: the layer's file, null (hidden on purpose) or
+  // undefined (nothing: no src and no image for these states).
+  function pickRef(layer, keys) {
     if (layer.states) {
       for (var i = 0; i < keys.length; i++) {
-        if (Object.prototype.hasOwnProperty.call(layer.states, keys[i])) return layer.states[keys[i]];
+        if (hasOwn(layer.states, keys[i])) return layer.states[keys[i]];
       }
     }
-    return layer.src;
+    return layer.src || undefined;
   }
 
   function drawOverride(s, ov, ctx, o, t) {
     if (ov.draw) { ov.draw(ctx, o, t, ov.api); return; }
     if (ov.base) s.draw(ctx, o, t);
-    var keys = s.state ? s.state(o) : NONE;
+    var dark = ov.dark && Theme.drawMode() === 'dark';
+    var fade = ov.fade && s.blend && !o.icon ? s.blend(o) : null;
+    if (fade && fade.k > 0 && fade.k < 1) {
+      // crossfade without a see-through middle: b fades in over a, then a fades out
+      var ga = ctx.globalAlpha, k = fade.k;
+      ctx.globalAlpha = ga * (k < 0.5 ? 1 : (1 - k) * 2);
+      layersFor(s, ov, ctx, o, t, fade.a, dark);
+      ctx.globalAlpha = ga * (k < 0.5 ? k * 2 : 1);
+      layersFor(s, ov, ctx, o, t, fade.b, dark);
+      ctx.globalAlpha = ga;
+      return;
+    }
+    layersFor(s, ov, ctx, o, t, s.state ? s.state(o) : NONE, dark);
+  }
+
+  // Draws the layers for one set of state names. When no layer has anything
+  // to show for them (no src, no image for the state, or its file did not
+  // load) the built-in art is drawn, so a state you did not draw keeps it.
+  function layersFor(s, ov, ctx, o, t, keys, dark) {
     var u = s.unit ? s.unit(o) : 1;
     var turn = ov.rotate && s.turn ? s.turn(o) : 0;
+    var shown = false;
     ctx.save();
     if (s.at) ctx.translate(o.x || 0, o.y || 0);
     if (u !== 1) ctx.scale(u, u);
     if (turn) ctx.rotate(turn);
     for (var i = 0; i < ov.layers.length; i++) {
       var L = ov.layers[i];
-      var src = pickSrc(L, keys);
-      if (!src) continue;
-      var im = IMG[src];
+      var ref = pickRef(L, keys);
+      if (ref === null) { shown = true; continue; }
+      if (ref === undefined) continue;
+      var im = IMG[dark && ref.dark ? ref.dark : ref.src];
+      if (dark && ref.dark && !(im && im.ok)) im = IMG[ref.src];
       if (!im || !im.ok) continue;
+      shown = true;
       var b = L.box || ov.box || s.box;
       if (L.spin) {
-        var cx = b[0] + b[2] / 2, cy = b[1] + b[3] / 2;
+        var a = L.spin === 1 ? o.angle || 0 : (o.angle || 0) * L.spin;
         ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(o.angle || 0);
-        blit(ctx, im, -b[2] / 2, -b[3] / 2, b[2], b[3]);
+        if (L.pivot) {
+          // the pivot is a point of the drawing, in the image's own pixels
+          var px = b[0] + L.pivot[0] / im.w * b[2], py = b[1] + L.pivot[1] / im.h * b[3];
+          ctx.translate(px, py);
+          ctx.rotate(a);
+          blit(ctx, im, b[0] - px, b[1] - py, b[2], b[3]);
+        } else {
+          ctx.translate(b[0] + b[2] / 2, b[1] + b[3] / 2);
+          ctx.rotate(a);
+          blit(ctx, im, -b[2] / 2, -b[3] / 2, b[2], b[3]);
+        }
         ctx.restore();
       } else {
         blit(ctx, im, b[0], b[1], b[2], b[3]);
       }
     }
     ctx.restore();
+    if (!shown && !ov.base) s.draw(ctx, o, t);
   }
 
   function isBox(b) { return Array.isArray(b) && b.length === 4 && b.every(function (v) { return typeof v === 'number' && isFinite(v); }); }
+  function isPair(b) { return Array.isArray(b) && b.length === 2 && b.every(function (v) { return typeof v === 'number' && isFinite(v); }); }
+  function spinOf(v, where) {
+    if (v == null || v === false) return 0;
+    if (v === true) return 1;
+    if (typeof v === 'number' && isFinite(v)) return v;
+    throw new Error(where + 'spin must be true or a number (a speed: 0.5 is half as fast, -1 turns the other way)');
+  }
+  var SPEC_KEYS = ['src', 'dark', 'states', 'layers', 'box', 'rotate', 'base', 'spin', 'pivot', 'fade', 'draw', 'images'];
+  var LAYER_KEYS = ['src', 'dark', 'states', 'box', 'spin', 'pivot'];
+  function unknownKeys(name, obj, allowed, where) {
+    Object.keys(obj).forEach(function (k) {
+      if (allowed.indexOf(k) >= 0) return;
+      var g = Theme.suggest(k, allowed);
+      warn(name + ': ' + where + '"' + k + '" is not an option, so it is ignored' + (g ? ' (did you mean "' + g + '"?)' : ''), {
+        sprite: name, hint: 'The options are: ' + allowed.join(', ') + ' (see GRAPHICS.md).'
+      });
+    });
+  }
+  // a sample label used as a state name ('blown out' for 'out')
+  function stateOfLabel(spec, k) {
+    var low = String(k).toLowerCase();
+    for (var i = 0; i < spec.samples.length; i++) {
+      var sm = spec.samples[i];
+      if (sm.label && sm.label.toLowerCase() === low && spec.state) {
+        var keys = spec.state(sm.o);
+        if (keys.length) return keys[0];
+      }
+    }
+    return null;
+  }
+  function unknownState(name, k) {
+    var spec = REG[name];
+    var g = stateOfLabel(spec, k) || Theme.suggest(k, spec.states);
+    warn(name + ': unknown state "' + k + '"' + (g ? ' (did you mean "' + g + '"?)' : '') + ', so its image is never used', {
+      sprite: name, hint: spec.states.length ? 'The states of ' + name + ' are: ' + spec.states.join(', ') + '.' : name + ' has no states: give it just a src.'
+    });
+  }
 
-  // A manifest entry -> { layers, rotate, base, box, draw, files, ready, error }
+  // A manifest entry -> { layers, rotate, base, box, fade, dark, draw, files, ready, error }
   function normalize(name, spec) {
+    var S = REG[name];
     if (typeof spec === 'string') spec = { src: spec };
     if (typeof spec === 'function') spec = { draw: spec };
-    if (!spec || typeof spec !== 'object') throw new Error('expected a file name, an object or a function');
+    if (!spec || typeof spec !== 'object' || Array.isArray(spec)) throw new Error('expected a file name, { ... } or a draw function');
+    unknownKeys(name, spec, SPEC_KEYS, '');
     var ov = {
       name: name, layers: [], rotate: spec.rotate !== false, base: !!spec.base, box: null, draw: null,
-      files: [], ready: false, error: null, kind: 'image'
+      fade: !!spec.fade, dark: false, files: [], failed: [], ready: false, partial: false, error: null, kind: 'image'
     };
-    if (spec.box != null) { if (!isBox(spec.box)) throw new Error('box must be [x, y, w, h]'); ov.box = spec.box; }
+    if (spec.box != null) { if (!isBox(spec.box)) throw new Error('box must be [x, y, w, h], four numbers'); ov.box = spec.box; }
     if (typeof spec.draw === 'function') {
       ov.kind = 'code';
       ov.draw = spec.draw;
+      var where = {}; // the names the draw function uses -> the files (next to an art set's art.js)
       ov.api = {
         name: name, kit: KIT,
-        base: REG[name].draw,
+        base: S.draw,
         image: function (ctx, src, x, y, w, h) {
-          var im = IMG[src];
+          var im = IMG[where[src] || src];
           if (im && im.ok) { blit(ctx, im, x, y, w, h); return true; }
           return false;
         }
       };
-      (spec.images || []).forEach(function (f) { ov.files.push(String(f)); });
+      if (spec.images != null && !Array.isArray(spec.images)) throw new Error('images must be a list of file names');
+      (spec.images || []).forEach(function (f) { var r = path(f); where[f] = r; ov.files.push(r); });
       return ov;
     }
-    var layers = spec.layers || [{ src: spec.src, states: spec.states, spin: spec.spin }];
-    if (!Array.isArray(layers) || !layers.length) throw new Error('layers must be a list');
+    if (spec.draw != null) throw new Error('draw must be a function (ctx, o, t, api) { ... }');
+    var single = !spec.layers;
+    var layers = spec.layers || [{ src: spec.src, dark: spec.dark, states: spec.states, spin: spec.spin, pivot: spec.pivot }];
+    if (!Array.isArray(layers) || !layers.length) throw new Error('layers must be a list: [{ src: ... }, { src: ... }]');
     layers.forEach(function (l, i) {
+      var where = single ? '' : 'layer ' + (i + 1) + ': ';
       if (typeof l === 'string') l = { src: l };
-      var L = { src: l.src || null, states: null, box: null, spin: !!l.spin };
-      if (l.box != null) { if (!isBox(l.box)) throw new Error('layer ' + i + ': box must be [x, y, w, h]'); L.box = l.box; }
+      if (!l || typeof l !== 'object') throw new Error(where + 'expected { src: ... }');
+      if (!single) unknownKeys(name, l, LAYER_KEYS, where);
+      var L = { src: fileRef(l.src, where + 'src'), states: null, box: null, spin: spinOf(l.spin, where), pivot: null };
+      if (L.src && typeof l.dark === 'string' && l.dark.trim()) L.src.dark = path(l.dark);
+      if (l.box != null) { if (!isBox(l.box)) throw new Error(where + 'box must be [x, y, w, h], four numbers'); L.box = l.box; }
+      if (l.pivot != null) {
+        if (!isPair(l.pivot)) throw new Error(where + 'pivot must be [x, y]: a point of the drawing, in its own pixels');
+        L.pivot = l.pivot;
+        if (l.spin == null) L.spin = 1;
+      }
       if (l.states) {
-        if (typeof l.states !== 'object') throw new Error('layer ' + i + ': states must map state names to files');
+        if (typeof l.states !== 'object' || Array.isArray(l.states)) throw new Error(where + 'states must map state names to files: { out: \'art/candle-out.svg\' }');
         L.states = {};
         Object.keys(l.states).forEach(function (k) {
-          if (REG[name].states.indexOf(k) < 0) warn(name + ': unknown state "' + k + '" (it has: ' + (REG[name].states.join(', ') || 'none') + ')');
-          L.states[k] = l.states[k] ? String(l.states[k]) : null;
+          if (S.states.indexOf(k) < 0) unknownState(name, k);
+          L.states[k] = fileRef(l.states[k], where + 'states.' + k);
         });
       }
-      if (!L.src && !L.states) throw new Error('layer ' + i + ' has no src');
-      if (L.src) ov.files.push(L.src);
-      if (L.states) Object.keys(L.states).forEach(function (k) { if (L.states[k]) ov.files.push(L.states[k]); });
+      if (!L.src && !L.states) throw new Error(where + 'has no src (the file to draw)');
+      [L.src].concat(L.states ? Object.keys(L.states).map(function (k) { return L.states[k]; }) : []).forEach(function (r) {
+        if (!r) return;
+        ov.files.push(r.src);
+        if (r.dark) { ov.files.push(r.dark); ov.dark = true; }
+      });
       ov.layers.push(L);
     });
+    if (ov.fade && !S.blend) report('note', name + ': fade does nothing here (its states switch at once, there is nothing in between)', { sprite: name });
+    // poses no layer has an image for keep the built-in art: say which
+    if (!ov.base && S.state) {
+      var bare = [];
+      S.samples.forEach(function (sm) {
+        var keys = S.state(sm.o);
+        if (ov.layers.some(function (L) { return pickRef(L, keys) !== undefined; })) return;
+        var label = keys.length ? keys[0] : sm.label || 'the default look';
+        if (bare.indexOf(label) < 0) bare.push(label);
+      });
+      if (bare.length) {
+        report('note', name + ': no src, so ' + bare.join(', ') + (bare.length === 1 ? ' keeps' : ' keep') + ' the built-in art', {
+          sprite: name, hint: 'That is fine if you meant it. To replace those too, add src: \'...\' (used for every state without its own image) or list them under states.'
+        });
+      }
+    }
     return ov;
   }
 
   function loadFiles(ov, onDone) {
     var files = ov.files.filter(function (f, i, a) { return a.indexOf(f) === i; });
     var left = files.length;
+    ov.nFiles = left;
     if (!left) { onDone(); return; }
     files.forEach(function (f) {
       loadImage(f, function (im) {
-        if (im.err && !ov.error) ov.error = im.err;
+        if (im.err) ov.failed.push(im.err);
         if (--left === 0) onDone();
       });
     });
@@ -1094,15 +1276,33 @@
   // override(name, spec | null): replace a sprite's art (null restores the built-in).
   function override(name, spec) {
     var s = REG[name];
-    if (!s) { warn('there is no sprite "' + name + '" (see GRAPHICS.md or the studio for the list)'); return false; }
+    if (!s) {
+      var g = REG['tool.' + name] ? 'tool.' + name : REG['object.' + name] ? 'object.' + name : Theme.suggest(name, ORDER);
+      warn('there is no sprite "' + name + '"' + (g ? ' (did you mean "' + g + '"?)' : ''), {
+        hint: 'Sprite names look like tool.fan, object.candle or ui.pip: the studio lists them all (see GRAPHICS.md).'
+      });
+      return false;
+    }
     if (spec == null) { s.ov = null; changed('sprites'); return true; }
     var ov;
-    try { ov = normalize(name, spec); } catch (e) { warn(name + ': ' + e.message); return false; }
+    try { ov = normalize(name, spec); } catch (e) {
+      warn(name + ': ' + e.message + ', so it keeps the built-in art', { sprite: name });
+      return false;
+    }
     s.ov = ov;
     loadFiles(ov, function () {
       if (s.ov !== ov) return;
-      if (ov.error) warn(name + ': ' + ov.error + ' (keeping the built-in art)');
-      ov.ready = !ov.error;
+      var bad = ov.failed.length;
+      if (!bad) ov.ready = true;
+      else if (bad === ov.nFiles || ov.kind === 'code') {
+        ov.error = ov.failed.join('; ');
+        report('error', name + ': ' + ov.error + ', so the built-in art is shown', { sprite: name, hint: PATH_HINT });
+      } else {
+        ov.ready = true;
+        ov.partial = true;
+        ov.error = bad + ' of ' + ov.nFiles + ' files missing: ' + ov.failed.join('; ');
+        report('warn', name + ': ' + ov.error + ' (the rest is shown; where nothing is left to draw, the built-in art)', { sprite: name, hint: PATH_HINT });
+      }
       changed('sprites');
     });
     return true;
@@ -1115,14 +1315,23 @@
   var TEXTURE_NAMES = ['garden', 'floor', 'wall'];
   var TEX = {};
   function setTexture(name, spec) {
-    if (TEXTURE_NAMES.indexOf(name) < 0) { warn('no texture "' + name + '" (use ' + TEXTURE_NAMES.join(', ') + ')'); return false; }
+    if (TEXTURE_NAMES.indexOf(name) < 0) {
+      var g = Theme.suggest(name, TEXTURE_NAMES);
+      warn('there is no texture "' + name + '"' + (g ? ' (did you mean "' + g + '"?)' : ''), { hint: 'Textures can go over: ' + TEXTURE_NAMES.join(', ') + '.' });
+      return false;
+    }
     if (spec == null) { delete TEX[name]; changed('textures'); return true; }
     if (typeof spec === 'string') spec = { src: spec };
-    var tx = { src: String(spec.src), tiles: +spec.tiles > 0 ? +spec.tiles : 1, alpha: spec.alpha == null ? 1 : clamp(+spec.alpha, 0, 1), img: null, error: null };
+    if (typeof spec !== 'object' || typeof spec.src !== 'string' || !spec.src.trim()) {
+      warn('texture ' + name + ': expected { src: \'art/floor.svg\', tiles: 2, alpha: 0.6 }');
+      return false;
+    }
+    unknownKeys('texture ' + name, spec, ['src', 'tiles', 'alpha'], '');
+    var tx = { src: path(spec.src), tiles: +spec.tiles > 0 ? +spec.tiles : 1, alpha: spec.alpha == null ? 1 : clamp(+spec.alpha, 0, 1), img: null, error: null };
     TEX[name] = tx;
     loadImage(tx.src, function (im) {
       if (TEX[name] !== tx) return;
-      if (im.err) { tx.error = im.err; warn('texture ' + name + ': ' + im.err); } else tx.img = im.img;
+      if (im.err) { tx.error = im.err; report('error', 'texture ' + name + ': ' + im.err + ', so there is none', { hint: PATH_HINT }); } else tx.img = im.img;
       changed('textures');
     });
     return true;
@@ -1141,7 +1350,9 @@
   // ------------------------------------------------------------------ manifests
 
   var want = null;       // manifest file asked for (?art=name or loadManifest)
-  var current = null;    // { file, note }
+  var current = null;    // { file, note, theme, tuning, raw }
+  var ran = {};          // manifest files that called WBArt
+  var SECTIONS = ['note', 'theme', 'tuning', 'sprites', 'textures'];
 
   function clearArt() {
     ORDER.forEach(function (n) { REG[n].ov = null; });
@@ -1150,27 +1361,50 @@
   function hasArt() {
     var o = Theme.overrides();
     return Object.keys(TEX).length > 0 || Object.keys(o.light).length > 0 || Object.keys(o.dark).length > 0 ||
-      ORDER.some(function (n) { return REG[n].ov !== null; });
+      Object.keys(Theme.tuningOverrides()).length > 0 || ORDER.some(function (n) { return REG[n].ov !== null; });
   }
 
   /*
-   * manifest({ note, theme, sprites, textures }) — what art/art.js calls (as WBArt).
+   * manifest({ note, theme, tuning, sprites, textures }) — what art/art.js calls (as WBArt).
    * Replaces whatever art was set before. See GRAPHICS.md for the format.
    */
   function manifest(m) {
     var cs = doc && doc.currentScript;
     var file = cs && cs.getAttribute('src');
     if (want && file && file !== want) return false; // another manifest was asked for
-    m = m || {};
+    if (file) ran[file] = true;
+    if (m == null || typeof m !== 'object' || Array.isArray(m)) {
+      if (m != null) warn('WBArt needs { ... }: WBArt({ theme: { ... }, sprites: { ... } })');
+      m = {};
+    }
     var had = hasArt();
     clearArt();
     Theme.reset(true);
-    current = { file: file || '(inline)', note: m.note ? String(m.note) : '', theme: m.theme || null };
-    if (m.theme) Theme.set(m.theme, true);
-    if (m.sprites) Object.keys(m.sprites).forEach(function (n) { override(n, m.sprites[n]); });
-    if (m.textures) Object.keys(m.textures).forEach(function (n) { setTexture(n, m.textures[n]); });
-    // an empty manifest over no art changes nothing: no repaint
-    if (had || hasArt()) changed('manifest');
+    Theme.clearProblems(function (p) { return p.scope === 'manifest' || (file && p.file === file); });
+    current = { file: file || '(inline)', note: m.note ? String(m.note) : '', theme: m.theme || null, tuning: m.tuning || null, raw: m };
+    Object.keys(m).forEach(function (k) {
+      if (SECTIONS.indexOf(k) >= 0) return;
+      var g = Theme.suggest(k, SECTIONS);
+      warn('WBArt: there is no section "' + k + '", so it is ignored' + (g ? ' (did you mean "' + g + '"?)' : ''), { hint: 'The sections are: ' + SECTIONS.join(', ') + '.' });
+    });
+    base = file ? folder(file) : '';
+    try {
+      if (m.theme) Theme.set(m.theme, true);
+      if (m.tuning) Theme.setTuning(m.tuning, true);
+      if (m.sprites) {
+        if (typeof m.sprites !== 'object') warn('sprites must be { \'object.candle\': ..., \'tool.fan\': ... }');
+        else Object.keys(m.sprites).forEach(function (n) { override(n, m.sprites[n]); });
+      }
+      if (m.textures) {
+        if (typeof m.textures !== 'object') warn('textures must be { floor: { src: ... } }');
+        else Object.keys(m.textures).forEach(function (n) { setTexture(n, m.textures[n]); });
+      }
+    } finally {
+      base = '';
+    }
+    // an empty manifest over no art changes nothing: no repaint. One that was
+    // asked for (?art=) or has problems is announced anyway (the studio lists them).
+    if (had || hasArt() || want || Theme.problems().length) changed('manifest');
     return true;
   }
 
@@ -1178,11 +1412,17 @@
   // current manifest. The game does this for ?art=<name>.
   function loadManifest(name) {
     if (!doc) return false;
-    if (name && !/^[a-z0-9][a-z0-9_-]*$/i.test(name)) { warn('bad manifest name "' + name + '"'); return false; }
+    if (name && !/^[a-z0-9][a-z0-9_-]*$/i.test(name)) {
+      report('error', 'bad art set name "' + name + '"', { scope: 'script', hint: '?art=<name> loads art/<name>/art.js; a name is letters, digits, - and _.' });
+      return false;
+    }
     want = name ? 'art/' + name + '/art.js' : 'art/art.js';
     var el = doc.createElement('script');
     el.src = want;
-    el.onerror = function () { warn('could not load ' + el.src); changed('manifest'); };
+    el.onerror = function () {
+      report('error', 'could not load ' + want + ', so the built-in art is shown', { scope: 'script', file: want, hint: '?art=' + name + ' loads art/' + name + '/art.js: check the folder name and that art.js is in it.' });
+      changed('manifest');
+    };
     (doc.head || doc.documentElement).appendChild(el);
     return true;
   }
@@ -1191,11 +1431,64 @@
     if (q) loadManifest(decodeURIComponent(q[1]));
   }
 
+  // A manifest with a typo never calls WBArt: say so (in the console, and in
+  // the studio's "Art in use"), with the line and a likely cause.
+  function manifestFile(url) {
+    var m = /(art\/(?:[\w-]+\/)?art\.js)(?:[?#].*)?$/.exec(String(url || ''));
+    return m ? m[1] : null;
+  }
+  function typoHint(msg) {
+    if (/Unexpected end of input/i.test(msg)) return 'A bracket is not closed: every { needs a }, every [ a ], every ( a ). The file should end with });';
+    if (/Invalid or unexpected token|Unterminated|unterminated/i.test(msg)) return 'A quote is not closed, or there is a curly quote from a word processor: use straight quotes \' or ".';
+    if (/is not defined/i.test(msg)) return 'A word without quotes: file names, colours and sprite names need quotes, like \'art/fan.svg\' or \'#ff8800\'.';
+    if (/Unexpected (identifier|string|number)|Unexpected token '\{'|missing \) after/i.test(msg)) return 'Usually a missing comma at the end of the line before (every entry but the last ends with a comma), or a missing quote.';
+    if (/Unexpected token/i.test(msg)) return 'An extra or missing bracket or comma near there.';
+    return 'Look at that line and the one before it.';
+  }
+  function staticManifest() {
+    var els = doc && doc.querySelectorAll ? doc.querySelectorAll('script[src]') : [];
+    for (var i = 0; i < els.length; i++) {
+      var f = manifestFile(els[i].getAttribute('src'));
+      if (f && f === els[i].getAttribute('src')) return f;
+    }
+    return null;
+  }
+  if (root && root.addEventListener && doc) {
+    root.addEventListener('error', function (e) {
+      if (e && e.target && e.target !== root && e.target.tagName === 'SCRIPT') {
+        var sf = manifestFile(e.target.getAttribute('src'));
+        if (sf && sf !== want) report('warn', 'could not load ' + sf + ', so the built-in art is shown', { scope: 'script', file: sf });
+        return;
+      }
+      var f = manifestFile(e && e.filename);
+      if (!f) return;
+      var msg = String(e.message || 'error').replace(/^(Uncaught\s+)?([A-Z]\w*Error:\s*)?/, '');
+      report('error', f + ' has a mistake on line ' + e.lineno + ': ' + msg, { scope: 'script', file: f, line: e.lineno, hint: typoHint(msg) });
+      changed('manifest');
+    }, true);
+    root.addEventListener('load', function () {
+      var f = want || staticManifest();
+      if (!f || ran[f]) return;
+      if (Theme.problems().some(function (p) { return p.file === f && p.scope === 'script'; })) return;
+      report('error', f + ' was loaded but did not call WBArt({ ... }), so the built-in art is shown', {
+        scope: 'script', file: f,
+        hint: 'It probably has a mistake: check commas, quotes and brackets. The browser console (F12) shows the line' +
+          (root.location && root.location.protocol === 'file:' ? ' (a page opened as a file cannot see it; through a web server, such as npm run serve, it is shown here too).' : '.')
+      });
+      changed('manifest');
+    });
+  }
+
   // ------------------------------------------------------------------ changes
 
-  var pendingWhy = null;
+  // Listeners get one call per burst of changes, with the biggest reason:
+  // 'manifest' (everything may have changed) > 'sprites' > 'textures'.
+  var pendingWhy = null, RANK = { textures: 1, sprites: 2, manifest: 3 };
   function changed(why) {
-    if (pendingWhy) return;
+    if (pendingWhy) {
+      if ((RANK[why] || 0) > (RANK[pendingWhy] || 0)) pendingWhy = why;
+      return;
+    }
     pendingWhy = why;
     var fire = function () {
       var w = pendingWhy; pendingWhy = null;
@@ -1207,13 +1500,15 @@
   }
   function onChange(fn) { listeners.push(fn); return function () { listeners = listeners.filter(function (f) { return f !== fn; }); }; }
 
+  // state: 'ready' | 'loading' | 'partial' (some files missing, the rest shown)
+  //      | 'error' (the built-in art is shown)
   function status() {
     return ORDER.map(function (n) {
       var s = REG[n], ov = s.ov;
       return {
         name: n, group: s.group,
         art: !ov ? 'built-in' : ov.kind,
-        state: !ov ? 'ready' : ov.error ? 'error' : ov.ready ? 'ready' : 'loading',
+        state: !ov ? 'ready' : ov.ready ? (ov.partial ? 'partial' : 'ready') : ov.error ? 'error' : 'loading',
         error: ov && ov.error, files: ov ? ov.files.slice() : []
       };
     });
@@ -1309,24 +1604,43 @@
   // state name -> [state name], so state() never allocates
   function keyed(names) { var m = {}; names.forEach(function (n) { m[n] = [n]; }); return m; }
 
+  // Every object also has an 'icon' state: the goal strip and the help sheet
+  // draw objects with o.icon set, so an image for 'icon' (else the happy
+  // state) is what they show. The built-in icons are the poses below.
+  // Image states switch at the halfway point of the eased value (o.lit >= 0.5
+  // is 'lit'); with fade: true they crossfade (blend).
+  function iconKeys(happy) { return ['icon', happy]; }
+  function iconNote(happy) { return 'goal strip and help icon (without an image for it: ' + happy + ')'; }
+
   var PIN = keyed(['still', 'spinning']);
+  PIN.icon = iconKeys('spinning');
   define('object.pinwheel', {
     group: 'object', draw: objPinwheel, note: 'wants any breeze. o.angle: spin.',
-    states: ['still', 'spinning'], state: function (o) { return o.flow > 0 ? PIN.spinning : PIN.still; },
+    states: ['still', 'spinning', 'icon'], state: function (o) { return o.icon ? PIN.icon : o.flow > 0 ? PIN.spinning : PIN.still; },
+    stateNotes: { still: 'no air yet: waiting', spinning: 'any air: happy', icon: iconNote('spinning') },
     samples: [{ label: 'still', o: pose({}) }, { label: 'spinning', o: pose({ flow: 1, angle: 1.2 }) }]
   });
 
   var CAN = keyed(['lit', 'out']);
+  CAN.icon = iconKeys('lit');
   define('object.candle', {
     group: 'object', draw: objCandle, note: 'wants no air. o.lit: 1 burning .. 0 blown out.',
-    states: ['lit', 'out'], state: function (o) { return (o.lit == null ? 1 : o.lit) >= 0.5 ? CAN.lit : CAN.out; },
+    states: ['lit', 'out', 'icon'], state: function (o) { return o.icon ? CAN.icon : (o.lit == null ? 1 : o.lit) >= 0.5 ? CAN.lit : CAN.out; },
+    blend: function (o) { return { a: CAN.out, b: CAN.lit, k: o.lit == null ? 1 : o.lit }; },
+    stateNotes: { lit: 'no air: happy', out: 'blown out by air: unhappy', icon: iconNote('lit') },
     samples: [{ label: 'lit', o: pose({}) }, { label: 'blown out', o: pose({ flow: 1, lit: 0, dirx: 1 }) }]
   });
 
   var LAU = keyed(['damp', 'dry', 'dirty']);
+  LAU.icon = iconKeys('dry');
   define('object.laundry', {
     group: 'object', draw: objLaundry, note: 'wants a clean breeze of 2+. o.dry, o.soot (smoky air), o.flow swings it.',
-    states: ['damp', 'dry', 'dirty'], state: function (o) { return o.soot >= 0.5 ? LAU.dirty : o.dry >= 0.5 ? LAU.dry : LAU.damp; },
+    states: ['damp', 'dry', 'dirty', 'icon'], state: function (o) { return o.icon ? LAU.icon : o.soot >= 0.5 ? LAU.dirty : o.dry >= 0.5 ? LAU.dry : LAU.damp; },
+    blend: function (o) {
+      if (o.soot > 0) return { a: o.dry >= 0.5 ? LAU.dry : LAU.damp, b: LAU.dirty, k: o.soot };
+      return { a: LAU.damp, b: LAU.dry, k: o.dry || 0 };
+    },
+    stateNotes: { damp: 'too little air: waiting', dry: 'a clean breeze of 2+: happy', dirty: 'smoky air reached it: unhappy', icon: iconNote('dry') },
     samples: [
       { label: 'damp', o: pose({}) }, { label: 'drying', o: pose({ flow: 2, dry: 1, dirx: 1 }) },
       { label: 'sooty', o: pose({ flow: 2, dry: 1, soot: 1, dirx: 1 }) }
@@ -1334,9 +1648,15 @@
   });
 
   var PAP = keyed(['calm', 'flutter', 'scattered']);
+  PAP.icon = iconKeys('calm');
   define('object.papers', {
     group: 'object', draw: objPapers, note: 'want a breeze of 1 at most. o.flutter, o.scatter (blown away).',
-    states: ['calm', 'flutter', 'scattered'], state: function (o) { return o.scatter >= 0.5 ? PAP.scattered : o.flutter >= 0.5 ? PAP.flutter : PAP.calm; },
+    states: ['calm', 'flutter', 'scattered', 'icon'], state: function (o) { return o.icon ? PAP.icon : o.scatter >= 0.5 ? PAP.scattered : o.flutter >= 0.5 ? PAP.flutter : PAP.calm; },
+    blend: function (o) {
+      if (o.scatter > 0) return { a: o.flutter >= 0.5 ? PAP.flutter : PAP.calm, b: PAP.scattered, k: o.scatter };
+      return { a: PAP.calm, b: PAP.flutter, k: o.flutter || 0 };
+    },
+    stateNotes: { calm: 'no air: happy', flutter: 'a breeze of 1: still happy', scattered: 'a breeze of 2+: blown away, unhappy', icon: iconNote('calm') },
     samples: [
       { label: 'calm', o: pose({}) }, { label: 'fluttering', o: pose({ flow: 1, flutter: 1 }) },
       { label: 'blown away', o: pose({ flow: 2, flutter: 1, scatter: 1, dirx: 1 }), t: 0.9 }
@@ -1344,9 +1664,15 @@
   });
 
   var FERN = keyed(['still', 'swaying', 'battered']);
+  FERN.icon = iconKeys('swaying');
   define('object.fern', {
     group: 'object', draw: objFern, note: 'wants a breeze of exactly 1. o.sway, o.bend (battered).',
-    states: ['still', 'swaying', 'battered'], state: function (o) { return o.bend >= 0.5 ? FERN.battered : o.sway >= 0.5 ? FERN.swaying : FERN.still; },
+    states: ['still', 'swaying', 'battered', 'icon'], state: function (o) { return o.icon ? FERN.icon : o.bend >= 0.5 ? FERN.battered : o.sway >= 0.5 ? FERN.swaying : FERN.still; },
+    blend: function (o) {
+      if (o.bend > 0) return { a: o.sway >= 0.5 ? FERN.swaying : FERN.still, b: FERN.battered, k: o.bend };
+      return { a: FERN.still, b: FERN.swaying, k: o.sway || 0 };
+    },
+    stateNotes: { still: 'no air: waiting', swaying: 'a breeze of exactly 1: happy', battered: 'a breeze of 2+: unhappy', icon: iconNote('swaying') },
     samples: [
       { label: 'still', o: pose({}) }, { label: 'swaying', o: pose({ flow: 1, sway: 1 }) },
       { label: 'battered', o: pose({ flow: 2, sway: 1, bend: 1, dirx: 1 }) }
@@ -1354,11 +1680,13 @@
   });
 
   var STO = keyed(['clear', 'smoky']);
+  STO.icon = iconKeys('clear');
   define('object.stove', {
     group: 'object', draw: objStove,
     note: 'its smoke must be blown outside. The rising smoke is drawn by the board, not the sprite.',
-    states: ['clear', 'smoky'], state: function (o) { return o.state === 'happy' ? STO.clear : STO.smoky; },
-    samples: [{ label: 'cooking', o: pose({ state: 'idle' }) }]
+    states: ['clear', 'smoky', 'icon'], state: function (o) { return o.icon ? STO.icon : o.state === 'happy' ? STO.clear : STO.smoky; },
+    stateNotes: { clear: 'its smoke is blown outside: happy', smoky: 'smoke stays in the house: unhappy', icon: iconNote('clear') },
+    samples: [{ label: 'cooking', o: pose({ state: 'idle' }) }, { label: 'clear', o: pose({ state: 'happy' }) }]
   });
 
   TOOL_IDS.forEach(function (id) {
@@ -1373,6 +1701,7 @@
     group: 'ui', draw: function (ctx, o) { pipShape(ctx, o.state, o.r || 6); },
     note: 'status pip on each object, in CSS px; o.r: radius. Image box is in radii.',
     states: ['happy', 'bad', 'dirty', 'idle'], state: function (o) { return PIP_KEYS[o.state] || PIP_KEYS.idle; },
+    stateNotes: { happy: 'the object is happy', bad: 'unhappy', dirty: 'unhappy: smoky air reached it', idle: 'waiting' },
     unit: function (o) { return o.r || 6; }, box: [-1.3, -1.3, 2.6, 2.6],
     samples: ['happy', 'bad', 'dirty', 'idle'].map(function (s) { return { label: s, o: { state: s } }; })
   });
@@ -1389,7 +1718,7 @@
   var KIT = {
     TAU: TAU, DX: DX, DY: DY, P: P, color: P, mix: mix, alpha: alpha, darker: darker, lighter: lighter,
     clamp: clamp, rr: rr, fillRR: fillRR, circle: circle, line: line, chevron: chevron, minW: minW,
-    draw: draw, drawBuiltin: drawBuiltin
+    num: Theme.num, draw: draw, drawBuiltin: drawBuiltin
   };
 
   return {
@@ -1411,6 +1740,10 @@
     // true once the manifest asked for has run and its images have loaded (or failed)
     ready: function () { return loading === 0 && (!want || !!current && current.file === want); },
     status: status,
+    // mistakes found in the art (see WBTheme.report): [{ level, text, hint, sprite, token, file, line }]
+    problems: Theme.problems,
+    image: function (src) { var im = IMG[src]; return im ? { src: im.src, ok: im.ok, error: im.err, w: im.w, h: im.h } : null; },
+    fakeImage: fakeImage,
     onChange: onChange
   };
 });

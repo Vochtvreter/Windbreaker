@@ -1,0 +1,87 @@
+tools/visual.js --baseline --from <rev> applies this patch to a revision whose
+js/render.js predates the window.__wbFreezeTime test hook (v1.0, de0d5e4, and
+the commits just before it), so its pictures are reproducible. It changes
+nothing a player sees: the hook only acts while __wbFreezeTime is set.
+
+--- a/js/render.js
++++ b/js/render.js
+@@ -100,8 +100,15 @@
+     return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+   }
+   function approach(cur, target, rate, dt) {
++    if (SETTLE) return target;
+     return cur + (target - cur) * (1 - Math.exp(-rate * dt));
+   }
++
++  // Test hook (tools/visual.js): while window.__wbFreezeTime is a number (ms),
++  // every frame is drawn at that moment as a pure function of the scene: eased
++  // values are settled, nothing spins on, and spin angles and wind streaks come
++  // from a fixed seed. Never set in normal play.
++  var RAND = Math.random, SETTLE = false;
+   function rng(seed) {
+     var a = seed >>> 0;
+     return function () {
+@@ -1587,22 +1594,22 @@
+     var dir = L.wind.dir;
+     var self = this;
+     function spawn(initial) {
+-      var life = calm ? 5 + Math.random() * 5 : 1.5 + Math.random() * 1.5;
+-      var x = Math.random() * W, y = Math.random() * H;
++      var life = calm ? 5 + RAND() * 5 : 1.5 + RAND() * 1.5;
++      var x = RAND() * W, y = RAND() * H;
+       // favour the band just upwind of the house, where the breeze meets the wall
+-      if (!calm && Math.random() < 0.35) {
+-        var depth = T * (0.4 + Math.random() * 1.6);
+-        if (dir === 1) { x = self.ox - depth; y = self.oy + Math.random() * L.h * T; }
+-        else if (dir === 3) { x = self.ox + L.w * T + depth; y = self.oy + Math.random() * L.h * T; }
+-        else if (dir === 2) { y = self.oy - depth; x = self.ox + Math.random() * L.w * T; }
+-        else { y = self.oy + L.h * T + depth; x = self.ox + Math.random() * L.w * T; }
++      if (!calm && RAND() < 0.35) {
++        var depth = T * (0.4 + RAND() * 1.6);
++        if (dir === 1) { x = self.ox - depth; y = self.oy + RAND() * L.h * T; }
++        else if (dir === 3) { x = self.ox + L.w * T + depth; y = self.oy + RAND() * L.h * T; }
++        else if (dir === 2) { y = self.oy - depth; x = self.ox + RAND() * L.w * T; }
++        else { y = self.oy + L.h * T + depth; x = self.ox + RAND() * L.w * T; }
+       }
+       list.push({
+         x: x, y: y,
+-        len: T * (0.4 + Math.random() * 0.5),
+-        life: life, age: initial ? Math.random() * life : 0,
+-        sp: 0.8 + Math.random() * 0.45, ph: Math.random() * TAU,
+-        vx: (Math.random() - 0.5), vy: (Math.random() - 0.5), r: 0.7 + Math.random() * 0.8
++        len: T * (0.4 + RAND() * 0.5),
++        life: life, age: initial ? RAND() * life : 0,
++        sp: 0.8 + RAND() * 0.45, ph: RAND() * TAU,
++        vx: (RAND() - 0.5), vy: (RAND() - 0.5), r: 0.7 + RAND() * 0.8
+       });
+     }
+     if (!this.streakSeeded) {
+@@ -1676,11 +1683,11 @@
+     return a;
+   };
+ 
+-  function newPieceAnim() { return { angle: Math.random() * TAU, sway: 0 }; }
++  function newPieceAnim() { return { angle: RAND() * TAU, sway: 0 }; }
+   function newObjAnim(gl) {
+     var f = gl.flow;
+     return {
+-      angle: Math.random() * TAU, spd: 0, lit: f > 0 ? 0 : 1, dry: f >= 2 ? 1 : 0,
++      angle: RAND() * TAU, spd: 0, lit: f > 0 ? 0 : 1, dry: f >= 2 ? 1 : 0,
+       scatter: f >= 2 ? 1 : 0, flutter: f === 1 ? 1 : 0, bend: f >= 2 ? 1 : 0, sway: f === 1 ? 1 : 0,
+       state: gl.state, stateT: -1e9, flow: f, haze: gl.state !== 'happy' ? 1 : 0, soot: gl.smoky ? 1 : 0,
+       dirx: 0, diry: 0, small: false, px: 0
+@@ -1706,6 +1713,14 @@
+   Board.prototype.draw = function (S, now) {
+     var L = this.L;
+     if (!L || !this.cssW) return;
++    SETTLE = typeof root.__wbFreezeTime === 'number';
++    RAND = Math.random;
++    if (SETTLE) {
++      now = root.__wbFreezeTime;
++      this.lastNow = now;
++      this.anim = {}; this.streaks = []; this.streakSeeded = false;
++      RAND = rng(this.seed * 7919 + 17);
++    }
+     var ctx = this.ctx, T = this.T, dpr = this.dpr;
+     var t = now / 1000;
+     var dt = this.lastNow ? clamp((now - this.lastNow) / 1000, 0, 0.1) : 0.016;

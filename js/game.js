@@ -2319,9 +2319,11 @@
       renderHome();
     }
   }
-  // light/dark switched, or the art manifest (art/art.js) retheme'd tokens or
+  // light/dark switched, or the art manifest (art/art.js) retheme'd tokens,
+  // changed a tuning number (the largest tile size needs a new layout) or
   // finished loading images: repaint the board's cached layers and the icons
-  function repaintArt() {
+  function repaintArt(why) {
+    if (why === 'tuning' || why === 'manifest') layoutBoard();
     board.refreshPalette();
     G.paletteVersion++;
     refreshIcons();

@@ -3,7 +3,9 @@
  * Windbreaker visual check — did a graphics change alter anything you did not mean to?
  *
  *   node tools/visual.js --baseline     render every scene and keep the pictures as the reference
- *   node tools/visual.js --compare      render again and compare with the reference, pixel by pixel
+ *                                       (do this BEFORE you change anything)
+ *   node tools/visual.js --compare      render again and compare with the reference, pixel by pixel;
+ *                                       writes screenshots/gfx/review.html (before | after | diff)
  *   node tools/visual.js                just render (to screenshots/gfx/current/)
  *   node tools/visual.js --perf         time the board drawing on the busiest scenes (ms per frame)
  *   node tools/visual.js --list         list the scenes
@@ -13,13 +15,17 @@
  *   --tolerance <pct>   most differing pixels allowed per picture, in % (default 0.05)
  *   --threshold <n>     how much a colour channel (0-255) may change before the pixel
  *                       counts as different (default 0: any change counts)
+ *   --strict            with --compare: also fail when a scene has no baseline yet
  *   --live              use today's js/engine.js and js/levels.js instead of the copies
  *                       pinned with the baseline
  *   --from <rev>        with --baseline: render the game as it was at a git revision
  *                       (e.g. HEAD: "what the last commit looked like"), rules and
- *                       levels included, then --compare shows what the working tree changed
+ *                       levels included, then --compare shows what the working tree changed.
+ *                       Needs a git checkout. A revision older than the visual-check hook
+ *                       (window.__wbFreezeTime, e.g. v1.0 = de0d5e4) gets tools/visual-freeze.patch.
  *   --pin-from <rev>    with --baseline: pin engine.js and levels.js from a git revision
- *   --root <dir>        serve the game from another checkout of it
+ *   --root <dir>        serve the game from another copy of it (no git needed: e.g.
+ *                       --baseline --root ../windbreaker-before, then --compare here)
  *   --headed            watch it
  *
  * Every scene is drawn at a frozen moment (window.__wbFreezeTime, see js/render.js):
@@ -34,11 +40,14 @@
  * (ids 901-903, tools/gallery.js) show every tool and every object in every state.
  *
  * Pictures go to screenshots/gfx/ (git-ignored): baseline/, current/ and diff/
- * (the diff pictures show changed pixels in magenta over a faded copy).
+ * (the diff pictures show changed pixels in magenta over a faded copy), and
+ * review.html shows them side by side. A change you meant? Run --baseline again
+ * to accept it as the new reference.
  * The comparison runs inside the browser (canvas getImageData), so it needs
  * nothing but Playwright with Chromium. Exits 1 when a picture differs by more
  * than the tolerance, there is no baseline at all, or the page logs an error
- * (a scene added since the baseline is reported as new).
+ * (a scene added since the baseline is reported as not checked; --strict fails
+ * on it). Exits 2 when it cannot run at all (no git for --from, ...).
  */
 'use strict';
 
@@ -54,6 +63,8 @@ const BASE_DIR = path.join(OUT, 'baseline');
 const CUR_DIR = path.join(OUT, 'current');
 const DIFF_DIR = path.join(OUT, 'diff');
 const PIN_DIR = path.join(BASE_DIR, 'pinned');
+const REVIEW = path.join(OUT, 'review.html');
+const FREEZE_PATCH = path.join(__dirname, 'visual-freeze.patch');
 const MOUNT = '/windbreaker/';
 const FREEZE_MS = 4321000; // the frozen moment every scene is drawn at
 
@@ -78,6 +89,7 @@ const OPTS = {
   tolerance: option('tolerance') != null ? parseFloat(option('tolerance')) : 0.05,
   threshold: option('threshold') != null ? parseInt(option('threshold'), 10) : 0,
   live: flag('live'),
+  strict: flag('strict'),
   pinFrom: option('pin-from') || option('from'),
   from: option('from'),
   root: option('root') ? path.resolve(option('root')) : null,
@@ -86,6 +98,35 @@ const OPTS = {
 // where the game's files are served from (the working tree, --root or --from)
 let GAME_ROOT = OPTS.root || ROOT;
 if (OPTS.from && !OPTS.baseline) { console.error('--from only goes with --baseline'); process.exit(2); }
+
+function die(msg) { console.error('tools/visual.js: ' + msg); process.exit(2); }
+
+// git, with errors a person can read (no Buffer dumps)
+function git(args, opts) {
+  try {
+    return execFileSync('git', args, Object.assign({ cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 256 << 20 }, opts || {}));
+  } catch (e) {
+    if (e.code === 'ENOENT') die('--from and --pin-from need git, and git is not installed. Without git: take the baseline before you change anything (node tools/visual.js --baseline), or from an untouched copy of the game (--baseline --root <that folder>).');
+    const err = String(e.stderr || e.message || '').trim().split('\n')[0];
+    if (/not a git repository/i.test(err)) die('--from and --pin-from need a git checkout, and ' + ROOT + ' is not one. Take the baseline before you change anything (node tools/visual.js --baseline), or from an untouched copy (--baseline --root <that folder>).');
+    die('git ' + args.join(' ') + ' failed: ' + err);
+  }
+}
+let GIT_PREFIX = null;
+// where the game sits in its git repository ('' at the top, 'games/windbreaker/' when nested)
+function gitPrefix() {
+  if (GIT_PREFIX === null) GIT_PREFIX = git(['rev-parse', '--show-prefix'], { encoding: 'utf8' }).trim();
+  return GIT_PREFIX;
+}
+const SHORT = {};
+function shortRev(rev) {
+  if (SHORT[rev]) return SHORT[rev];
+  gitPrefix(); // fails with a clear message without git or outside a checkout
+  let out = '';
+  try { out = execFileSync('git', ['rev-parse', '--short', '--verify', '--quiet', rev + '^{commit}'], { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch (e) { out = ''; }
+  if (!out) die('git does not know the revision "' + rev + '" (try HEAD, a tag, or a commit id from git log)');
+  return (SHORT[rev] = out);
+}
 
 function loadPlaywright() {
   try { return require('playwright'); } catch (e) { /* try the global install */ }
@@ -135,8 +176,8 @@ const SCENES = [
   { name: 'calm', url: '?unlock#6', pieces: 'solution', closeWin: true },
   { name: 'busy-solved', url: '?unlock#100', pieces: 'solution', winCard: true },
   // the example art manifest (art/examples/art.js): images, layers, states, code, texture, tokens
-  { name: 'art-examples', url: '?unlock&art=examples#901', pieces: 'solution', closeWin: true, sizes: ['desktop'] },
-  { name: 'art-examples-trouble', url: '?unlock&art=examples#902', pieces: 'solution', sizes: ['phone'] },
+  { name: 'art-examples', url: '?unlock&art=examples#901', pieces: 'solution', closeWin: true, sizes: ['desktop'], needs: 'art/examples/art.js' },
+  { name: 'art-examples-trouble', url: '?unlock&art=examples#902', pieces: 'solution', sizes: ['phone'], needs: 'art/examples/art.js' },
 ];
 
 const SIZES = {
@@ -168,16 +209,40 @@ function pin() {
   fs.mkdirSync(PIN_DIR, { recursive: true });
   for (const name of ['engine.js', 'levels.js']) {
     const src = OPTS.pinFrom
-      ? execFileSync('git', ['show', OPTS.pinFrom + ':js/' + name], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20 })
+      ? git(['show', OPTS.pinFrom + ':./js/' + name], { encoding: 'utf8' })
       : fs.readFileSync(path.join(GAME_ROOT, 'js', name), 'utf8');
     fs.writeFileSync(path.join(PIN_DIR, name), src);
   }
 }
-// --from <rev>: the whole game as it was at that revision, in a temporary folder
+// --from <rev>: the whole game as it was at that revision, in a temporary folder.
+// The game may sit in a sub-folder of a bigger repository: only that folder is taken.
+let FREEZE_PATCHED = false;
 function checkoutRev(rev) {
+  shortRev(rev);
+  const prefix = gitPrefix();
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wb-visual-'));
-  const tar = execFileSync('git', ['archive', '--format=tar', rev], { cwd: ROOT, maxBuffer: 256 << 20 });
-  execFileSync('tar', ['-x', '-C', dir], { input: tar });
+  // run from the repository's top: from a sub-folder git archive would add that folder's path
+  const top = git(['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim();
+  const tar = git(['archive', '--format=tar', prefix ? rev + ':' + prefix.replace(/\/$/, '') : rev], { cwd: top });
+  try { execFileSync('tar', ['-x', '-C', dir], { input: tar, stdio: ['pipe', 'ignore', 'pipe'] }); } catch (e) {
+    die('could not unpack ' + rev + ' (tar: ' + String(e.stderr || e.message).trim().split('\n')[0] + ')');
+  }
+  const render = path.join(dir, 'js', 'render.js');
+  if (!fs.existsSync(render)) die(rev + ' has no js/render.js here: is ' + ROOT + ' the game folder?');
+  if (!fs.readFileSync(render, 'utf8').includes('__wbFreezeTime')) {
+    // older than the hook that draws every picture at a frozen moment: add it
+    try {
+      execFileSync('git', ['apply', '--whitespace=nowarn', FREEZE_PATCH], {
+        cwd: dir, stdio: ['ignore', 'pipe', 'pipe'], env: Object.assign({}, process.env, { GIT_CEILING_DIRECTORIES: path.dirname(dir) }),
+      });
+      FREEZE_PATCHED = true;
+    } catch (e) {
+      fs.rmSync(dir, { recursive: true, force: true });
+      die('revision ' + rev + ' predates the visual-check hook (window.__wbFreezeTime in js/render.js) and ' +
+        'tools/visual-freeze.patch does not apply to it, so its pictures would not be reproducible (spin angles and wind streaks would be random). ' +
+        'Use a later revision, such as v1.0 (de0d5e4) or anything after it.');
+    }
+  }
   return dir;
 }
 const INFO_FILE = path.join(BASE_DIR, 'baseline.json');
@@ -316,8 +381,15 @@ async function renderAll(browser, base, dir) {
     (groups[k] = groups[k] || []).push(s);
   }
   const out = [];
+  const skipped = new Set();
   for (const k of Object.keys(groups)) {
-    const g = groups[k];
+    const g = groups[k].filter((s) => {
+      // a scene for something the game being rendered does not have yet (an older --from)
+      if (!s.scene.needs || fs.existsSync(path.join(GAME_ROOT, s.scene.needs))) return true;
+      skipped.add(s.scene.name);
+      return false;
+    });
+    if (!g.length) continue;
     const ctx = await newContext(browser, g[0].mode, g[0].size, !!g[0].scene.reduced);
     const page = await ctx.newPage();
     watch(page, k);
@@ -335,6 +407,7 @@ async function renderAll(browser, base, dir) {
     }
     await ctx.close();
   }
+  skipped.forEach((n) => console.log('  skip ' + n + ' (this version of the game has no ' + SCENES.find((x) => x.name === n).needs + ')'));
   return out;
 }
 
@@ -418,6 +491,45 @@ async function perf(browser, base) {
   return out;
 }
 
+// ------------------------------------------------------------------ review page
+// screenshots/gfx/review.html: every compared picture as before | after | diff,
+// changed ones first. It sits next to baseline/, current/ and diff/.
+
+function writeReview(rows, info) {
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const changed = rows.filter((r) => !r.missing && (r.sizeA || r.pct > OPTS.tolerance));
+  const small = rows.filter((r) => !r.missing && !r.sizeA && r.diff && r.pct <= OPTS.tolerance);
+  const same = rows.filter((r) => !r.missing && !r.sizeA && !r.diff);
+  const fresh = rows.filter((r) => r.missing);
+  const fig = (r) => {
+    const f = encodeURIComponent(r.file);
+    const what = r.missing ? 'no baseline yet' : r.sizeA ? 'size changed: ' + r.sizeA + ' → ' + r.sizeB : r.diff ? r.pct.toFixed(4) + '% of the pixels changed (' + r.diff + ' px)' : 'identical';
+    const cells = [];
+    if (!r.missing) cells.push('<figure><a href="baseline/' + f + '"><img loading="lazy" src="baseline/' + f + '" alt="before"></a><figcaption>before (baseline)</figcaption></figure>');
+    cells.push('<figure><a href="current/' + f + '"><img loading="lazy" src="current/' + f + '" alt="after"></a><figcaption>after (now)</figcaption></figure>');
+    if (r.diff) cells.push('<figure><a href="diff/' + f + '"><img loading="lazy" src="diff/' + f + '" alt="changed pixels"></a><figcaption>changed pixels in magenta</figcaption></figure>');
+    return '<section><h3>' + esc(r.file) + ' <small>' + esc(what) + '</small></h3><div class="row">' + cells.join('') + '</div></section>';
+  };
+  const group = (title, list, open) => list.length
+    ? '<details' + (open ? ' open' : '') + '><summary>' + esc(title) + ' (' + list.length + ')</summary>' + list.map(fig).join('') + '</details>' : '';
+  const html = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
+    '<title>Windbreaker visual review</title><style>' +
+    ':root{color-scheme:light dark;--bg:#f4f0e8;--ink:#3a414c;--soft:#646b76;--card:#fffcf6;--line:rgba(58,65,76,.15);--bad:#b5473c}' +
+    '@media (prefers-color-scheme:dark){:root{--bg:#1a1e24;--ink:#e7e3db;--soft:#b1b6bd;--card:#272c34;--line:rgba(231,227,219,.12);--bad:#ec8577}}' +
+    'body{margin:0;padding:16px;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,sans-serif}h1{font-size:20px;margin:0 0 4px}' +
+    'p{margin:0 0 12px;color:var(--soft);max-width:80ch}code{font-size:.95em}details{margin:14px 0}summary{font-weight:600;cursor:pointer;font-size:16px}' +
+    'section{background:var(--card);border-radius:12px;padding:10px 12px;margin:10px 0}h3{font-size:14px;margin:0 0 8px}h3 small{font-weight:400;color:var(--soft)}' +
+    '.changed h3 small{color:var(--bad)}.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:8px}' +
+    'figure{margin:0}img{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:6px}figcaption{font-size:12px;color:var(--soft)}' +
+    '</style></head><body><h1>Windbreaker visual review</h1>' +
+    '<p>' + changed.length + ' changed, ' + small.length + ' with tiny differences within the tolerance, ' + same.length + ' identical, ' + fresh.length + ' without a baseline. ' +
+    'Baseline: ' + esc(info ? info.game + ', taken ' + info.date : 'unknown') + '. Written ' + esc(new Date().toISOString().slice(0, 16).replace('T', ' ')) + '.</p>' +
+    '<p>Is every change one you meant? Then accept them: <code>node tools/visual.js --baseline</code>. If not, the magenta pixels show where to look.</p>' +
+    '<div class="changed">' + group('Changed', changed, true) + '</div>' + group('Tiny differences (within the tolerance)', small, false) +
+    group('No baseline yet (not checked)', fresh, false) + group('Identical', same, false) + '</body></html>\n';
+  fs.writeFileSync(REVIEW, html);
+}
+
 // ------------------------------------------------------------------ main
 
 function dim(s) { return process.stdout.isTTY ? '\x1b[2m' + s + '\x1b[0m' : s; }
@@ -432,6 +544,7 @@ function dim(s) { return process.stdout.isTTY ? '\x1b[2m' + s + '\x1b[0m' : s; }
     tmp = GAME_ROOT = checkoutRev(OPTS.from);
     process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
   }
+  if (OPTS.pinFrom && !OPTS.from) shortRev(OPTS.pinFrom);
   if (OPTS.baseline) pin();
   const { chromium } = loadPlaywright();
   const server = await startServer();
@@ -442,7 +555,7 @@ function dim(s) { return process.stdout.isTTY ? '\x1b[2m' + s + '\x1b[0m' : s; }
   try {
     const pinned = !OPTS.live && fs.existsSync(path.join(PIN_DIR, 'levels.js'));
     console.log('Windbreaker visual check · ' + (pinned ? 'rules + levels pinned with the baseline' : 'live rules + levels') + ' · chromium ' + browser.version());
-    if (OPTS.from) console.log('rendering the game as of ' + OPTS.from + ' (' + execFileSync('git', ['rev-parse', '--short', OPTS.from], { cwd: ROOT, encoding: 'utf8' }).trim() + ')');
+    if (OPTS.from) console.log('rendering the game as of ' + OPTS.from + ' (' + shortRev(OPTS.from) + ')' + (FREEZE_PATCHED ? ', with tools/visual-freeze.patch (it predates the visual-check hook)' : ''));
     else if (GAME_ROOT !== ROOT) console.log('rendering the game in ' + GAME_ROOT);
     const info = readInfo();
     if (OPTS.compare && info) console.log('baseline: ' + info.game + ', taken ' + info.date + (info.chromium !== browser.version() ? ' with chromium ' + info.chromium + ' (now ' + browser.version() + ': expect small differences)' : ''));
@@ -456,29 +569,53 @@ function dim(s) { return process.stdout.isTTY ? '\x1b[2m' + s + '\x1b[0m' : s; }
       const done = await renderAll(browser, base, dir);
       if (OPTS.baseline) {
         fs.writeFileSync(INFO_FILE, JSON.stringify({
-          game: OPTS.from ? 'git ' + OPTS.from + ' (' + execFileSync('git', ['rev-parse', '--short', OPTS.from], { cwd: ROOT, encoding: 'utf8' }).trim() + ')' : GAME_ROOT === ROOT ? 'the working tree' : GAME_ROOT,
+          game: OPTS.from ? 'git ' + OPTS.from + ' (' + shortRev(OPTS.from) + ')' + (FREEZE_PATCHED ? ' + tools/visual-freeze.patch' : '') : GAME_ROOT === ROOT ? 'the working tree' : GAME_ROOT,
           rules: OPTS.pinFrom ? 'git ' + OPTS.pinFrom : 'the working tree',
           date: new Date().toISOString().slice(0, 16).replace('T', ' '),
           chromium: browser.version(),
         }, null, 2) + '\n');
       }
+      if (OPTS.baseline) {
+        console.log('\nbaseline taken. Now make your change, then run: node tools/visual.js --compare');
+      }
       if (OPTS.compare) {
         console.log('\ncomparing with ' + path.relative(process.cwd(), BASE_DIR) + '/ (a pixel counts as changed when a channel moves by more than ' + OPTS.threshold + ')');
         const rows = await compareAll(browser, done);
-        let worst = 0;
+        const noBaseline = !rows.some((q) => !q.missing);
+        let worst = 0, compared = 0, changed = 0, unchecked = 0;
         for (const r of rows) {
-          let line, bad = false;
-          if (r.missing) { line = 'new: no baseline yet'; bad = !rows.some((q) => !q.missing); }
-          else if (r.sizeA) { line = 'size changed: ' + r.sizeA + ' -> ' + r.sizeB; bad = true; }
+          let line, bad = false, word = 'ok     ';
+          if (r.missing) {
+            unchecked++;
+            line = 'not checked: no baseline picture for it yet';
+            bad = noBaseline || OPTS.strict;
+            word = bad ? 'FAIL   ' : 'new    ';
+          } else if (r.sizeA) { line = 'size changed: ' + r.sizeA + ' -> ' + r.sizeB; bad = true; word = 'CHANGED'; changed++; compared++; }
           else {
+            compared++;
             worst = Math.max(worst, r.pct);
             bad = r.pct > OPTS.tolerance;
+            if (bad) { word = 'CHANGED'; changed++; }
             line = (r.diff ? r.pct.toFixed(4) + '% changed (' + r.diff + ' px, max channel delta ' + r.maxDelta + ') · diff/' + r.file : 'identical');
           }
+          r.bad = bad;
           if (bad) failed = true;
-          console.log('  ' + (bad ? 'FAIL ' : 'ok   ') + r.file.padEnd(44) + ' ' + line);
+          console.log('  ' + word + ' ' + r.file.padEnd(44) + ' ' + line);
         }
-        console.log('\nworst picture: ' + worst.toFixed(4) + '% changed (tolerance ' + OPTS.tolerance + '%)');
+        writeReview(rows, readInfo());
+        if (noBaseline) {
+          console.log('\nNo baseline yet, so nothing was compared. Take one BEFORE you change anything:');
+          console.log('  node tools/visual.js --baseline              (the game as it is now)');
+          console.log('  node tools/visual.js --baseline --from HEAD  (in a git checkout: the last commit)');
+        } else {
+          console.log('\nworst picture: ' + worst.toFixed(4) + '% changed (tolerance ' + OPTS.tolerance + '%) · ' + compared + ' compared');
+          if (unchecked) console.log(unchecked + ' picture' + (unchecked === 1 ? ' has' : 's have') + ' no baseline and ' + (unchecked === 1 ? 'was' : 'were') + ' not checked' + (OPTS.strict ? ' (--strict: that fails)' : ' (run --baseline to add them; --strict fails on them)'));
+          if (changed) {
+            console.log(changed + ' picture' + (changed === 1 ? '' : 's') + ' changed. Look at them side by side: ' + path.relative(process.cwd(), REVIEW));
+            console.log('If that is what you meant, accept it as the new reference: node tools/visual.js --baseline');
+          }
+        }
+        console.log('review page: ' + path.relative(process.cwd(), REVIEW));
       }
     }
   } finally {

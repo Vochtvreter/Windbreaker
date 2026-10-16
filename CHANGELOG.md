@@ -4,6 +4,30 @@ Every release is merged to `main` with a version bump; work in progress lives
 on the `dev` branch. The version is shown at the bottom of the level-select
 screen.
 
+## v1.1 — One new thing at a time, and graphics you can restyle
+
+* Gentler progression: chapters 1-15 each introduce exactly one new tool
+  or object on their first level (a simple tutorial with a tip that
+  explains it), followed by four practice levels that add nothing new.
+  Tools: window 1, fan 11, deflector 21, curtain 31, wall vent 41,
+  splitter 51, extractor 56, skylight 61, air filter 66, ceiling fan 71.
+  Objects: candle 6, stove 16, laundry 26, papers 36, fern 46.
+* Smaller twists (courtyards, calm days, hatched walls, tables, strong
+  wind, gales) now each first appear alone, on the third level of a
+  chapter, with a tip. tools/check-levels.js enforces all of this.
+* 20 new gentle levels for the early chapters, levels re-slotted and
+  reviewed; mastery chapters 16-20 (Still Air, Kitchen Rush, Storm Season,
+  Crosswinds, Fresh Air). Levels that no longer fit are kept in
+  levels/unused.json. Saved progress from v1.0 is carried over by level
+  (js/migrate.js); unfinished boards are reset once.
+* Graphics you can restyle without touching game code: js/theme.js holds
+  every colour (light and dark), art/art.js swaps in your own SVG/PNG
+  drawings and tunes speeds and sizes, studio.html previews everything
+  live and exports ready-to-save files, and GRAPHICS.md walks you through
+  it. The refactor is pixel-identical (58 reference pictures).
+* Checks: 234 unit tests, every level rule on all 100 levels, visual
+  regression and the 159-check end-to-end suite all pass.
+
 ## v1.0 — Windbreaker 1.0
 
 * Release-candidate review fixes: progress is no longer lost when the game

@@ -9,6 +9,7 @@
   <script src="js/theme.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
     html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     body {
       margin: 0; font-family: var(--font); font-size: 14px; line-height: 1.45;
@@ -27,24 +28,41 @@
     .bar h1 svg { width: 26px; height: 26px; flex: none; }
     .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
     .controls label { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-soft); }
-    select, input[type="text"], button {
+    select, input[type="text"], input[type="number"], input[type="search"], button {
       font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong);
       border-radius: 8px; padding: 4px 8px; min-height: 30px;
     }
     button { cursor: pointer; }
     button:hover { border-color: var(--accent); }
     button.primary { background: var(--accent-fill); color: var(--accent-ink); border-color: transparent; }
+    button.small { min-height: 26px; padding: 1px 8px; font-size: 12.5px; }
     :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
     input[type="range"] { accent-color: var(--accent); width: 110px; }
     output { min-width: 2.2em; font-variant-numeric: tabular-nums; }
-    .bar nav { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-left: auto; }
+    .bar nav { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-left: auto; align-items: center; }
+    .art-pick { display: inline-flex; gap: 4px; align-items: center; }
+    .art-pick input { width: 9em; }
+    .count { display: inline-block; min-width: 1.6em; padding: 0 6px; border-radius: 99px; text-align: center; font-size: 12px; font-weight: 600; background: var(--bad); color: var(--danger-ink); }
+    .count.warn { background: var(--accent-2); }
+    .edits-pill { font-size: 12.5px; color: var(--ink-soft); }
+    .edits-pill b { color: var(--accent-text); }
     @media (max-width: 640px) { .bar { position: static; } }
 
     main { padding: 0 16px 48px; max-width: 1500px; margin: 0 auto; }
     section { padding-top: 26px; scroll-margin-top: 70px; }
     section > h2 { font-size: 20px; margin-bottom: 4px; }
-    .lead { color: var(--ink-soft); max-width: 70ch; margin-bottom: 14px; }
+    .lead { color: var(--ink-soft); max-width: 75ch; margin-bottom: 14px; }
     h3.group { font-size: 15px; margin: 20px 0 8px; color: var(--ink-soft); font-weight: 600; }
+
+    .banner {
+      margin-top: 16px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--bad);
+      background: var(--surface); box-shadow: var(--shadow);
+    }
+    .banner h2 { font-size: 15px; color: var(--bad-text); margin-bottom: 4px; }
+    .banner ul { margin: 4px 0 0; padding-left: 20px; }
+    .banner.info { border-color: var(--accent); }
+    .banner.info h2 { color: var(--accent-text); }
+    .banner .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 
     .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; }
     .card {
@@ -54,38 +72,82 @@
     .card-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
     .card-head code { font-weight: 600; font-size: 13.5px; }
     .note { color: var(--ink-soft); font-size: 12.5px; }
-    .states { color: var(--muted); font-size: 12px; }
+    .states, .uses { color: var(--muted); font-size: 12px; }
+    .states b { color: var(--ink-soft); font-weight: 600; }
+    .uses a { color: var(--muted); }
     .badge { font-size: 11px; padding: 1px 7px; border-radius: 99px; background: var(--bg-2); color: var(--ink-soft); }
     .badge.image, .badge.code { background: var(--accent-soft); color: var(--accent-text); }
     .badge.error { background: var(--bad); color: var(--danger-ink); }
+    .badge.partial { background: var(--accent-2); color: var(--danger-ink); }
     .samples { display: flex; flex-wrap: wrap; gap: 8px; }
-    figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; }
-    figure .pair { display: flex; gap: 3px; }
-    figure canvas { display: block; border-radius: 8px; }
+    figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; }
+    figure .pair { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; }
+    figure canvas { display: block; border-radius: 8px; max-width: 100%; }
     figcaption { font-size: 11.5px; color: var(--muted); text-align: center; }
+    figcaption code { color: var(--ink-soft); }
 
     .board-controls { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-bottom: 10px; }
-    .board-controls label { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-soft); }
+    .board-controls label { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-soft); max-width: 100%; }
+    .board-controls select { min-width: 0; max-width: 100%; flex: 1 1 auto; }
     .boards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 12px; }
     .boards figure { align-items: stretch; }
     .boards canvas { width: 100%; border-radius: 14px; }
 
     .tok-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 4px; align-items: center; }
+    .tok-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 32%); gap: 18px; align-items: start; }
+    .preview { position: sticky; top: 74px; margin-top: 26px; background: var(--surface); border-radius: 14px; padding: 10px; box-shadow: var(--shadow); }
+    .preview canvas { width: 100%; display: block; border-radius: 10px; }
+    .preview .row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin-bottom: 6px; color: var(--ink-soft); font-size: 12.5px; }
+    @media (max-width: 900px) {
+      .tok-layout { grid-template-columns: minmax(0, 1fr); }
+      .preview { position: static; order: -1; }
+    }
     .tok-wrap { overflow-x: auto; }
     table { border-collapse: collapse; width: 100%; min-width: 560px; }
     th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
     th { font-size: 12px; color: var(--muted); font-weight: 600; }
     td.tok code { font-weight: 600; }
+    td.tok { scroll-margin-top: 80px; }
     tr.is-changed td.tok code::after { content: " \2022"; color: var(--accent-text); }
+    tr.is-hit td { background: var(--accent-soft); }
+    .used { display: block; color: var(--muted); font-size: 11.5px; margin-top: 2px; }
     .val { display: flex; align-items: center; gap: 6px; }
     .val input[type="text"] { width: 100%; min-width: 0; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
-    .val input[type="color"] { width: 34px; height: 30px; padding: 0 2px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); flex: none; }
-    .chip { width: 30px; height: 30px; border-radius: 8px; flex: none; border: 1px solid var(--line-strong); }
+    .val input[aria-invalid="true"] { border-color: var(--bad); outline: 1px solid var(--bad); }
+    .val-msg { display: block; font-size: 11.5px; color: var(--bad-text); margin-top: 2px; }
+    .swatch {
+      position: relative; width: 30px; height: 30px; border-radius: 8px; flex: none; overflow: hidden;
+      border: 1px solid var(--line-strong); cursor: pointer;
+      background-color: var(--surface);
+      background-image: linear-gradient(45deg, var(--line-strong) 25%, transparent 25%, transparent 75%, var(--line-strong) 75%),
+        linear-gradient(45deg, var(--line-strong) 25%, transparent 25%, transparent 75%, var(--line-strong) 75%);
+      background-size: 10px 10px; background-position: 0 0, 5px 5px;
+    }
+    .swatch i { position: absolute; inset: 0; }
+    .swatch input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
+    .swatch:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
+    .filter { width: min(100%, 260px); }
+
+    .tune-row { display: grid; grid-template-columns: minmax(9em, 12em) minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+    .tune-row .ctl { display: flex; align-items: center; gap: 8px; }
+    .tune-row input[type="range"] { width: 160px; }
+    .tune-row input[type="number"] { width: 5.5em; }
+    .tune-row button { min-width: 7em; }
+    .tune-row.is-changed code::after { content: " \2022"; color: var(--accent-text); }
+    @media (max-width: 640px) { .tune-row { grid-template-columns: minmax(0, 1fr); } }
+
     textarea {
-      width: 100%; min-height: 120px; font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; color: var(--ink);
+      width: 100%; min-height: 140px; font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; color: var(--ink);
       background: var(--surface); border: 1px solid var(--line-strong); border-radius: 10px; padding: 10px;
     }
     .status td, .status th { font-size: 13px; }
+    .problems { list-style: none; margin: 8px 0 14px; padding: 0; display: grid; gap: 6px; }
+    .problems li { padding: 8px 10px; border-radius: 10px; background: var(--surface); border-left: 4px solid var(--line-strong); }
+    .problems li.error { border-left-color: var(--bad); }
+    .problems li.warn { border-left-color: var(--o-sun); }
+    .problems .lvl { font-weight: 700; margin-right: 6px; }
+    .problems li.error .lvl { color: var(--bad-text); }
+    .problems .hint { display: block; color: var(--ink-soft); font-size: 12.5px; margin-top: 2px; }
     .err { color: var(--bad-text); }
     .muted { color: var(--muted); }
   </style>
@@ -98,48 +160,87 @@
         <option value="both">Light + dark</option><option value="light">Light</option><option value="dark">Dark</option>
       </select></label>
       <label>Tile <input id="size" type="range" min="28" max="96" step="2" value="56"><output id="size-out" for="size">56</output></label>
-      <label>Art <select id="art"><option value="">art/art.js</option><option value="examples">art/examples/art.js</option></select></label>
+      <span class="art-pick">
+        <label for="art">Art</label>
+        <select id="art"><option value="">art/art.js</option><option value="examples">art/examples/art.js</option></select>
+        <input id="art-name" type="text" placeholder="art set name" aria-label="Open an art set by name (art/&lt;name&gt;/art.js)">
+        <button id="art-open" type="button" class="small">Open</button>
+      </span>
       <label><input id="motion" type="checkbox" checked> Motion</label>
+      <label title="Draw the tile edge, its centre and each image layer's box and pivot"><input id="boxes" type="checkbox"> Tile and boxes</label>
     </div>
-    <nav aria-label="Sections"><a href="#sprites">Sprites</a><a href="#boards">Boards</a><a href="#tokens">Tokens</a><a href="#art-in-use">Art in use</a></nav>
+    <nav aria-label="Sections">
+      <a href="#sprites">Sprites</a><a href="#boards">Boards</a><a href="#tokens">Colours</a><a href="#tuning">Speeds and sizes</a>
+      <a href="#art-in-use">Art in use <span id="problem-count" class="count" hidden></span></a>
+      <span id="edits-pill" class="edits-pill" hidden></span>
+    </nav>
   </header>
 
   <main>
+    <div id="banner"></div>
+
     <section id="sprites" aria-labelledby="sprites-h">
       <h2 id="sprites-h">Sprites</h2>
       <p class="lead">Every sprite in the registry (<code>js/sprites.js</code>) in the poses the game uses. A badge shows when
-        <code>art/art.js</code> overrides one; the states are the names an image override can give per state.</p>
+        your <code>art.js</code> overrides one. Under each picture: its label and, after the dot, the state name an image
+        override uses for it (<code>out</code>, not "blown out"). "Tile and boxes" shows where image layers go.</p>
       <div id="sprite-groups"></div>
     </section>
 
     <section id="boards" aria-labelledby="boards-h">
       <h2 id="boards-h">Boards</h2>
-      <p class="lead">Live boards drawn by the game's renderer with the current theme and art. The gallery rooms
-        (<code>tools/gallery.js</code>) show every tool and object at once.</p>
+      <p class="lead">Live boards drawn by the game's renderer with the current colours, speeds and art. The gallery rooms
+        (<code>tools/gallery.js</code>) show every tool and object at once; they exist only here. Any level opens in the game
+        with the link below the boards.</p>
       <div class="board-controls">
         <label>Room <select id="room"></select></label>
         <label><input id="solved" type="checkbox" checked> With the solution</label>
+        <span id="open-game"></span>
       </div>
       <div id="board-list" class="boards"></div>
     </section>
 
-    <section id="tokens" aria-labelledby="tokens-h">
-      <h2 id="tokens-h">Tokens</h2>
-      <p class="lead">The theme (<code>js/theme.js</code>): every colour the page and the canvas use. Edits apply live
-        here only; copy the result into the <code>theme</code> section of <code>art/art.js</code> to keep it.</p>
-      <div class="tok-actions">
-        <button id="copy-theme" class="primary" type="button">Copy theme for art/art.js</button>
-        <button id="reset-theme" type="button">Undo my edits</button>
-        <span id="copy-note" class="muted" role="status"></span>
+    <div class="tok-layout">
+      <div>
+        <section id="tokens" aria-labelledby="tokens-h">
+          <h2 id="tokens-h">Colours</h2>
+          <p class="lead">The theme (<code>js/theme.js</code>): every colour the page and the canvas use, light and dark. Click a
+            swatch or type a value (<code>#e2898b</code>, <code>rgba(0, 0, 0, 0.2)</code>, <code>tomato</code>): everything repaints
+            as you type. Your edits stay in this browser until you save them: <b>Download art.js</b> and save it over
+            <code id="save-target">art/art.js</code>, then reload.</p>
+          <div class="tok-actions">
+            <button id="download" class="primary" type="button">Download art.js</button>
+            <button id="copy-theme" type="button">Copy the theme and tuning sections</button>
+            <button id="reset-theme" type="button">Undo my edits</button>
+            <input id="tok-filter" class="filter" type="search" placeholder="Find a colour: fan, wall, air…" aria-label="Filter colours">
+            <span id="copy-note" class="muted" role="status"></span>
+          </div>
+          <textarea id="theme-out" readonly hidden aria-label="Text for art/art.js"></textarea>
+          <div id="token-groups"></div>
+        </section>
+
+        <section id="tuning" aria-labelledby="tuning-h">
+          <h2 id="tuning-h">Speeds and sizes</h2>
+          <p class="lead">How fast things move and how big a few things are. They go in the <code>tuning</code> section of
+            <code>art.js</code> (Download art.js includes them). The preview and the boards show the result.</p>
+          <div id="tuning-groups"></div>
+        </section>
       </div>
-      <textarea id="theme-out" readonly hidden aria-label="Theme section for art/art.js"></textarea>
-      <div id="token-groups"></div>
-    </section>
+      <aside class="preview" aria-label="Preview">
+        <div class="row">
+          <span>Preview</span>
+          <label><input type="radio" name="pv-mode" value="light" checked> light</label>
+          <label><input type="radio" name="pv-mode" value="dark"> dark</label>
+        </div>
+        <canvas id="preview" role="img" aria-label="Preview of the current room"></canvas>
+      </aside>
+    </div>
 
     <section id="art-in-use" aria-labelledby="art-h">
       <h2 id="art-h">Art in use</h2>
-      <p class="lead">What the manifest overrides and whether its files loaded. Edit <code>art/art.js</code> (or
-        <code>art/&lt;name&gt;/art.js</code>, opened with <code>?art=&lt;name&gt;</code>) and reload.</p>
+      <p class="lead">What your <code>art.js</code> changes, whether its files loaded, and every mistake found in it, with a
+        hint. Edit <code>art/art.js</code> (or <code>art/&lt;name&gt;/art.js</code>, opened with <code>?art=&lt;name&gt;</code>)
+        and reload.</p>
       <div id="art-status"></div>
     </section>
   </main>
@@ -154,7 +255,7 @@
   (function () {
     'use strict';
     var Theme = window.WBTheme, SPR = window.WBSprites, WB = window.WB, R = window.WBRender;
-    var P = Theme.color;
+    var P = Theme.color, N = Theme.num;
     var $ = function (id) { return document.getElementById(id); };
     function el(tag, cls, text) {
       var e = document.createElement(tag);
@@ -163,12 +264,15 @@
       return e;
     }
     var params = new URLSearchParams(location.search);
-    var ui = { mode: 'both', size: 56, motion: true };
+    var artName = params.get('art') || '';
+    var ui = { mode: 'both', size: 56, motion: true, boxes: false, preview: 'light' };
     try {
       var saved = JSON.parse(localStorage.getItem('windbreaker.studio') || '{}');
       if (saved.mode) ui.mode = saved.mode;
       if (saved.size) ui.size = saved.size;
       if (saved.motion === false) ui.motion = false;
+      if (saved.boxes) ui.boxes = true;
+      if (saved.preview === 'dark') ui.preview = 'dark';
     } catch (e) { /* no storage */ }
     function save() { try { localStorage.setItem('windbreaker.studio', JSON.stringify(ui)); } catch (e) { /* no storage */ } }
     function modes() { return ui.mode === 'both' ? ['light', 'dark'] : [ui.mode]; }
@@ -187,6 +291,81 @@
       ctx.setTransform(k, 0, 0, k, 0, 0);
       return ctx;
     }
+    function manifestFile() { var c = SPR.current(); return c && c.file !== '(inline)' ? c.file : artName ? 'art/' + artName + '/art.js' : 'art/art.js'; }
+
+    // ---------------------------------------------------------------- which tokens each sprite uses (traced)
+
+    var USES = {};     // token -> { sprites: [], board: bool, icons: bool, css: [] }
+    function use(n) { return USES[n] || (USES[n] = { sprites: [], board: false, icons: false, css: [] }); }
+    function traceUses() {
+      USES = {};
+      var cv = document.createElement('canvas');
+      cv.width = cv.height = 16;
+      var ctx = cv.getContext('2d');
+      var inSprites = {};
+      SPR.list().forEach(function (name) {
+        var spec = SPR.get(name);
+        var names = Theme.trace(function () {
+          ['light', 'dark'].forEach(function (mode) {
+            inMode(mode, function () {
+              spec.samples.forEach(function (sm) {
+                ctx.save();
+                SPR.drawBuiltin(name, ctx, Object.assign({ px: 0.02, r: 6 }, sm.o), sm.t || 0.5);
+                ctx.restore();
+              });
+            });
+          });
+        });
+        names.forEach(function (n) { use(n).sprites.push(name); inSprites[n] = true; });
+      });
+      // the board itself: garden, house, airflow and marks (two gallery rooms)
+      var bc = document.createElement('canvas');
+      var B = new R.Board(bc);
+      var names = Theme.trace(function () {
+        (window.WBGallery || []).slice(0, 2).forEach(function (def) {
+          var L = WB.parseLevel(def);
+          var pcs = L.fixed.map(function (p) { return Object.assign({ fixed: true }, p); })
+            .concat((def.solution || []).map(function (p) { return Object.assign({ fixed: false }, p); }));
+          B.setLevel(L, def.id);
+          B.layout(400, 300, 0);
+          B.draw({ pieces: pcs, sim: WB.simulate(L, pcs), reduced: false }, 1000);
+          B.draw({ pieces: pcs, sim: WB.simulate(L, pcs), reduced: true }, 1100);
+        });
+      });
+      names.forEach(function (n) { if (!inSprites[n]) use(n).board = true; });
+      var ic = document.createElement('canvas');
+      names = Theme.trace(function () {
+        R.icon(ic, 'swirl', 'w', 28);
+        ['table', 'stall', 'inlet', 'outlet', 'lanes-2', 'meter-laundry-2-happy', 'meter-papers-1-idle', 'meter-fern-1-bad', 'pip-idle'].forEach(function (id) { R.icon(ic, 'ui', id, 28); });
+      });
+      names.forEach(function (n) { if (!inSprites[n]) use(n).icons = true; });
+      // the page (css/style.css): only readable when the studio is served over http(s)
+      if (/^https?:$/.test(location.protocol) && window.fetch) {
+        fetch('css/style.css').then(function (r) { return r.ok ? r.text() : ''; }).then(function (css) {
+          css.replace(/\/\*[\s\S]*?\*\//g, '').split('}').forEach(function (part) {
+            var k = part.lastIndexOf('{');
+            if (k < 0) return;
+            var sel = part.slice(0, k).split('{').pop().replace(/\s+/g, ' ').trim();
+            var m, re = /var\(--([a-z0-9-]+)\)/g, body = part.slice(k + 1);
+            while ((m = re.exec(body))) { var u = use(m[1]); if (u.css.indexOf(sel) < 0) u.css.push(sel); }
+          });
+          buildTokens();
+        }).catch(function () { /* not available */ });
+      }
+    }
+    function usedText(n) {
+      var u = USES[n];
+      if (!u) return '';
+      var bits = [];
+      if (u.sprites.length) bits.push('sprites: ' + u.sprites.slice(0, 5).join(', ') + (u.sprites.length > 5 ? ' +' + (u.sprites.length - 5) : ''));
+      if (u.board) bits.push('the board');
+      if (u.icons) bits.push('help icons');
+      if (u.css.length) bits.push('page: ' + u.css.slice(0, 3).join(' · ') + (u.css.length > 3 ? ' +' + (u.css.length - 3) : ''));
+      return bits.length ? 'used by ' + bits.join('; ') : '';
+    }
+    function tokensOfSprite(name) {
+      return Object.keys(USES).filter(function (n) { return USES[n].sprites.indexOf(name) >= 0; });
+    }
 
     // ---------------------------------------------------------------- sprites
 
@@ -194,7 +373,8 @@
       { id: 'tool', title: 'Tools' }, { id: 'object', title: 'Objects' },
       { id: 'icon', title: 'Tray and help icons' }, { id: 'ui', title: 'Board marks' }
     ];
-    var SPIN = { 'tool.fan': 6, 'tool.extractor': 4.5, 'tool.ceilingfan': 1.4, 'object.pinwheel': 3.2 };
+    // spin speeds like the game's (render.js), times the tuning numbers
+    var SPIN = { 'tool.fan': ['spin-fan', 6], 'tool.extractor': ['spin-extractor', 4.5], 'tool.ceilingfan': ['spin-ceilingfan', 1.4], 'object.pinwheel': ['spin-pinwheel', 3.2] };
     var samples = []; // { cv, name, sample, mode, visible }
     var io = window.IntersectionObserver ? new IntersectionObserver(function (es) {
       es.forEach(function (e) { e.target.__s.visible = e.isIntersecting; });
@@ -203,11 +383,11 @@
     function toolType(name) { return name.indexOf('tool.') === 0 ? name.slice(5) : null; }
     function isWallTool(name) { var t = toolType(name); return !!t && WB.TOOLS[t] && WB.TOOLS[t].mount !== 'floor'; }
 
-    function sampleSize(spec) {
+    function sampleSize(group) {
       var T = ui.size;
-      if (spec.group === 'tool') return Math.round(T * 1.7);
-      if (spec.group === 'object') return Math.round(T * 1.5);
-      if (spec.group === 'icon') return Math.max(36, Math.round(T * 0.8));
+      if (group === 'tool') return Math.round(T * 1.7);
+      if (group === 'object') return Math.round(T * 1.5);
+      if (group === 'icon') return Math.max(36, Math.round(T * 0.8));
       return Math.max(32, Math.round(T * 0.7));
     }
 
@@ -229,23 +409,66 @@
       if (vertical) ctx.fillRect(-0.5, -half, 1, half * 2); else ctx.fillRect(-half, -0.5, half * 2, 1);
     }
 
+    // "Tile and boxes": the tile edge, its centre and, for image overrides,
+    // each layer's box and the point it spins around (in unit space)
+    function overlay(ctx, spec, o) {
+      var px = o.px || 0.02;
+      ctx.save();
+      ctx.lineWidth = px * 1.2;
+      ctx.setLineDash([px * 4, px * 3]);
+      ctx.strokeStyle = P('accent');
+      ctx.strokeRect(-0.5, -0.5, 1, 1);
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(-px * 6, 0); ctx.lineTo(px * 6, 0); ctx.moveTo(0, -px * 6); ctx.lineTo(0, px * 6);
+      ctx.strokeStyle = P('ink');
+      ctx.stroke();
+      var ov = spec.ov;
+      if (ov && ov.layers && ov.layers.length) {
+        if (ov.rotate && spec.turn) ctx.rotate(spec.turn(o));
+        ov.layers.forEach(function (L) {
+          var b = L.box || ov.box || spec.box;
+          ctx.strokeStyle = P('bad');
+          ctx.setLineDash([px * 2, px * 2]);
+          ctx.strokeRect(b[0], b[1], b[2], b[3]);
+          ctx.setLineDash([]);
+          if (!L.spin) return;
+          var cx = b[0] + b[2] / 2, cy = b[1] + b[3] / 2;
+          var im = L.pivot && L.src ? SPR.image(L.src.src) : null;
+          if (L.pivot && im && im.ok) { cx = b[0] + L.pivot[0] / im.w * b[2]; cy = b[1] + L.pivot[1] / im.h * b[3]; }
+          ctx.beginPath();
+          ctx.arc(cx, cy, px * 4, 0, Math.PI * 2);
+          ctx.moveTo(cx - px * 7, cy); ctx.lineTo(cx + px * 7, cy); ctx.moveTo(cx, cy - px * 7); ctx.lineTo(cx, cy + px * 7);
+          ctx.stroke();
+        });
+      }
+      ctx.restore();
+    }
+
     function paint(s, t) {
-      var spec = SPR.get(s.name), size = sampleSize(spec), T = ui.size;
+      var spec = SPR.get(s.name), size = sampleSize(spec.group), T = ui.size;
       inMode(s.mode, function () {
         var ctx = setup(s.cv, size, size);
         ctx.clearRect(0, 0, size, size);
         ctx.save();
         ctx.translate(size / 2, size / 2);
         var o = Object.assign({}, s.sample.o);
-        var tt = (s.sample.t || 0) + t;
-        if (SPIN[s.name] && (s.name !== 'object.pinwheel' || o.flow > 0)) o.angle = (o.angle || 0) + t * SPIN[s.name];
+        var tt = (s.sample.t || 0) + t * N('idle-speed');
+        var sp = SPIN[s.name];
+        if (sp && (s.name !== 'object.pinwheel' || o.flow > 0)) o.angle = (o.angle || 0) + t * sp[1] * N(sp[0]);
         if (spec.group === 'tool' || spec.group === 'object') {
           ctx.scale(T, T);
           o.px = 1 / T;
           backdrop(ctx, s.name, o, size / 2 / T);
           if (spec.group === 'tool' && s.name !== 'piece.base' && !isWallTool(s.name)) SPR.draw('piece.base', ctx, { px: o.px, fixed: o.fixed });
           if (spec.group === 'object') o.small = T < 34;
-          SPR.draw(s.name, ctx, o, tt);
+          if (spec.group === 'object') {
+            ctx.save();
+            ctx.scale(N('object-scale'), N('object-scale'));
+            SPR.draw(s.name, ctx, o, tt);
+            ctx.restore();
+          } else SPR.draw(s.name, ctx, o, tt);
+          if (ui.boxes) overlay(ctx, spec, o);
         } else if (spec.group === 'icon') {
           ctx.fillStyle = P('surface');
           ctx.fillRect(-size / 2, -size / 2, size, size);
@@ -255,12 +478,18 @@
         } else {
           ctx.fillStyle = P('floor');
           ctx.fillRect(-size / 2, -size / 2, size, size);
-          if (s.name === 'ui.pip') o.r = Math.max(5, size * 0.22);
+          if (s.name === 'ui.pip') o.r = Math.max(5, size * 0.22) * N('pip-size');
           else { o.r = Math.max(5.5, size * 0.2); ctx.fillStyle = P('wall'); ctx.fillRect(-size * 0.22, -size / 2, size * 0.44, size); }
           SPR.draw(s.name, ctx, o, tt);
         }
         ctx.restore();
       });
+    }
+
+    function stateKey(spec, o) {
+      if (!spec.state) return null;
+      var keys = spec.state(o);
+      return keys.length ? keys[0] : null;
     }
 
     function buildSprites() {
@@ -273,25 +502,54 @@
       GROUPS.forEach(function (g) {
         root.appendChild(el('h3', 'group', g.title));
         var cards = el('div', 'cards');
+        // wide enough for one pose in every mode shown, at any tile size
+        var w = modes().length * sampleSize(g.id) + (modes().length - 1) * 3 + 26;
+        cards.style.gridTemplateColumns = 'repeat(auto-fill, minmax(min(100%, ' + Math.max(300, w) + 'px), 1fr))';
         SPR.list(g.id).forEach(function (name) {
           var spec = SPR.get(name), info = st[name];
           var card = el('article', 'card');
+          card.id = 'sprite-' + name;
           var head = el('div', 'card-head');
           head.appendChild(el('code', null, name));
-          var badge = el('span', 'badge ' + (info.state === 'error' ? 'error' : info.art), info.state === 'error' ? 'error: built-in shown' : info.art === 'built-in' ? 'built-in' : info.art + (info.state === 'loading' ? ' (loading)' : ''));
+          var label = info.state === 'error' ? 'error: built-in shown' : info.state === 'partial' ? info.art + ': files missing' :
+            info.art === 'built-in' ? 'built-in' : info.art + (info.state === 'loading' ? ' (loading)' : '');
+          var badge = el('span', 'badge ' + (info.state === 'error' || info.state === 'partial' ? info.state : info.art), label);
           if (info.error) badge.title = info.error;
           head.appendChild(badge);
           card.appendChild(head);
           if (spec.note) card.appendChild(el('p', 'note', spec.note));
-          if (spec.states.length) card.appendChild(el('p', 'states', 'states: ' + spec.states.join(', ')));
+          if (spec.states.length) {
+            var sp = el('p', 'states');
+            sp.appendChild(document.createTextNode('states: '));
+            spec.states.forEach(function (k, i) {
+              if (i) sp.appendChild(document.createTextNode(' · '));
+              sp.appendChild(el('b', null, k));
+              if (spec.stateNotes && spec.stateNotes[k]) sp.appendChild(document.createTextNode(' (' + spec.stateNotes[k] + ')'));
+            });
+            card.appendChild(sp);
+          }
+          var toks = tokensOfSprite(name);
+          if (toks.length) {
+            var up = el('p', 'uses');
+            up.appendChild(document.createTextNode('colours: '));
+            toks.forEach(function (n, i) {
+              if (i) up.appendChild(document.createTextNode(', '));
+              var a = el('a', null, n);
+              a.href = '#tok-' + n;
+              a.addEventListener('click', function (e) { e.preventDefault(); showToken(n); });
+              up.appendChild(a);
+            });
+            card.appendChild(up);
+          }
           var row = el('div', 'samples');
           spec.samples.forEach(function (sample) {
             var fig = el('figure');
             var pair = el('div', 'pair');
+            var key = stateKey(spec, sample.o);
             modes().forEach(function (mode) {
               var cv = el('canvas');
               cv.setAttribute('role', 'img');
-              cv.setAttribute('aria-label', name + (sample.label ? ', ' + sample.label : '') + ', ' + mode);
+              cv.setAttribute('aria-label', name + (sample.label ? ', ' + sample.label : '') + (key ? ' (state ' + key + ')' : '') + ', ' + mode);
               var s = { cv: cv, name: name, sample: sample, mode: mode, visible: true, still: g.id === 'icon' || g.id === 'ui' };
               cv.__s = s;
               samples.push(s);
@@ -299,7 +557,12 @@
               pair.appendChild(cv);
             });
             fig.appendChild(pair);
-            if (sample.label) fig.appendChild(el('figcaption', null, sample.label));
+            if (sample.label || key) {
+              var cap = el('figcaption');
+              if (sample.label && sample.label !== key) cap.appendChild(document.createTextNode(sample.label + (key ? ' · ' : '')));
+              if (key) cap.appendChild(el('code', null, key));
+              fig.appendChild(cap);
+            }
             row.appendChild(fig);
           });
           card.appendChild(row);
@@ -319,25 +582,48 @@
 
     // ---------------------------------------------------------------- boards
 
-    var rooms = (window.WBGallery || []).map(function (d) { return { key: 'g' + d.id, label: d.name, def: d }; })
-      .concat((WB.LEVELS || []).map(function (d) { return { key: 'l' + d.id, label: 'Level ' + d.id + ' · ' + d.name, def: d }; }));
-    var boards = []; // { mode, board, cv, S }
+    var rooms = (window.WBGallery || []).map(function (d) { return { key: 'g' + d.id, label: d.name, def: d, gallery: true }; })
+      .concat((WB.LEVELS || []).map(function (d) { return { key: 'l' + d.id, label: 'Level ' + d.id + ' · ' + d.name + roomContents(d), def: d }; }));
+    function roomContents(d) {
+      try {
+        var L = WB.parseLevel(d), seen = {};
+        L.objects.forEach(function (o) { seen[o.type] = 1; });
+        return ' (' + Object.keys(seen).join(', ') + ')';
+      } catch (e) { return ''; }
+    }
+    var boards = []; // { mode, board, cv, S, L }
     function currentRoom() {
       var k = $('room').value;
       for (var i = 0; i < rooms.length; i++) if (rooms[i].key === k) return rooms[i];
       return rooms[0];
     }
-    function buildBoards() {
-      var list = $('board-list');
-      list.textContent = '';
-      boards = [];
-      var room = currentRoom();
-      if (!room) { list.appendChild(el('p', 'muted', 'No levels found.')); return; }
+    function roomScene(room) {
       var L = WB.parseLevel(room.def);
       var fixed = L.fixed.map(function (p) { return { type: p.type, x: p.x, y: p.y, d: p.d | 0 }; });
       var placed = $('solved').checked ? (room.def.solution || []).map(function (p) { return { type: p.type, x: p.x, y: p.y, d: p.d | 0 }; }) : [];
       var sim = WB.simulate(L, fixed.concat(placed));
       var pieces = fixed.map(function (p) { return Object.assign({ fixed: true }, p); }).concat(placed.map(function (p) { return Object.assign({ fixed: false }, p); }));
+      return { L: L, S: { pieces: pieces, sim: sim, reduced: !ui.motion } };
+    }
+    function gameLink(id) { return 'index.html?unlock' + (artName ? '&art=' + encodeURIComponent(artName) : '') + '#' + id; }
+    function buildBoards() {
+      var list = $('board-list');
+      list.textContent = '';
+      boards = [];
+      var room = currentRoom();
+      var og = $('open-game');
+      og.textContent = '';
+      if (!room) { list.appendChild(el('p', 'muted', 'No levels found.')); return; }
+      if (room.gallery) {
+        og.appendChild(document.createTextNode('Studio only. In the game, level 100 has every object: '));
+      }
+      var a = el('a', null, room.gallery ? 'open level 100 in the game' : 'Open level ' + room.def.id + ' in the game');
+      a.href = gameLink(room.gallery ? 100 : room.def.id);
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.title = '?unlock opens every level (with its own progress, so your real game is not touched)';
+      og.appendChild(a);
+      var sc = roomScene(room);
       modes().forEach(function (mode) {
         var fig = el('figure');
         var cv = el('canvas');
@@ -346,16 +632,24 @@
         fig.appendChild(cv);
         if (ui.mode === 'both') fig.appendChild(el('figcaption', null, mode));
         list.appendChild(fig);
-        var b = { mode: mode, cv: cv, board: new R.Board(cv), L: L, S: { pieces: pieces, sim: sim, reduced: !ui.motion } };
-        b.board.setLevel(L, room.def.id || 1);
+        var b = { mode: mode, cv: cv, board: new R.Board(cv), L: sc.L, S: { pieces: sc.S.pieces, sim: sc.S.sim, reduced: !ui.motion } };
+        b.board.setLevel(sc.L, room.def.id || 1);
         boards.push(b);
       });
+      buildPreview(room, sc);
       layoutBoards();
     }
+    var preview = null;
+    function buildPreview(room, sc) {
+      var cv = $('preview');
+      preview = { mode: ui.preview, cv: cv, board: new R.Board(cv), L: sc.L, S: { pieces: sc.S.pieces, sim: sc.S.sim, reduced: !ui.motion } };
+      preview.board.setLevel(sc.L, room.def.id || 1);
+    }
+    function allBoards() { return preview ? boards.concat([preview]) : boards; }
     function layoutBoards() {
-      boards.forEach(function (b) {
-        var w = b.cv.parentNode.clientWidth || 400;
-        var h = Math.round(Math.min(w * (b.L.h + 2) / (b.L.w + 2), window.innerHeight * 0.8));
+      allBoards().forEach(function (b) {
+        var w = b.cv.parentNode.clientWidth - (b === preview ? 20 : 0) || 400;
+        var h = Math.round(Math.min(w * (b.L.h + 2) / (b.L.w + 2), window.innerHeight * (b === preview ? 0.55 : 0.8)));
         inMode(b.mode, function () { b.board.layout(w, Math.max(160, h), 0); });
       });
       boardsDirty = true;
@@ -364,68 +658,224 @@
     function drawBoards(now) {
       if (!ui.motion && !boardsDirty) return;
       boardsDirty = false;
-      boards.forEach(function (b) {
+      allBoards().forEach(function (b) {
         b.S.reduced = !ui.motion;
         inMode(b.mode, function () { b.board.draw(b.S, ui.motion ? now : 0); });
       });
     }
 
+    // ---------------------------------------------------------------- edits (kept in this browser until saved)
+
+    // what the manifest set (taken when it is applied); edits are the differences
+    var start = null;
+    var EDITS_KEY = function () { return 'windbreaker.studio.edits:' + manifestFile(); };
+    function snapshot() { return { theme: Theme.overrides(), tuning: Theme.tuningOverrides() }; }
+    function edits() {
+      var now = snapshot(), d = { light: {}, dark: {}, tuning: {} }, n = 0;
+      ['light', 'dark'].forEach(function (m) {
+        var a = start.theme[m], b = now.theme[m];
+        Object.keys(Object.assign({}, a, b)).forEach(function (k) { if (a[k] !== b[k]) { d[m][k] = b[k] == null ? null : b[k]; n++; } });
+      });
+      var ta = start.tuning, tb = now.tuning;
+      Object.keys(Object.assign({}, ta, tb)).forEach(function (k) { if (ta[k] !== tb[k]) { d.tuning[k] = tb[k] == null ? null : tb[k]; n++; } });
+      d.n = n;
+      return d;
+    }
+    function storeEdits() {
+      if (!start) return;
+      var d = edits();
+      try {
+        if (d.n) localStorage.setItem(EDITS_KEY(), JSON.stringify(d));
+        else localStorage.removeItem(EDITS_KEY());
+      } catch (e) { /* no storage */ }
+      var pill = $('edits-pill');
+      pill.hidden = !d.n;
+      pill.textContent = '';
+      if (d.n) {
+        pill.appendChild(el('b', null, d.n + ' unsaved edit' + (d.n === 1 ? '' : 's')));
+        pill.appendChild(document.createTextNode(' · '));
+        var a = el('a', null, 'save');
+        a.href = '#tokens';
+        pill.appendChild(a);
+      }
+    }
+    function applyEdits(d) {
+      Theme.set({ light: d.light || {}, dark: d.dark || {} }, true);
+      Theme.setTuning(d.tuning || {});
+    }
+    var restoreOffer = null;
+    function takeStart() {
+      start = snapshot();
+      restoreOffer = null;
+      try {
+        var d = JSON.parse(localStorage.getItem(EDITS_KEY()) || 'null');
+        if (d && d.n) restoreOffer = d;
+      } catch (e) { restoreOffer = null; }
+      storeEdits.skip = !!restoreOffer;
+      renderBanner();
+    }
+
+    // ---------------------------------------------------------------- writing art.js
+
+    function q(s) { return "'" + JSON.stringify(String(s)).slice(1, -1).replace(/\\"/g, '"').replace(/'/g, "\\'") + "'"; }
+    function key(k) { return /^[A-Za-z_$][\w$]*$/.test(k) ? k : q(k); }
+    function fnSource(f, ind) {
+      var src = String(f);
+      if (!/^(async\s+)?function\b/.test(src) && !/^(async\s+)?(\([^)]*\)|[\w$]+)\s*=>/.test(src)) {
+        src = src.replace(/^(async\s+)?[\w$]+\s*\(/, function (m, a) { return (a || '') + 'function ('; }); // method shorthand
+      }
+      var lines = src.split('\n');
+      if (lines.length < 2) return src;
+      var min = Infinity;
+      lines.slice(1).forEach(function (l) { if (l.trim()) min = Math.min(min, l.match(/^ */)[0].length); });
+      return lines.map(function (l, i) { return i ? ind + l.slice(Math.min(min, l.match(/^ */)[0].length)) : l; }).join('\n');
+    }
+    function lit(v, ind) {
+      if (typeof v === 'function') return fnSource(v, ind);
+      if (Array.isArray(v)) {
+        if (v.every(function (x) { return x === null || typeof x !== 'object'; })) return '[' + v.map(function (x) { return lit(x, ind); }).join(', ') + ']';
+        var ia = ind + '  ';
+        return '[\n' + v.map(function (x) { return ia + lit(x, ia); }).join(',\n') + '\n' + ind + ']';
+      }
+      if (v && typeof v === 'object') {
+        var keys = Object.keys(v);
+        if (!keys.length) return '{}';
+        // small flat objects stay on one line, like a person would write them
+        var flat = keys.every(function (k) { var x = v[k]; return x === null || typeof x !== 'object' && typeof x !== 'function' || Array.isArray(x) && x.every(function (y) { return y === null || typeof y !== 'object'; }); });
+        if (flat) {
+          var one = '{ ' + keys.map(function (k) { return key(k) + ': ' + lit(v[k], ind); }).join(', ') + ' }';
+          if (ind.length + one.length <= 96) return one;
+        }
+        var inner = ind + '  ';
+        return '{\n' + keys.map(function (k) { return inner + key(k) + ': ' + lit(v[k], inner); }).join(',\n') + '\n' + ind + '}';
+      }
+      if (typeof v === 'string') return q(v);
+      if (typeof v === 'number' || typeof v === 'boolean' || v === null) return String(v);
+      return 'null';
+    }
+    var SECTION_NOTES = {
+      theme: 'Colours, per mode (the studio\'s Colours section lists every token).',
+      tuning: 'Speeds and sizes (1 = as designed).',
+      sprites: 'Sprites by name: an image, images per state, layers, or a draw function.',
+      textures: 'Repeating images over the garden, the floor or the walls.'
+    };
+    function themeObj() { var ov = Theme.overrides(); return { light: ov.light, dark: ov.dark }; }
+    function manifestText() {
+      var cur = SPR.current(), raw = cur && cur.raw ? cur.raw : {};
+      var m = { note: raw.note || '', theme: themeObj(), tuning: Theme.tuningOverrides(), sprites: raw.sprites || {}, textures: raw.textures || {} };
+      Object.keys(raw).forEach(function (k) { if (!(k in m)) m[k] = raw[k]; });
+      var body = Object.keys(m).map(function (k) {
+        return (SECTION_NOTES[k] ? '  // ' + SECTION_NOTES[k] + '\n' : '') + '  ' + key(k) + ': ' + lit(m[k], '  ');
+      }).join(',\n\n');
+      return '/*\n * Windbreaker art manifest (see GRAPHICS.md), written by studio.html from\n * ' + manifestFile() + ' on ' +
+        new Date().toISOString().slice(0, 16).replace('T', ' ') + '.\n *\n * Save it as ' + manifestFile() + ' (replacing the old one) and reload the game.\n' +
+        ' * Only what was inside WBArt({ ... }) is kept: if your old file had other code\n * (helper functions), copy that back in.\n */\nWBArt({\n' + body + '\n});\n';
+    }
+    function sectionsText() {
+      return '  theme: ' + lit(themeObj(), '  ') + ',\n\n  tuning: ' + lit(Theme.tuningOverrides(), '  ') + ',';
+    }
+    // -> null when text is a valid manifest that sets the current theme and tuning, else what is wrong
+    function verify(text, whole) {
+      var got = null;
+      try {
+        new Function('WBArt', whole ? text : 'WBArt({\n' + text + '\n});')(function (m) { got = m; });
+      } catch (e) { return e.message; }
+      if (!got) return 'it does not call WBArt';
+      var want = JSON.stringify({ t: themeObj(), u: Theme.tuningOverrides() });
+      return JSON.stringify({ t: got.theme, u: got.tuning }) === want ? null : 'it does not hold the current theme';
+    }
+    function showOut(txt, note) {
+      var out = $('theme-out');
+      out.value = txt;
+      out.hidden = false;
+      $('copy-note').textContent = note;
+    }
+
     // ---------------------------------------------------------------- tokens
 
-    var tokenInputs = []; // { name, mode, text, color, chip, row }
+    var tokenInputs = []; // { name, mode, text, color, chip, row, msg }
+    function cellProblem(name, mode) {
+      var ps = SPR.problems().filter(function (p) { return p.token === name && p.mode === mode && p.value != null; });
+      return ps.length ? ps[0] : null;
+    }
     function buildTokens() {
       var root = $('token-groups');
       root.textContent = '';
       tokenInputs = [];
       Theme.groups.forEach(function (g) {
-        root.appendChild(el('h3', 'group', g.title + ' · ' + g.note));
+        var h = el('h3', 'group', g.title + ' · ' + g.note);
+        root.appendChild(h);
         var wrap = el('div', 'tok-wrap');
         var table = el('table');
         var thead = el('thead'), hr = el('tr');
-        ['token', 'used for', 'light', 'dark'].forEach(function (h) { var th = el('th', null, h); th.scope = 'col'; hr.appendChild(th); });
+        ['token', 'what it colours', 'light', 'dark'].forEach(function (t) { var th = el('th', null, t); th.scope = 'col'; hr.appendChild(th); });
         thead.appendChild(hr);
         table.appendChild(thead);
         var tb = el('tbody');
         g.tokens.forEach(function (tok) {
           var tr = el('tr');
+          tr.dataset.search = (tok.name + ' ' + tok.note + ' ' + usedText(tok.name)).toLowerCase();
           var td = el('td', 'tok');
+          td.id = 'tok-' + tok.name;
           td.appendChild(el('code', null, tok.name));
           tr.appendChild(td);
-          tr.appendChild(el('td', 'note', tok.note));
+          var nt = el('td', 'note', tok.note);
+          var ut = usedText(tok.name);
+          if (ut) nt.appendChild(el('span', 'used', ut));
+          tr.appendChild(nt);
           ['light', 'dark'].forEach(function (mode) {
             var cell = el('td');
             var box = el('div', 'val');
             var value = Theme.palette(mode)[tok.name];
-            var colorish = Theme.isColor(tok.light) && Theme.isColor(tok.dark);
+            var colorish = tok.kind === 'color';
             var text = el('input');
             text.type = 'text';
             text.value = value;
+            text.spellcheck = false;
             text.setAttribute('aria-label', tok.name + ', ' + mode);
             var color = null, chip = null;
             if (colorish) {
-              chip = el('span', 'chip');
+              var sw = el('label', 'swatch');
+              sw.title = 'Pick a colour';
+              chip = el('i');
               chip.style.background = value;
               color = el('input');
               color.type = 'color';
               color.value = Theme.hex(value);
               color.setAttribute('aria-label', tok.name + ', ' + mode + ', colour picker');
-              box.appendChild(chip);
-              box.appendChild(color);
+              sw.appendChild(chip);
+              sw.appendChild(color);
+              box.appendChild(sw);
               color.addEventListener('input', function () {
+                // the picker has no transparency: keep the token's own
                 var a = Theme.parse(Theme.palette(mode)[tok.name])[3];
                 var c = Theme.parse(color.value);
                 edit(tok, mode, a < 1 ? 'rgba(' + c[0] + ', ' + c[1] + ', ' + c[2] + ', ' + +a.toFixed(3) + ')' : color.value);
               });
             }
             box.appendChild(text);
-            text.addEventListener('change', function () {
-              var v = text.value.trim();
-              if (colorish && v && !Theme.isColor(v)) { text.value = Theme.palette(mode)[tok.name]; return; }
-              edit(tok, mode, v);
-            });
             cell.appendChild(box);
+            var msg = el('span', 'val-msg');
+            msg.hidden = true;
+            cell.appendChild(msg);
+            var ti = { name: tok.name, mode: mode, text: text, color: color, chip: chip, row: tr, msg: msg, tok: tok };
+            function typed(final) {
+              var v = text.value.trim();
+              if (!v) {
+                if (final) { mark(ti, null); edit(tok, mode, ''); }
+                return;
+              }
+              if (Theme.check(tok.name, v) == null) {
+                mark(ti, colorish ? '"' + v + '" is not a colour, so it is not used. Try #e2898b, rgb(226, 137, 139) or a name like tomato.' : 'not a valid ' + (tok.kind === 'font' ? 'font list' : 'box-shadow') + ', so it is not used');
+                return;
+              }
+              mark(ti, null);
+              edit(tok, mode, v);
+            }
+            text.addEventListener('input', function () { typed(false); });
+            text.addEventListener('change', function () { typed(true); });
+            tokenInputs.push(ti);
             tr.appendChild(cell);
-            tokenInputs.push({ name: tok.name, mode: mode, text: text, color: color, chip: chip, row: tr });
           });
           tb.appendChild(tr);
         });
@@ -434,52 +884,185 @@
         root.appendChild(wrap);
       });
       syncTokens();
+      filterTokens();
+    }
+    function mark(ti, message) {
+      ti.text.setAttribute('aria-invalid', message ? 'true' : 'false');
+      ti.msg.hidden = !message;
+      ti.msg.textContent = message || '';
+      ti.bad = !!message;
     }
     function edit(tok, mode, v) {
       var o = {};
       o[mode] = {};
+      var start0 = start && start.theme[mode][tok.name];
       // back to the built-in value: drop the override
-      o[mode][tok.name] = !v || v === tok[mode] ? null : v;
+      o[mode][tok.name] = !v || (v === tok[mode] && start0 == null) ? null : v;
       Theme.set(o);
     }
     function syncTokens() {
       var ov = Theme.overrides();
       tokenInputs.forEach(function (t) {
         var v = Theme.palette(t.mode)[t.name];
-        if (document.activeElement !== t.text) t.text.value = v;
+        if (document.activeElement !== t.text && !t.bad) t.text.value = v;
         if (t.color && document.activeElement !== t.color) t.color.value = Theme.hex(v);
         if (t.chip) t.chip.style.background = v;
+        var p = cellProblem(t.name, t.mode);
+        if (p && !t.bad) { t.msg.hidden = false; t.msg.textContent = 'your art.js says "' + p.value + '": not usable, so the built-in value is shown'; }
+        else if (!t.bad) { t.msg.hidden = true; }
       });
       tokenInputs.forEach(function (t) {
         t.row.classList.toggle('is-changed', ov.light[t.name] != null || ov.dark[t.name] != null);
       });
     }
-    function themeText() {
-      var ov = Theme.overrides();
-      function block(m) {
-        var keys = Object.keys(ov[m]);
-        if (!keys.length) return '{}';
-        return '{\n' + keys.map(function (k) { return "      '" + k + "': '" + ov[m][k] + "'"; }).join(',\n') + '\n    }';
-      }
-      return '  theme: {\n    light: ' + block('light') + ',\n    dark: ' + block('dark') + '\n  },';
+    function filterTokens() {
+      var f = $('tok-filter').value.trim().toLowerCase();
+      document.querySelectorAll('#token-groups tbody tr').forEach(function (tr) { tr.hidden = !!f && tr.dataset.search.indexOf(f) < 0; });
+      document.querySelectorAll('#token-groups h3.group').forEach(function (h) {
+        var rows = h.nextSibling.querySelectorAll('tbody tr');
+        var any = Array.prototype.some.call(rows, function (r) { return !r.hidden; });
+        h.hidden = h.nextSibling.hidden = !any;
+      });
+    }
+    function showToken(n) {
+      $('tok-filter').value = '';
+      filterTokens();
+      var td = $('tok-' + n);
+      if (!td) return;
+      td.scrollIntoView({ block: 'center' });
+      var tr = td.parentNode;
+      tr.classList.add('is-hit');
+      setTimeout(function () { tr.classList.remove('is-hit'); }, 1600);
+      var inp = tr.querySelector('input[type="text"]');
+      if (inp) inp.focus({ preventScroll: true });
     }
 
-    // ---------------------------------------------------------------- art in use
+    // ---------------------------------------------------------------- tuning
 
+    var tuneInputs = [];
+    function buildTuning() {
+      var root = $('tuning-groups');
+      root.textContent = '';
+      tuneInputs = [];
+      Theme.tuningGroups.forEach(function (g) {
+        root.appendChild(el('h3', 'group', g.title + ' · ' + g.note));
+        g.tunings.forEach(function (tu) {
+          var row = el('div', 'tune-row');
+          var name = el('div');
+          name.appendChild(el('code', null, tu.name));
+          row.appendChild(name);
+          row.appendChild(el('div', 'note', tu.note));
+          var ctl = el('div', 'ctl');
+          var range = el('input');
+          range.type = 'range'; range.min = tu.min; range.max = tu.max; range.step = tu.step;
+          range.setAttribute('aria-label', tu.name);
+          var nb = el('input');
+          nb.type = 'number'; nb.min = tu.min; nb.max = tu.max; nb.step = tu.step;
+          nb.setAttribute('aria-label', tu.name + ', number');
+          var reset = el('button', 'small', 'default ' + tu.value);
+          reset.type = 'button';
+          function set(v) {
+            var o = {};
+            var n = parseFloat(v);
+            if (!isFinite(n)) return;
+            o[tu.name] = n === tu.value && (!start || start.tuning[tu.name] == null) ? null : n;
+            Theme.setTuning(o);
+          }
+          range.addEventListener('input', function () { set(range.value); });
+          nb.addEventListener('change', function () { set(nb.value); });
+          reset.addEventListener('click', function () { var o = {}; o[tu.name] = null; Theme.setTuning(o); });
+          ctl.appendChild(range); ctl.appendChild(nb); ctl.appendChild(reset);
+          row.appendChild(ctl);
+          root.appendChild(row);
+          tuneInputs.push({ tu: tu, range: range, nb: nb, row: row });
+        });
+      });
+      syncTuning();
+    }
+    function syncTuning() {
+      var ov = Theme.tuningOverrides();
+      tuneInputs.forEach(function (t) {
+        var v = N(t.tu.name);
+        if (document.activeElement !== t.range) t.range.value = v;
+        if (document.activeElement !== t.nb) t.nb.value = v;
+        t.row.classList.toggle('is-changed', ov[t.tu.name] != null);
+      });
+    }
+
+    // ---------------------------------------------------------------- problems and art in use
+
+    var LEVEL_WORD = { error: 'Mistake', warn: 'Ignored', note: 'Note' };
+    function problemList(list) {
+      var ul = el('ul', 'problems');
+      list.forEach(function (p) {
+        var li = el('li', p.level);
+        li.appendChild(el('span', 'lvl', LEVEL_WORD[p.level] || p.level));
+        li.appendChild(document.createTextNode(p.text));
+        if (p.hint) li.appendChild(el('span', 'hint', p.hint));
+        ul.appendChild(li);
+      });
+      return ul;
+    }
+    function renderBanner() {
+      var root = $('banner');
+      root.textContent = '';
+      var errs = SPR.problems().filter(function (p) { return p.level === 'error'; });
+      if (errs.length) {
+        var b = el('div', 'banner');
+        b.setAttribute('role', 'alert');
+        b.appendChild(el('h2', null, errs.length === 1 ? 'Something in your art is not shown' : errs.length + ' things in your art are not shown'));
+        b.appendChild(problemList(errs.slice(0, 4)));
+        var a = el('a', null, 'Everything in Art in use');
+        a.href = '#art-in-use';
+        b.appendChild(a);
+        root.appendChild(b);
+      }
+      if (restoreOffer) {
+        var r = el('div', 'banner info');
+        r.appendChild(el('h2', null, 'You have ' + restoreOffer.n + ' edit' + (restoreOffer.n === 1 ? '' : 's') + ' from last time that ' + (restoreOffer.n === 1 ? 'is' : 'are') + ' not in ' + manifestFile() + ' yet'));
+        r.appendChild(el('p', 'muted', 'They were kept in this browser. Put them back, then use Download art.js to save them for good.'));
+        var acts = el('div', 'actions');
+        var yes = el('button', 'primary', 'Put them back');
+        yes.type = 'button';
+        yes.addEventListener('click', function () { var d = restoreOffer; restoreOffer = null; storeEdits.skip = false; applyEdits(d); renderBanner(); });
+        var no = el('button', null, 'Throw them away');
+        no.type = 'button';
+        no.addEventListener('click', function () { restoreOffer = null; storeEdits.skip = false; try { localStorage.removeItem(EDITS_KEY()); } catch (e) { /* none */ } renderBanner(); });
+        acts.appendChild(yes); acts.appendChild(no);
+        r.appendChild(acts);
+        root.appendChild(r);
+      }
+      var cnt = $('problem-count');
+      var all = SPR.problems().filter(function (p) { return p.level !== 'note'; });
+      cnt.hidden = !all.length;
+      cnt.textContent = all.length;
+      cnt.className = 'count' + (errs.length ? '' : ' warn');
+      cnt.title = all.length + ' problem' + (all.length === 1 ? '' : 's') + ' in the art';
+    }
     function buildStatus() {
       var root = $('art-status');
       root.textContent = '';
       var cur = SPR.current();
+      var probs = SPR.problems();
+      if (probs.length) {
+        root.appendChild(el('h3', 'group', 'Problems (' + probs.length + ')'));
+        var order = { error: 0, warn: 1, note: 2 };
+        root.appendChild(problemList(probs.slice().sort(function (a, b) { return order[a.level] - order[b.level]; })));
+      } else {
+        root.appendChild(el('p', 'muted', 'No problems found in the art.'));
+      }
       var p = el('p');
       p.appendChild(document.createTextNode('Manifest: '));
-      p.appendChild(el('code', null, cur ? cur.file : '(none)'));
+      p.appendChild(el('code', null, cur ? cur.file : manifestFile()));
+      if (!cur) p.appendChild(document.createTextNode(' did not run (see the problems above), so everything is built-in'));
       if (cur && cur.note) p.appendChild(document.createTextNode(' — ' + cur.note));
       root.appendChild(p);
       var rows = SPR.status().filter(function (s) { return s.art !== 'built-in'; });
       var tex = SPR.textureNames.map(function (n) { return { name: n, t: SPR.textureInfo(n) }; }).filter(function (x) { return x.t; });
       var ov = Theme.overrides();
       var nTok = Object.keys(ov.light).length + Object.keys(ov.dark).length;
-      root.appendChild(el('p', 'muted', rows.length + ' sprite override' + (rows.length === 1 ? '' : 's') + ', ' + tex.length + ' texture' + (tex.length === 1 ? '' : 's') + ', ' + nTok + ' token value' + (nTok === 1 ? '' : 's') + ' changed.'));
+      var nTune = Object.keys(Theme.tuningOverrides()).length;
+      root.appendChild(el('p', 'muted', rows.length + ' sprite override' + (rows.length === 1 ? '' : 's') + ', ' + tex.length + ' texture' + (tex.length === 1 ? '' : 's') + ', ' + nTok + ' colour value' + (nTok === 1 ? '' : 's') + ' and ' + nTune + ' speed or size' + (nTune === 1 ? '' : 's') + ' changed.'));
       if (rows.length || tex.length) {
         var wrap = el('div', 'tok-wrap');
         var table = el('table', 'status');
@@ -491,8 +1074,8 @@
           var tr = el('tr');
           var c = el('td'); c.appendChild(el('code', null, s.name)); tr.appendChild(c);
           tr.appendChild(el('td', null, s.art));
-          tr.appendChild(el('td', 'note', s.files.join(', ') || '—'));
-          tr.appendChild(el('td', s.state === 'error' ? 'err' : null, s.state === 'error' ? s.error : s.state));
+          tr.appendChild(el('td', 'note', s.files.filter(function (f, i, a) { return a.indexOf(f) === i; }).join(', ') || '—'));
+          tr.appendChild(el('td', s.state === 'error' || s.state === 'partial' ? 'err' : null, s.state === 'error' ? 'built-in shown: ' + s.error : s.state === 'partial' ? s.error : s.state));
           tb.appendChild(tr);
         });
         tex.forEach(function (x) {
@@ -508,26 +1091,50 @@
         root.appendChild(wrap);
       }
       var missing = Theme.missing();
-      if (missing.length) root.appendChild(el('p', 'err', 'Unknown tokens asked for: ' + missing.join(', ')));
+      if (missing.length) root.appendChild(el('p', 'err', 'Unknown tokens asked for by drawing code: ' + missing.join(', ')));
     }
 
     // ---------------------------------------------------------------- wiring
 
-    function refreshArt() {
-      boards.forEach(function (b) { inMode(b.mode, function () { b.board.refreshPalette(); }); });
-      boardsDirty = true;
-      buildSprites();
-      buildStatus();
-      syncTokens();
+    // Colour and speed edits only repaint; new art rebuilds the cards. Both
+    // wait for the next frame, so dragging the colour picker stays smooth.
+    var pending = null;
+    function schedule(rebuild) {
+      if (pending) { pending.rebuild = pending.rebuild || rebuild; return; }
+      pending = { rebuild: rebuild };
+      requestAnimationFrame(function () {
+        var r = pending.rebuild;
+        pending = null;
+        allBoards().forEach(function (b) { inMode(b.mode, function () { b.board.refreshPalette(); }); });
+        layoutBoards();
+        if (r) buildSprites(); else paintAll(true);
+        syncTokens();
+        syncTuning();
+        buildStatus();
+        renderBanner();
+        if (!storeEdits.skip) storeEdits();
+      });
     }
-    Theme.onChange(function () { refreshArt(); });
-    SPR.onChange(function () { refreshArt(); });
+    Theme.onChange(function () { schedule(false); });
+    SPR.onChange(function (why) {
+      if (why === 'manifest') { takeStart(); buildTokens(); }
+      schedule(true);
+    });
 
     $('mode').value = ui.mode;
     $('size').value = ui.size;
     $('size-out').value = ui.size;
     $('motion').checked = ui.motion;
-    $('art').value = params.get('art') === 'examples' ? 'examples' : '';
+    $('boxes').checked = ui.boxes;
+    document.querySelectorAll('input[name="pv-mode"]').forEach(function (r) { r.checked = r.value === ui.preview; });
+    var artSel = $('art');
+    if (artName && artName !== 'examples') {
+      var opt = el('option', null, 'art/' + artName + '/art.js');
+      opt.value = artName;
+      artSel.appendChild(opt);
+    }
+    artSel.value = artName;
+    $('save-target').textContent = manifestFile();
     function applyMode() { Theme.setMode(ui.mode === 'both' ? null : ui.mode); }
     applyMode();
     $('mode').addEventListener('change', function () {
@@ -540,41 +1147,77 @@
       buildSprites();
     });
     $('motion').addEventListener('change', function () { ui.motion = $('motion').checked; save(); paintAll(true); boardsDirty = true; });
-    $('art').addEventListener('change', function () {
-      var v = $('art').value;
-      location.search = v ? '?art=' + encodeURIComponent(v) : '';
+    $('boxes').addEventListener('change', function () { ui.boxes = $('boxes').checked; save(); paintAll(true); });
+    document.querySelectorAll('input[name="pv-mode"]').forEach(function (r) {
+      r.addEventListener('change', function () { ui.preview = r.value; save(); if (preview) preview.mode = r.value; layoutBoards(); });
     });
+    function openArt(v) { location.search = v ? '?art=' + encodeURIComponent(v) : ''; }
+    artSel.addEventListener('change', function () { openArt(artSel.value); });
+    $('art-open').addEventListener('click', function () {
+      var v = $('art-name').value.trim().replace(/^art\//, '').replace(/\/(art\.js)?$/, '');
+      if (v && !/^[a-z0-9][a-z0-9_-]*$/i.test(v)) { $('art-name').setCustomValidity('letters, digits, - and _ only'); $('art-name').reportValidity(); return; }
+      openArt(v);
+    });
+    $('art-name').addEventListener('input', function () { $('art-name').setCustomValidity(''); });
+    $('art-name').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('art-open').click(); });
     rooms.forEach(function (r) { var o = el('option', null, r.label); o.value = r.key; $('room').appendChild(o); });
     $('room').addEventListener('change', buildBoards);
     $('solved').addEventListener('change', buildBoards);
+    $('tok-filter').addEventListener('input', filterTokens);
     $('copy-theme').addEventListener('click', function () {
-      var out = $('theme-out'), txt = themeText();
-      out.value = txt;
-      out.hidden = false;
-      var note = $('copy-note');
-      try {
-        navigator.clipboard.writeText(txt).then(function () { note.textContent = 'Copied.'; }, function () { note.textContent = 'Select the text below and copy it.'; });
-      } catch (e) { note.textContent = 'Select the text below and copy it.'; }
+      var txt = sectionsText();
+      var bad = verify(txt, false);
+      if (bad) { showOut(txt, 'Something is off (' + bad + '): please report this. The text is below.'); return; }
+      showOut(txt, 'Copied. In ' + manifestFile() + ', replace the whole theme: { … } and tuning: { … } blocks with this (it already includes what is in your file now).');
+      try { navigator.clipboard.writeText(txt).catch(function () { $('copy-note').textContent = 'Select the text below and copy it, then replace the theme: { … } and tuning: { … } blocks in ' + manifestFile() + '.'; }); } catch (e) { /* the text is shown */ }
+    });
+    $('download').addEventListener('click', function () {
+      if (!SPR.current()) {
+        // the studio cannot see what the broken file holds: a new file would lose it
+        showOut(sectionsText(), manifestFile() + ' has a mistake, so the studio cannot see what is in it, and a new file would lose your drawings. ' +
+          'Fix the mistake first (see Art in use), or paste the theme and tuning sections below into it by hand.');
+        return;
+      }
+      var txt = manifestText();
+      var bad = verify(txt, true);
+      if (bad) { showOut(txt, 'This file would not work (' + bad + '): please report this. The text is below.'); return; }
+      var a = el('a');
+      a.href = URL.createObjectURL(new Blob([txt], { type: 'text/javascript' }));
+      a.download = 'art.js';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      showOut(txt, 'Downloaded art.js (checked: it is a valid art file). Save it over ' + manifestFile() + ' and reload. The full text is also below.');
     });
     $('reset-theme').addEventListener('click', function () {
-      var cur = SPR.current();
+      if (!start) return;
       Theme.reset(true);
-      Theme.set(cur && cur.theme ? cur.theme : {});
+      Theme.set({ light: start.theme.light, dark: start.theme.dark }, true);
+      Theme.setTuning(start.tuning);
+      tokenInputs.forEach(function (t) { mark(t, null); });
     });
     var resizeT = 0;
     window.addEventListener('resize', function () { clearTimeout(resizeT); resizeT = setTimeout(layoutBoards, 100); });
 
+    traceUses();
+    takeStart();
     buildSprites();
     buildBoards();
     buildTokens();
+    buildTuning();
     buildStatus();
+    renderBanner();
     var last = 0;
     (function loop(now) {
-      if (ui.motion && now - last > 30) {
-        last = now;
-        paintAll(false);
+      try {
+        if (ui.motion && now - last > 30) {
+          last = now;
+          paintAll(false);
+        }
+        drawBoards(now);
+      } catch (e) {
+        if (window.console) console.error(e);
       }
-      drawBoards(now);
       requestAnimationFrame(loop);
     })(performance.now());
   })();

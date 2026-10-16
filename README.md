@@ -7,7 +7,10 @@ deflectors, curtains and more to steer the breeze: make the pinwheels spin and
 the laundry dry, keep the candles lit and get the kitchen smoke outside.
 
 * 100 levels, from very easy to properly tricky
-* a new tool every 5 levels until all 10 are unlocked
+* new things arrive one at a time: each chapter introduces a single tool or
+  object, explains it, and gives you four more puzzles with what you know
+* restyle it yourself: colours, sizes, speeds and your own drawings (see
+  `GRAPHICS.md` and `studio.html`)
 * plays with mouse or touch, on phones and desktops, in light or dark mode
 * no build step, no dependencies — just static files
 
@@ -30,8 +33,9 @@ the laundry dry, keep the candles lit and get the kitchen smoke outside.
   | Papers | at most a gentle breeze (1) |
   | Fern | exactly a gentle breeze (1) |
 
-* Tools, one new every 5 levels: window, fan, deflector, curtain, wall vent,
-  splitter, extractor, skylight, air filter and ceiling fan.
+* Tools, introduced one at a time with objects in between: window, fan,
+  deflector, curtain, wall vent, splitter, extractor, skylight, air filter and
+  ceiling fan.
 
 **Controls:** tap a tool, then a highlighted cell (or drag it onto the board).
 Tap a placed fan or deflector to turn it; tapping any other piece puts it back
@@ -69,10 +73,12 @@ All paths are relative, so it works from any sub-path.
 * `js/version.js` — the version shown on the level-select screen, bumped with
   every release.
 * `js/render.js`, `js/game.js`, `css/style.css`, `index.html` — the game.
-* `GRAPHICS.md` — how the game looks and how to change it: the theme
-  (`js/theme.js`, every colour for light and dark, shared by CSS and canvas),
-  the sprite registry (`js/sprites.js`), art overrides (`art/art.js`), the art
-  studio (`studio.html`) and the visual regression check (`tools/visual.js`).
+* `GRAPHICS.md` — how the game looks and how to change it. It starts with a
+  quick start for artists: colours, speeds and sizes, and your own drawings,
+  all in one file (`art/art.js`), with the art studio (`studio.html`) as the
+  workbench. Then the theme (`js/theme.js`, every colour for light and dark,
+  shared by CSS and canvas), the sprite registry (`js/sprites.js`) and the
+  visual regression check (`tools/visual.js`).
 * `levels/src/chNN.json` — level sources, one file per chapter of 5 levels.
 * `js/levels.js` — generated from the sources with `npm run build`.
 * `tools/` — level checker, solver, ASCII viewer and end-to-end test

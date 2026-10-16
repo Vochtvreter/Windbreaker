@@ -21,6 +21,8 @@
   // ------------------------------------------------------------------ theme + shapes
 
   var P = Theme.color;
+  // tuning numbers: speeds and sizes (js/theme.js; 1 = as designed)
+  var N = Theme.num;
   var mix = Theme.mix, alpha = Theme.alpha, darker = Theme.darker;
   var rr = K.rr, fillRR = K.fillRR, circle = K.circle, line = K.line;
 
@@ -167,7 +169,8 @@
     } else if (kind === 'object') {
       var so = size * 0.92;
       ctx.scale(so, so);
-      var st = { angle: 0.5, lit: 1, dry: 1, flow: 0, scatter: 0, flutter: 0, bend: 0, sway: 0, small: size < 30, px: 1 / so };
+      // icon: true picks an image override's 'icon' state (else its happy one)
+      var st = { angle: 0.5, lit: 1, dry: 1, flow: 0, scatter: 0, flutter: 0, bend: 0, sway: 0, small: size < 30, px: 1 / so, icon: true };
       SPR.draw('object.' + id, ctx, st, 0.2);
     } else if (kind === 'ui') {
       uiIcon(ctx, id, size);
@@ -390,12 +393,12 @@
     reserveTop = Math.max(0, Math.round(reserveTop || 0));
     // the whole stage is repainted every frame: 2x is crisp and spares 3x phones
     var dpr = Math.min(root.devicePixelRatio || 1, 2);
-    var lay = this.lay;
-    if (lay && lay.L === L && lay.w === availW && lay.h === availH && lay.r === reserveTop && lay.dpr === dpr) {
+    var lay = this.lay, maxT = N('max-tile');
+    if (lay && lay.L === L && lay.w === availW && lay.h === availH && lay.r === reserveTop && lay.dpr === dpr && lay.maxT === maxT) {
       return { w: this.cssW, h: this.cssH, T: this.T };
     }
-    var sizeChanged = !lay || lay.L !== L || lay.w !== availW || lay.h !== availH || lay.r !== reserveTop;
-    this.lay = { L: L, w: availW, h: availH, r: reserveTop, dpr: dpr };
+    var sizeChanged = !lay || lay.L !== L || lay.w !== availW || lay.h !== availH || lay.r !== reserveTop || lay.maxT !== maxT;
+    this.lay = { L: L, w: availW, h: availH, r: reserveTop, dpr: dpr, maxT: maxT };
     var hAvail = Math.max(60, availH - reserveTop);
     var m = 1;
     var T = Math.min(availW / (L.w + 2 * m), hAvail / (L.h + 2 * m));
@@ -404,7 +407,7 @@
       T = Math.min(availW / (L.w + 2 * m), hAvail / (L.h + 2 * m));
     }
     T = T >= 20 ? Math.floor(T) : Math.max(10, T);
-    T = Math.min(T, 84);
+    T = Math.min(T, maxT);
     this.T = T;
     this.m = m;
     this.cssW = availW;
@@ -737,7 +740,7 @@
       this.streakSeeded = true;
     }
     if (!motion) return;
-    var speed = calm ? T * 0.1 : (0.9 + 0.7 * s) * T;
+    var speed = (calm ? T * 0.1 : (0.9 + 0.7 * s) * T) * N('wind-speed');
     for (var j = list.length - 1; j >= 0; j--) {
       var st = list[j];
       st.age += dt;
@@ -852,18 +855,19 @@
     var small = T < 34;
     var winAge = S.win != null ? (now - S.win) / 1000 : -1;
     var boostK = motion && winAge >= 0 && winAge < 1.3 ? Math.sin(Math.PI * clamp(winAge / 1.3, 0, 1)) : 0;
+    var winBoost = N('win-boost'), idleT = t * N('idle-speed');
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(this.gardenLayer, 0, 0);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.stepStreaks(dt, motion);
-    this.drawStreaks(ctx, motion ? t : 0);
+    this.drawStreaks(ctx, motion ? t * N('wind-speed') : 0);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(this.houseLayer, 0, 0);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.translate(this.ox, this.oy);
 
-    var flowT = motion ? t : 0;
+    var flowT = motion ? t * N('flow-speed') : 0;
     var i, p;
 
     // ---------------- placement highlights
@@ -940,15 +944,15 @@
       var ci = p.y * L.w + p.x;
       var f = WB.isFloorish(WB.cellAt(L, p.x, p.y)) ? sim.flow[ci] : 0;
       if (motion) {
-        var spin = 1 + 1.5 * boostK;
-        if (p.type === 'fan') a.angle += dt * (3 + 3.5 * f) * spin;
-        else if (p.type === 'extractor') a.angle += dt * 4.5 * spin;
-        else if (p.type === 'ceilingfan') a.angle += dt * 1.4 * spin;
+        var spin = 1 + 1.5 * boostK * winBoost;
+        if (p.type === 'fan') a.angle += dt * (3 + 3.5 * f) * N('spin-fan') * spin;
+        else if (p.type === 'extractor') a.angle += dt * 4.5 * N('spin-extractor') * spin;
+        else if (p.type === 'ceilingfan') a.angle += dt * 1.4 * N('spin-ceilingfan') * spin;
       }
       var di = ci * 2;
       if (p.type === 'curtain') {
         var dvx = clamp(A.dir[di] + A.dir[di + 1] * 0.5, -1, 1);
-        var target = motion ? (0.02 + 0.045 * Math.min(f, 3)) * Math.sin(t * (1.6 + f * 1.4) + p.x) + dvx * 0.05 * Math.min(f, 3) : 0;
+        var target = motion ? (0.02 + 0.045 * Math.min(f, 3)) * Math.sin(idleT * (1.6 + f * 1.4) + p.x) + dvx * 0.05 * Math.min(f, 3) : 0;
         a.sway = approach(a.sway, target, 6, dt);
       }
       var o = GLYPH_OPT;
@@ -968,7 +972,7 @@
 
     // ---------------- objects
     var goals = sim.goals || [];
-    var objScale = small ? 1.16 : 1.06;
+    var objScale = (small ? 1.16 : 1.06) * N('object-scale');
     for (i = 0; i < L.objects.length; i++) {
       var ob = L.objects[i];
       var gl = goals[i] || NO_GOAL;
@@ -981,7 +985,7 @@
       var odi = (ob.y * L.w + ob.x) * 2;
       var ovx = A.dir[odi], ovy = A.dir[odi + 1], vl = Math.hypot(ovx, ovy);
       an.dirx = vl ? ovx / vl : 0; an.diry = vl ? ovy / vl : 0;
-      an.spd = approach(an.spd, fo * 3.2 * (1 + 1.5 * boostK), 2.2, dt);
+      an.spd = approach(an.spd, fo * 3.2 * N('spin-pinwheel') * (1 + 1.5 * boostK * winBoost), 2.2, dt);
       if (motion) an.angle += an.spd * dt;
       an.lit = approach(an.lit, fo > 0 ? 0 : 1, 5, dt);
       an.dry = approach(an.dry, fo >= 2 ? 1 : 0, 2.5, dt);
@@ -1007,7 +1011,7 @@
           ctx.beginPath(); circle(ctx, cx, cy, T * 0.95); ctx.fill();
         }
       }
-      var ot = motion ? t : 0.4;
+      var ot = motion ? idleT : 0.4;
       if (ob.type === 'stove') this.drawStoveSmoke(ctx, ob, gl, an, T, ot, motion, dt);
       var lift = METER[ob.type] ? (small ? 0.07 : 0.05) : 0;
       ctx.save();
@@ -1066,7 +1070,7 @@
         ctx.beginPath();
         line(ctx, kx - kr * 0.4, ky - kr * 0.4, kx + kr * 0.4, ky + kr * 0.4);
         line(ctx, kx + kr * 0.4, ky - kr * 0.4, kx - kr * 0.4, ky + kr * 0.4);
-        ctx.strokeStyle = '#ffffff';
+        ctx.strokeStyle = P('mark');
         ctx.lineWidth = Math.max(1.3, kr * 0.28);
         ctx.lineCap = 'round';
         ctx.stroke();
@@ -1133,7 +1137,7 @@
       if (hv.x >= 0 && hv.y >= 0 && hv.x < L.w && hv.y < L.h) {
         var onWall = WB.isWall(WB.cellAt(L, hv.x, hv.y));
         ctx.beginPath(); rr(ctx, hv.x * T + T * 0.05, hv.y * T + T * 0.05, T * 0.9, T * 0.9, T * 0.2);
-        ctx.strokeStyle = onWall ? 'rgba(255,255,255,0.45)' : alpha(P('ink'), 0.22);
+        ctx.strokeStyle = onWall ? alpha(P('mark'), 0.45) : alpha(P('ink'), 0.22);
         ctx.lineWidth = Math.max(1.2, T * 0.035);
         ctx.stroke();
       }
@@ -1193,7 +1197,7 @@
 
   Board.prototype.drawFlows = function (ctx, A, T, t, motion, realT, boostK) {
     var i, j, sg, run;
-    var lw = Math.max(1.7, T * 0.062) * (1 + 0.35 * boostK);
+    var lw = Math.max(1.7, T * 0.062) * N('stream-width') * (1 + 0.35 * boostK);
     var gap = Math.max(lw + 1.8, T * 0.14);
     ctx.save();
     ctx.lineCap = 'round';
@@ -1245,7 +1249,7 @@
       if (motion) {
         // moving comet streaks, phase-aligned with the path distance
         var heads = [new Path2D(), new Path2D()], tails = [new Path2D(), new Path2D()];
-        var vb = 1 + 0.6 * boostK;
+        var vb = 1 + 0.6 * boostK * N('win-boost');
         for (i = 0; i < runs.length; i++) {
           run = runs[i];
           var n = Math.min(run.s, 4), v = speedFor(run.s) * vb;
@@ -1450,7 +1454,7 @@
 
   Board.prototype.drawPip = function (ctx, ob, state, age, T, small, winAge) {
     var cx = (ob.x + 0.5) * T, cy = (ob.y + 0.5) * T;
-    var r = Math.max(4.5, T * 0.11);
+    var r = Math.max(4.5, T * 0.11) * N('pip-size');
     var px, py;
     if (small) { px = cx + T * 0.5 - r * 0.8; py = cy - T * 0.5 + r * 0.8; }
     else { px = cx + T * 0.4 - r * 0.25; py = cy - T * 0.4 + r * 0.25; }

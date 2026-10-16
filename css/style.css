@@ -96,7 +96,7 @@ button {
   background: var(--accent-fill);
   border-color: var(--accent-fill);
   color: var(--accent-ink);
-  box-shadow: 0 4px 14px rgba(43, 130, 120, 0.26);
+  box-shadow: 0 4px 14px var(--accent-glow);
 }
 .btn-primary:hover { border-color: var(--accent-fill); filter: brightness(1.06); }
 
@@ -536,7 +536,7 @@ button {
   font-weight: 500;
   line-height: 1.35;
   pointer-events: none;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--tooltip-shadow);
   white-space: normal;
   animation: tip-in .14s ease-out;
 }

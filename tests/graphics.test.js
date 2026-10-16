@@ -15,7 +15,6 @@ const SPR = require('../js/sprites.js');
 const GALLERY = require('../tools/gallery.js');
 const { WB } = require('../tools/lib');
 
-const NOT_COLOURS = ['font', 'shadow', 'shadow-lg'];
 
 // A 2D context that draws nothing but checks every colour it is given.
 function mockContext(bad) {
@@ -44,11 +43,33 @@ function mockContext(bad) {
 }
 
 function quietly(fn) {
-  const warn = console.warn;
+  const saved = { warn: console.warn, error: console.error, info: console.info };
   const said = [];
-  console.warn = (m) => said.push(String(m));
-  try { return { value: fn(), said }; } finally { console.warn = warn; }
+  console.warn = console.error = console.info = (m) => said.push(String(m));
+  try { return { value: fn(), said }; } finally { Object.assign(console, saved); }
 }
+
+// A 2D context that records what is drawn: images (by src), transforms, alpha.
+function recorder() {
+  const log = { images: [], translates: [], depth: 0, maxDepth: 0, alphas: [] };
+  const ctx = {
+    globalAlpha: 1,
+    getTransform: () => ({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }),
+    save() { log.depth++; log.maxDepth = Math.max(log.maxDepth, log.depth); },
+    restore() { log.depth--; },
+    translate(x, y) { log.translates.push([x, y]); },
+    drawImage(img, x, y, w, h) { log.images.push({ src: img.src, x, y, w, h, alpha: ctx.globalAlpha }); },
+    createRadialGradient: () => ({ addColorStop() {} }),
+    createLinearGradient: () => ({ addColorStop() {} }),
+    measureText: () => ({ width: 10 }),
+  };
+  return { ctx: new Proxy(ctx, { get: (t, k) => (k in t ? t[k] : () => {}) }), log };
+}
+// fake loaded images (Node has none): src -> an image the recorder can name
+function fake(...srcs) { srcs.forEach((src) => SPR.fakeImage(src, 100, 100)); }
+// an override's files settle synchronously in Node (fake images, or "no images here")
+function settle() { return new Promise((ok) => setTimeout(ok, 5)); }
+
 
 // ------------------------------------------------------------------ theme
 
@@ -60,7 +81,8 @@ test('theme: every token has a light and a dark value, names are unique', () => 
     const t = Theme.info(name);
     assert.ok(t.light && t.dark, name + ' has both values');
     assert.ok(t.note, name + ' says what it is for');
-    if (!NOT_COLOURS.includes(name)) {
+    assert.ok(['color', 'font', 'shadow'].includes(t.kind), name + ' has a kind');
+    if (t.kind === 'color') {
       assert.ok(Theme.isColor(t.light), name + ' light is a colour: ' + t.light);
       assert.ok(Theme.isColor(t.dark), name + ' dark is a colour: ' + t.dark);
     }
@@ -121,6 +143,10 @@ test('the stylesheets only use theme tokens, and keep no colours of their own pe
     assert.deepEqual(unknown, [], file + ' uses tokens js/theme.js does not define');
   }
   assert.doesNotMatch(style, /^\s*--[a-z0-9-]+\s*:/m, 'css/style.css defines no custom properties (js/theme.js does)');
+  // no colour literals either (mask gradients only use black as "opaque")
+  const literals = [...style.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?)\([^)]*\)/gi)]
+    .map((m) => m[0]).filter((c) => c !== '#000');
+  assert.deepEqual(literals, [], 'css/style.css uses theme tokens for every colour');
   assert.doesNotMatch(style, /prefers-color-scheme/, 'light/dark differences live in js/theme.js');
 });
 
@@ -252,7 +278,8 @@ test('art/art.js and art/examples/art.js are valid manifests', () => {
     const src = fs.readFileSync(path.join(ROOT, file), 'utf8');
     new Function('WBArt', src)((m) => { got = m; });
     assert.ok(got && typeof got === 'object', file + ' calls WBArt({...})');
-    for (const k of Object.keys(got)) assert.ok(['note', 'theme', 'sprites', 'textures'].includes(k), file + ': unknown section ' + k);
+    for (const k of Object.keys(got)) assert.ok(['note', 'theme', 'tuning', 'sprites', 'textures'].includes(k), file + ': unknown section ' + k);
+    for (const k of Object.keys(got.tuning || {})) assert.ok(Theme.tuningNames.includes(k), file + ': no tuning ' + k);
     for (const n of Object.keys(got.sprites || {})) assert.ok(SPR.has(n), file + ': no sprite ' + n);
     for (const n of Object.keys(got.textures || {})) assert.ok(SPR.textureNames.includes(n), file + ': no texture ' + n);
     const files = JSON.stringify(got).match(/art\/[\w/.-]+\.(svg|png|webp|jpg)/g) || [];
@@ -283,4 +310,174 @@ test('tools/visual.js lists its scenes without a browser', () => {
   assert.ok(files.length >= 40);
   assert.ok(files.includes('gallery-tools.dark.phone.png'));
   assert.ok(files.every((f) => /^[a-z0-9-]+\.(light|dark)\.(phone|desktop)\.png$/.test(f)));
+});
+
+// ------------------------------------------------------------------ art mistakes (the studio's "Art in use")
+
+test('theme: values that are not colours are reported and skipped; #rgba and hsl() parse', () => {
+  try {
+    const r = quietly(() => Theme.set({ 't-fan': 'reddish', wall: '#12345', light: { floor: 'hsl(0, 100%, 45%)', 't-vent': '#f00a' } }, true));
+    assert.equal(Theme.palette('light')['t-fan'], Theme.defaults.light['t-fan'], 'reddish is ignored');
+    assert.equal(Theme.palette('dark').wall, Theme.defaults.dark.wall, '#12345 is ignored');
+    assert.equal(Theme.palette('light').floor, 'hsl(0, 100%, 45%)');
+    assert.ok(r.said.some((m) => m.includes('"reddish" is not a colour')));
+    assert.ok(Theme.problems().some((p) => p.token === 't-fan' && p.value === 'reddish'));
+    assert.deepEqual(Theme.parse('#f00a').map((v) => +v.toFixed(3)), [255, 0, 0, 0.667]);
+    assert.deepEqual(Theme.parse('hsl(0, 100%, 45%)'), [230, 0, 0, 1]);
+    assert.equal(Theme.alpha('#f00a', 0.5), 'rgba(255,0,0,0.333)');
+    assert.ok(Theme.isColor('#f00a') && Theme.isColor('hsla(120, 50%, 50%, 0.5)') && !Theme.isColor('reddish'));
+    assert.equal(Theme.check('font', "'Comic Sans MS', cursive"), "'Comic Sans MS', cursive");
+  } finally {
+    Theme.reset(true);
+    Theme.clearProblems();
+  }
+});
+
+test('theme: flat values set both modes, per-mode ones win; an unknown token is said once', () => {
+  try {
+    const r = quietly(() => Theme.set({ 't-fan': '#ff0000', dark: { 't-fan': '#00ff00', flor: '#000' }, light: { flor: '#fff' } }, true));
+    assert.equal(Theme.palette('light')['t-fan'], '#ff0000');
+    assert.equal(Theme.palette('dark')['t-fan'], '#00ff00');
+    assert.equal(r.said.filter((m) => m.includes('"flor"')).length, 1);
+    assert.ok(r.said.some((m) => m.includes('did you mean "floor"?')));
+  } finally {
+    Theme.reset(true);
+    Theme.clearProblems();
+  }
+});
+
+test('tuning: defaults, setTuning, ranges, unknown names, manifests', () => {
+  try {
+    for (const n of Theme.tuningNames) assert.equal(Theme.num(n), Theme.tuningInfo(n).value, n + ' starts at its default');
+    assert.equal(Theme.num('spin-fan'), 1);
+    assert.equal(Theme.num('max-tile'), 84);
+    const r = quietly(() => Theme.setTuning({ 'spin-fan': 0.5, 'object-scale': 9, 'idle-speed': 'fast', 'spin-fna': 2 }, true));
+    assert.equal(Theme.num('spin-fan'), 0.5);
+    assert.equal(Theme.num('object-scale'), 1.5, 'clamped to its range');
+    assert.equal(Theme.num('idle-speed'), 1, 'not a number: ignored');
+    assert.ok(r.said.some((m) => m.includes('did you mean "spin-fan"?')));
+    quietly(() => SPR.manifest({ tuning: { 'pip-size': 1.5 } }));
+    assert.deepEqual(Theme.tuningOverrides(), { 'pip-size': 1.5 }, 'a manifest replaces the tuning');
+  } finally {
+    quietly(() => SPR.manifest({}));
+    Theme.clearProblems();
+  }
+  assert.deepEqual(Theme.tuningOverrides(), {});
+});
+
+test('sprites: a draw function that throws is switched off and the built-in art is drawn', async () => {
+  try {
+    let calls = 0;
+    SPR.override('object.pinwheel', { draw(ctx) { calls++; ctx.save(); return undefinedVariable; } }); // eslint-disable-line no-undef
+    await settle();
+    const { ctx, log } = recorder();
+    const real = SPR.get('object.pinwheel').draw;
+    let builtin = 0;
+    SPR.get('object.pinwheel').draw = function () { builtin++; return real.apply(this, arguments); };
+    let r;
+    try {
+      r = quietly(() => {
+        assert.doesNotThrow(() => SPR.draw('object.pinwheel', ctx, { flow: 1, px: 0.02 }, 0));
+        SPR.draw('object.pinwheel', ctx, { flow: 1, px: 0.02 }, 0);
+      });
+    } finally { SPR.get('object.pinwheel').draw = real; }
+    assert.equal(calls, 1, 'not called again after it failed');
+    assert.equal(builtin, 2, 'the built-in art is drawn instead, both times');
+    assert.equal(log.depth, 1, 'only the save() the failed function made itself is left over');
+    const st = SPR.status().find((s) => s.name === 'object.pinwheel');
+    assert.equal(st.state, 'error');
+    assert.match(st.error, /undefinedVariable/);
+    assert.ok(r.said.some((m) => m.includes('object.pinwheel') && m.includes('undefinedVariable')));
+    assert.ok(SPR.problems().some((p) => p.level === 'error' && p.sprite === 'object.pinwheel'));
+  } finally {
+    quietly(() => SPR.manifest({}));
+  }
+});
+
+test('sprites: states without a picture (and no src) keep the built-in art', async () => {
+  try {
+    fake('t/out.svg');
+    const r = quietly(() => SPR.override('object.candle', { states: { out: 't/out.svg' } }));
+    assert.ok(r.said.some((m) => m.includes('no src, so lit keeps the built-in art')));
+    await settle();
+    assert.equal(SPR.status().find((s) => s.name === 'object.candle').state, 'ready');
+    const lit = recorder(), out = recorder();
+    SPR.draw('object.candle', mockContext([]), { lit: 1, px: 0.02 }, 0); // the built-in draws (valid colours)
+    SPR.draw('object.candle', lit.ctx, { lit: 1, px: 0.02 }, 0);
+    SPR.draw('object.candle', out.ctx, { lit: 0, px: 0.02 }, 0);
+    assert.equal(lit.log.images.length, 0, 'lit: no picture, so the built-in art');
+    assert.ok(lit.log.maxDepth > 1, 'lit: the built-in art drew');
+    assert.deepEqual(out.log.images.map((i) => i.src), ['t/out.svg']);
+  } finally {
+    quietly(() => SPR.manifest({}));
+  }
+});
+
+test('sprites: a missing file only loses its own state; dark twins; icon state; pivot; fade', async () => {
+  try {
+    fake('t/candle.svg', 't/candle-dark.svg', 't/head.svg', 't/stick.svg', 't/lit.svg', 't/out2.svg', 't/icon.svg');
+    quietly(() => {
+      SPR.override('object.candle', { src: { src: 't/candle.svg', dark: 't/candle-dark.svg' }, states: { out: 't/no-such-file.svg', icon: 't/icon.svg' } });
+      SPR.override('object.pinwheel', { layers: [{ src: 't/stick.svg' }, { src: 't/head.svg', pivot: [50, 40], box: [-0.5, -0.5, 1, 1] }] });
+      SPR.override('object.fern', { src: 't/lit.svg', states: { battered: 't/out2.svg' }, fade: true });
+    });
+    await settle();
+    const st = SPR.status().find((s) => s.name === 'object.candle');
+    assert.equal(st.state, 'partial');
+    assert.match(st.error, /1 of 4 files missing: could not load t\/no-such-file.svg/);
+    let rec = recorder();
+    SPR.draw('object.candle', rec.ctx, { lit: 1 }, 0);
+    assert.deepEqual(rec.log.images.map((i) => i.src), ['t/candle.svg'], 'the picture that loaded is drawn');
+    rec = recorder();
+    SPR.draw('object.candle', rec.ctx, { lit: 0 }, 0);
+    assert.deepEqual(rec.log.images.map((i) => i.src), [], 'its missing state: the built-in art');
+    const prev = Theme.use('dark');
+    try {
+      rec = recorder();
+      SPR.draw('object.candle', rec.ctx, { lit: 1 }, 0);
+      assert.deepEqual(rec.log.images.map((i) => i.src), ['t/candle-dark.svg'], 'dark mode uses the dark twin');
+    } finally { Theme.use(prev); }
+    rec = recorder();
+    SPR.draw('object.candle', rec.ctx, { lit: 0, icon: true }, 0);
+    assert.deepEqual(rec.log.images.map((i) => i.src), ['t/icon.svg'], 'icons use the icon state');
+    // the pinwheel head turns around its pivot: (50, 40) of a 100 x 100 picture in the tile
+    rec = recorder();
+    SPR.draw('object.pinwheel', rec.ctx, { flow: 1, angle: 1 }, 0);
+    assert.deepEqual(rec.log.translates.map((p) => p.map((v) => +v.toFixed(6))), [[0, -0.1]]);
+    assert.deepEqual(rec.log.images.map((i) => [i.src, +i.x.toFixed(6), +i.y.toFixed(6)]), [['t/stick.svg', -0.5, -0.5], ['t/head.svg', -0.5, -0.4]]);
+    // fade: halfway from swaying to battered, both pictures are drawn
+    rec = recorder();
+    SPR.draw('object.fern', rec.ctx, { sway: 1, bend: 0.5 }, 0);
+    assert.deepEqual(rec.log.images.map((i) => [i.src, i.alpha]), [['t/lit.svg', 1], ['t/out2.svg', 1]]);
+    rec = recorder();
+    SPR.draw('object.fern', rec.ctx, { sway: 1, bend: 0.25 }, 0);
+    assert.deepEqual(rec.log.images.map((i) => [i.src, i.alpha]), [['t/lit.svg', 1], ['t/out2.svg', 0.5]]);
+  } finally {
+    quietly(() => SPR.manifest({}));
+  }
+});
+
+test('every object has an icon state, and icons fall back to the happy state', () => {
+  const happy = { pinwheel: 'spinning', candle: 'lit', laundry: 'dry', papers: 'calm', fern: 'swaying', stove: 'clear' };
+  for (const o of WB.OBJECT_ORDER) {
+    const s = SPR.get('object.' + o);
+    assert.ok(s.states.includes('icon'), o + ' has an icon state');
+    assert.deepEqual(s.state({ icon: true }), ['icon', happy[o]], o);
+    assert.ok(s.states.every((k) => s.stateNotes && s.stateNotes[k]), o + ': every state is explained');
+  }
+});
+
+test('manifests: misspelt names are reported with a suggestion', () => {
+  try {
+    quietly(() => SPR.manifest({ sprite: {}, sprites: { 'object.pinwhel': 'x.svg', fan: 'x.svg', 'object.candle': { src: 'c.svg', states: { 'blown out': 'o.svg' } } }, textures: { flor: 'f.svg' } }));
+    const texts = SPR.problems().map((p) => p.text);
+    for (const want of ['no section "sprite"', 'did you mean "sprites"?', 'did you mean "object.pinwheel"?', 'did you mean "tool.fan"?',
+      'unknown state "blown out" (did you mean "out"?)', 'no texture "flor" (did you mean "floor"?)']) {
+      assert.ok(texts.some((t) => t.includes(want)), want + ' in ' + JSON.stringify(texts));
+    }
+    quietly(() => SPR.manifest({}));
+    assert.deepEqual(SPR.problems(), [], 'the next manifest starts with a clean list');
+  } finally {
+    quietly(() => SPR.manifest({}));
+  }
 });

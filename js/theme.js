@@ -12,6 +12,11 @@
  * Art manifests (art/art.js) and the studio change tokens with WBTheme.set();
  * the CSS is rewritten and listeners (the game) repaint the canvas.
  *
+ * Besides colours there are "tuning" numbers: animation speeds and a few sizes
+ * (WBTheme.num(name), set by the manifest's tuning section). And a list of
+ * art problems (WBTheme.problems()): typos and bad values found while an art
+ * manifest is applied, shown by the studio's "Art in use".
+ *
  * Exposes window.WBTheme. It is loaded first, in <head>, so the page never
  * paints without its colours. Also loads in Node (no CSS is written there) for
  * the unit tests.
@@ -31,7 +36,7 @@
       id: 'page', title: 'Page and controls', note: 'Screens, cards, buttons and text. A few also mark the board.',
       tokens: [
         ['font', FONT, FONT, 'font stack'],
-        ['bg', '#f4f0e8', '#1a1e24', 'page background'],
+        ['bg', '#f4f0e8', '#1a1e24', 'page background; the browser bar on phones'],
         ['bg-2', '#ece6da', '#222830', 'sunken background: chips, tracks, icon pairs'],
         ['surface', '#fffcf6', '#272c34', 'cards and tray; ring around status pips; meter pill'],
         ['surface-2', '#f3eee4', '#2e343d', 'secondary surface'],
@@ -43,6 +48,7 @@
         ['accent', '#379a8f', '#5cc1b4', 'brand teal: hint outline, keyboard cursor, goal focus, win bloom'],
         ['accent-text', '#24716a', '#5cc1b4', 'accent-coloured text (4.8:1+ on bg, surface and accent-soft)'],
         ['accent-fill', '#2b8278', '#5cc1b4', 'primary button background (4.6:1 with white)'],
+        ['accent-glow', 'rgba(43, 130, 120, 0.26)', 'rgba(43, 130, 120, 0.26)', 'soft glow under primary buttons (Play, Next)'],
         ['accent-ink', '#ffffff', '#0f2220', 'text on accent-fill'],
         ['accent-soft', 'rgba(55, 154, 143, 0.14)', 'rgba(92, 193, 180, 0.16)', 'selected tool, soft accent wash'],
         ['accent-2', '#e8866d', '#f0957c', 'second accent: pieces in the way of a hint'],
@@ -55,7 +61,8 @@
         ['scrim', 'rgba(40, 44, 40, 0.24)', 'rgba(0, 0, 0, 0.45)', 'behind dialogs'],
         ['scrim-light', 'rgba(40, 44, 40, 0.08)', 'rgba(0, 0, 0, 0.18)', 'behind the win sheet (the house stays visible)'],
         ['shadow', '0 1px 2px rgba(50, 45, 35, 0.06), 0 6px 20px rgba(50, 45, 35, 0.08)', '0 1px 2px rgba(0, 0, 0, 0.25), 0 6px 20px rgba(0, 0, 0, 0.25)', 'card shadow (a box-shadow)'],
-        ['shadow-lg', '0 2px 6px rgba(50, 45, 35, 0.08), 0 18px 48px rgba(50, 45, 35, 0.16)', '0 2px 6px rgba(0, 0, 0, 0.3), 0 18px 48px rgba(0, 0, 0, 0.45)', 'dialog shadow (a box-shadow)']
+        ['shadow-lg', '0 2px 6px rgba(50, 45, 35, 0.08), 0 18px 48px rgba(50, 45, 35, 0.16)', '0 2px 6px rgba(0, 0, 0, 0.3), 0 18px 48px rgba(0, 0, 0, 0.45)', 'dialog shadow (a box-shadow)'],
+        ['tooltip-shadow', '0 4px 14px rgba(0, 0, 0, 0.18)', '0 4px 14px rgba(0, 0, 0, 0.18)', 'tooltip shadow (a box-shadow)']
       ]
     },
     {
@@ -64,7 +71,7 @@
         ['garden', '#dde7d5', '#28332b', 'lawn around the house'],
         ['garden-2', '#d2dfca', '#222c25', 'lawn vignette towards the edges'],
         ['garden-mark', 'rgba(110, 140, 100, 0.16)', 'rgba(150, 190, 140, 0.1)', 'grass tufts'],
-        ['streak', 'rgba(255, 255, 255, 0.92)', 'rgba(205, 228, 236, 0.5)', 'wind streaks and calm motes in the garden (mixed with air)'],
+        ['streak', 'rgba(255, 255, 255, 0.92)', 'rgba(205, 228, 236, 0.5)', 'wind streaks and calm motes in the garden (mixed half and half with air: recolour the two together)'],
         ['floor', '#f7f2e8', '#424852', 'floor tiles'],
         ['floor-grid', 'rgba(91, 100, 114, 0.07)', 'rgba(255, 255, 255, 0.05)', 'grid lines between floor tiles'],
         ['wall', '#66707e', '#181c21', 'walls; fixed plinths and vent slats are tinted with it'],
@@ -80,10 +87,10 @@
       ]
     },
     {
-      id: 'air', title: 'Air and smoke', note: 'Streams, ripples and puffs.',
+      id: 'air', title: 'Air and smoke', note: 'Streams, ripples and puffs. To recolour the air, change air, air-deep and streak together.',
       tokens: [
-        ['air', '#6aaee0', '#79bdeb', 'airflow streams'],
-        ['air-deep', '#3f8bc6', '#a6d6f7', 'blocked-stream ripples, window wind-mouths, water drops, meter dots'],
+        ['air', '#6aaee0', '#79bdeb', 'airflow streams; also the wind streaks in the garden (with streak), the title logo, the win swirl, "no way out" lines and the wind icon in help'],
+        ['air-deep', '#3f8bc6', '#a6d6f7', 'blocked-stream ripples, window wind-mouths, water drops, meter dots, reduced-motion chevrons; the wind badge at the top'],
         ['smoke', '#9a8f83', '#8d867e', 'smoky streams, puffs and soot']
       ]
     },
@@ -133,15 +140,18 @@
         ['hl-edge', 'rgba(55, 154, 143, 0.6)', 'rgba(92, 193, 180, 0.7)', 'placement dots and wall-slot outlines'],
         ['hl-wall', 'rgba(150, 228, 216, 0.3)', 'rgba(92, 193, 180, 0.3)', 'wall placement slots'],
         ['pip-idle', '#9aa1aa', '#8b929b', 'waiting status pip; a stalled inlet on a solved board'],
-        ['mark', '#ffffff', '#ffffff', 'white marks on coloured shapes: ticks, arrows, glints']
+        ['mark', '#ffffff', '#ffffff', 'white marks on coloured shapes: ticks, arrows, glints; the cross on pieces in the way of a hint; the hover ring on walls']
       ]
     }
   ];
 
+  // Tokens that are not colours; every other token must be a colour.
+  var KINDS = { font: 'font', shadow: 'shadow', 'shadow-lg': 'shadow', 'tooltip-shadow': 'shadow' };
+
   var NAMES = [], DEFAULTS = { light: {}, dark: {} }, INFO = {};
   GROUPS.forEach(function (g) {
     g.tokens = g.tokens.map(function (t) {
-      var tok = { name: t[0], light: t[1], dark: t[2], note: t[3], group: g.id };
+      var tok = { name: t[0], light: t[1], dark: t[2], note: t[3], group: g.id, kind: KINDS[t[0]] || 'color' };
       NAMES.push(tok.name);
       DEFAULTS.light[tok.name] = tok.light;
       DEFAULTS.dark[tok.name] = tok.dark;
@@ -151,14 +161,60 @@
   });
   var MODES = ['light', 'dark'];
 
+  // ------------------------------------------------------------------ tuning
+  // Numbers, the same in light and dark mode: animation speeds (1 = as
+  // designed, 0.5 = half as fast, 0 = still) and a few sizes. js/render.js and
+  // the studio read them with num(name); an art manifest sets them in its
+  // tuning section, e.g. tuning: { 'spin-fan': 0.5 }.
+
+  // [name, default, min, max, step, what it changes]
+  var TUNING_GROUPS = [
+    {
+      id: 'motion', title: 'Speeds', note: '1 is the speed the game was designed with: 0.5 is half as fast, 2 twice as fast, 0 stops it.',
+      tunings: [
+        ['spin-fan', 1, 0, 4, 0.05, 'fan blades (they also turn faster the more air goes through)'],
+        ['spin-extractor', 1, 0, 4, 0.05, 'extractor rotors'],
+        ['spin-ceilingfan', 1, 0, 4, 0.05, 'ceiling fan paddles'],
+        ['spin-pinwheel', 1, 0, 4, 0.05, 'pinwheels (and a pinwheel image layer with spin)'],
+        ['flow-speed', 1, 0, 4, 0.05, 'the streaks travelling along the airflow streams, and the smoke puffs on smoky streams'],
+        ['wind-speed', 1, 0, 4, 0.05, 'the wind streaks drifting across the garden (and the calm motes bobbing)'],
+        ['idle-speed', 1, 0, 4, 0.05, 'small idle motion: flame flicker, laundry and fern swing, curtain sway, fluttering papers, stove glow and smoke'],
+        ['win-boost', 1, 0, 3, 0.05, 'the burst of extra spin and flow when a level is solved (0: none)']
+      ]
+    },
+    {
+      id: 'size', title: 'Sizes', note: 'Multipliers (1 = as designed), except the largest tile, which is in CSS pixels.',
+      tunings: [
+        ['object-scale', 1, 0.5, 1.5, 0.01, 'objects (pinwheel, candle, laundry, ...) on their tile'],
+        ['stream-width', 1, 0.3, 2.5, 0.05, 'how thick the airflow streams are'],
+        ['pip-size', 1, 0.5, 2, 0.05, 'the status pip on each object'],
+        ['max-tile', 84, 40, 160, 1, 'the largest a tile gets on big screens, in CSS pixels']
+      ]
+    }
+  ];
+  var TNAMES = [], TINFO = {}, TDEF = {};
+  TUNING_GROUPS.forEach(function (g) {
+    g.tunings = g.tunings.map(function (t) {
+      var x = { name: t[0], value: t[1], min: t[2], max: t[3], step: t[4], note: t[5], group: g.id };
+      TNAMES.push(x.name);
+      TINFO[x.name] = x;
+      TDEF[x.name] = x.value;
+      return x;
+    });
+  });
+
   // ------------------------------------------------------------------ state
 
   var over = { light: {}, dark: {} };     // overrides (art manifest, studio)
   var resolved = { light: null, dark: null };
   var forced = null;                      // WBTheme.use(): canvas mode regardless of the page
+  var activeMode = 'light';
   var active = palette('light');          // what color() reads
+  var tune = {};                          // tuning overrides
+  var tuned = Object.assign({}, TDEF);    // what num() reads
   var listeners = [];
   var missing = {};
+  var tracing = null;                     // trace(): token names asked for
 
   function palette(mode) {
     mode = mode === 'dark' ? 'dark' : 'light';
@@ -182,10 +238,11 @@
     if (a === 'dark' || a === 'light') return a;
     return darkMQ && darkMQ.matches ? 'dark' : 'light';
   }
-  function refresh() { active = palette(forced || pageMode()); }
+  function refresh() { activeMode = forced || pageMode(); active = palette(activeMode); }
 
   // Hot path: every colour the canvas draws comes through here.
   function color(name) {
+    if (tracing !== null) tracing[name] = true;
     var v = active[name];
     return v !== undefined ? v : unknown(name);
   }
@@ -195,6 +252,76 @@
       if (typeof console !== 'undefined') console.warn('WBTheme: unknown token "' + name + '"');
     }
     return '#888888';
+  }
+  // Runs fn and returns the token names it asked for (the studio's "used by").
+  function trace(fn) {
+    var prev = tracing, mine = {};
+    tracing = mine;
+    try { fn(); } finally {
+      tracing = prev;
+      if (prev) for (var k in mine) prev[k] = true;
+    }
+    return Object.keys(mine);
+  }
+
+  // Tuning numbers: hot path too (a few per piece per frame).
+  function num(name) {
+    var v = tuned[name];
+    if (v !== undefined) return v;
+    if (!missing['#' + name]) {
+      missing['#' + name] = true;
+      if (typeof console !== 'undefined') console.warn('WBTheme: unknown tuning "' + name + '"');
+    }
+    return 1;
+  }
+
+  // ------------------------------------------------------------------ problems
+  // Mistakes found while art is applied: unknown names, values that are not
+  // colours, files that do not load, a draw function that fails, an art.js
+  // with a typo. Each is said once in the console and listed by the studio.
+  //   level: 'error' (something is not shown) | 'warn' (something was ignored) | 'note'
+  //   more:  { hint, scope, token, mode, sprite, file, line }; scope 'manifest' (the
+  //          default) is cleared whenever a manifest is applied
+
+  var PROBLEMS = [];
+  function report(level, text, more) {
+    var key = level + '|' + text;
+    for (var i = 0; i < PROBLEMS.length; i++) if (PROBLEMS[i].key === key) return PROBLEMS[i];
+    var p = { level: level, text: text, key: key, scope: 'manifest' };
+    if (more) for (var k in more) if (more[k] != null) p[k] = more[k];
+    PROBLEMS.push(p);
+    if (typeof console !== 'undefined') {
+      var msg = 'Windbreaker art: ' + text + (p.hint ? '\n  ' + p.hint : '');
+      if (level === 'error') console.error(msg); else if (level === 'note') (console.info || console.log)(msg); else console.warn(msg);
+    }
+    return p;
+  }
+  function problems() { return PROBLEMS.map(function (p) { return Object.assign({}, p); }); }
+  // clearProblems() clears all; clearProblems(fn) the ones fn(problem) says yes to
+  function clearProblems(fn) { PROBLEMS = fn ? PROBLEMS.filter(function (p) { return !fn(p); }) : []; }
+
+  // "did you mean": the closest name in list, if it is close enough
+  function distance(a, b) {
+    var m = a.length, n = b.length, prev = [], cur, i, j;
+    for (j = 0; j <= n; j++) prev[j] = j;
+    for (i = 1; i <= m; i++) {
+      cur = [i];
+      for (j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1));
+      prev = cur;
+    }
+    return prev[n];
+  }
+  function suggest(word, list) {
+    var w = String(word).toLowerCase().trim(), best = null, bd = Infinity;
+    for (var i = 0; i < list.length; i++) {
+      var d = distance(w, String(list[i]).toLowerCase());
+      if (d < bd) { bd = d; best = list[i]; }
+    }
+    return best !== null && best !== word && bd <= Math.max(2, Math.floor(w.length / 3)) ? best : null;
+  }
+  function meant(word, list) {
+    var s = suggest(word, list);
+    return s ? ' (did you mean "' + s + '"?)' : '';
   }
 
   // ------------------------------------------------------------------ CSS
@@ -222,6 +349,12 @@
       }
     }
     styleEl.textContent = css();
+    // the browser bar on phones (<meta name="theme-color" media="(prefers-color-scheme: ...)">)
+    var metas = doc.querySelectorAll ? doc.querySelectorAll('meta[name="theme-color"]') : [];
+    for (var i = 0; i < metas.length; i++) {
+      var bg = palette(/dark/.test(metas[i].getAttribute('media') || '') ? 'dark' : 'light').bg;
+      if (metas[i].getAttribute('content') !== bg) metas[i].setAttribute('content', bg);
+    }
   }
 
   // ------------------------------------------------------------------ changes
@@ -234,26 +367,87 @@
     }
   }
 
+  // check(token, value) -> the value to keep, or null when it is not a colour
+  // (or a font list / box-shadow) at all. Colour names and other CSS colour
+  // forms need a browser: the canvas checks them (and parse() reads them).
+  function check(name, v) {
+    var tok = INFO[name];
+    if (!tok || v == null) return null;
+    v = String(v).trim();
+    if (!v) return null;
+    if (tok.kind === 'color') return isColor(v) || canvasColor(v) ? v : null;
+    return cssOk(tok.kind === 'font' ? 'font-family' : 'box-shadow', v) ? v : null;
+  }
+  var COLOUR_HELP = 'Colours can be #rgb, #rrggbb, #rrggbbaa, rgb(r, g, b), rgba(r, g, b, a), hsl(h, s%, l%) or a CSS colour name such as tomato (names need a browser).';
+
   // set({ light: {tok: value}, dark: {...} }) or set({ tok: value }) for both
-  // modes. A null value removes that override. Unknown tokens are skipped.
+  // modes; both at once also works (the flat values first, then the per-mode
+  // ones). A null value removes that override. Unknown tokens and values that
+  // are not colours are reported and skipped.
   function set(o, quiet) {
     if (!o) return;
-    var split = o.light || o.dark;
-    MODES.forEach(function (mode) {
-      var src = split ? o[mode] || {} : o;
+    if (typeof o !== 'object') { report('warn', 'theme must look like { light: { token: value }, dark: { token: value } }'); return; }
+    var split = o.light != null || o.dark != null;
+    var flat = {}, unknownSaid = {};
+    Object.keys(o).forEach(function (k) { if (!split || (k !== 'light' && k !== 'dark')) flat[k] = o[k]; });
+    function apply(mode, src) {
       Object.keys(src).forEach(function (k) {
-        if (!INFO[k]) { if (typeof console !== 'undefined') console.warn('WBTheme: no token "' + k + '" (see GRAPHICS.md)'); return; }
-        if (src[k] == null || src[k] === '') delete over[mode][k];
-        else over[mode][k] = String(src[k]).trim();
+        if (!INFO[k]) {
+          if (!unknownSaid[k]) {
+            unknownSaid[k] = true;
+            report('warn', 'theme: there is no token "' + k + '"' + meant(k, NAMES), { hint: 'The studio\'s Tokens section (and js/theme.js) lists every token.', token: k });
+          }
+          return;
+        }
+        var v = src[k];
+        if (v == null || v === '') { delete over[mode][k]; return; }
+        var ok = check(k, v);
+        if (ok == null) {
+          var kind = INFO[k].kind === 'color' ? 'a colour' : INFO[k].kind === 'font' ? 'a font list' : 'a box-shadow';
+          report('warn', 'theme: "' + String(v).trim() + '" is not ' + kind + ', so ' + k + ' (' + mode + ') keeps ' + palette(mode)[k],
+            { hint: INFO[k].kind === 'color' ? COLOUR_HELP : null, token: k, mode: mode, value: String(v) });
+          return;
+        }
+        over[mode][k] = ok;
       });
+    }
+    MODES.forEach(function (mode) {
+      apply(mode, flat);
+      if (!split || o[mode] == null) return;
+      if (typeof o[mode] !== 'object') { report('warn', 'theme: ' + mode + ' must be { token: value, ... }'); return; }
+      apply(mode, o[mode]);
     });
     resolved = { light: null, dark: null };
     refresh();
     writeCss();
     if (!quiet) emit('tokens');
   }
+  // setTuning({ name: number }): null removes an override. Unknown names,
+  // values that are not numbers and numbers out of range are reported.
+  function setTuning(o, quiet) {
+    if (!o) return;
+    if (typeof o !== 'object') { report('warn', 'tuning must look like { \'spin-fan\': 0.5 }'); return; }
+    Object.keys(o).forEach(function (k) {
+      var info = TINFO[k];
+      if (!info) { report('warn', 'tuning: there is no "' + k + '"' + meant(k, TNAMES), { hint: 'The studio\'s Speeds and sizes section lists them: ' + TNAMES.join(', ') + '.' }); return; }
+      var v = o[k];
+      if (v == null || v === '') { delete tune[k]; return; }
+      var n = typeof v === 'number' ? v : /^\s*-?(\d+\.?\d*|\.\d+)\s*$/.test(String(v)) ? parseFloat(v) : NaN;
+      if (!isFinite(n)) { report('warn', 'tuning: ' + k + ' must be a number, not "' + v + '" (keeping ' + num(k) + ')', { tuning: k }); return; }
+      if (n < info.min || n > info.max) {
+        var c = n < info.min ? info.min : info.max;
+        report('warn', 'tuning: ' + k + ' goes from ' + info.min + ' to ' + info.max + ', so ' + n + ' becomes ' + c, { tuning: k });
+        n = c;
+      }
+      tune[k] = n;
+    });
+    tuned = Object.assign({}, TDEF, tune);
+    if (!quiet) emit('tuning');
+  }
   function reset(quiet) {
     over = { light: {}, dark: {} };
+    tune = {};
+    tuned = Object.assign({}, TDEF);
     resolved = { light: null, dark: null };
     refresh();
     writeCss();
@@ -280,14 +474,28 @@
 
   // ------------------------------------------------------------------ colour helpers
   // Results are cached, but every input is quantised first so the caches stay
-  // small even for per-frame values.
+  // small even for per-frame values. parse() reads #rgb, #rgba, #rrggbb,
+  // #rrggbbaa, rgb()/rgba() and hsl()/hsla(); in a browser anything else the
+  // canvas understands (colour names, ...) goes through the canvas first.
 
+  var HEX_RE = /^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
+  var RGB_RE = /^rgba?\(\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*(,\s*[\d.]+\s*)?\)$/i;
+  var HSL_RE = /^hsla?\(\s*-?[\d.]+(deg)?\s*,\s*[\d.]+%\s*,\s*[\d.]+%\s*(,\s*[\d.]+\s*)?\)$/i;
+
+  function hslToRgb(h, s, l) {
+    h = ((h % 360) + 360) % 360 / 360; s = clamp01(s); l = clamp01(l);
+    function f(n) {
+      var k = (n + h * 12) % 12;
+      return l - s * Math.min(l, 1 - l) * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    }
+    return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
+  }
   function parse(c) {
     c = String(c).trim();
     var m;
     if (c.charAt(0) === '#') {
       var h = c.slice(1);
-      if (h.length === 3) h = h.replace(/./g, function (x) { return x + x; });
+      if (h.length === 3 || h.length === 4) h = h.replace(/./g, function (x) { return x + x; });
       var n = parseInt(h.slice(0, 6), 16);
       return [(n >> 16) & 255, (n >> 8) & 255, n & 255, h.length === 8 ? parseInt(h.slice(6), 16) / 255 : 1];
     }
@@ -296,9 +504,42 @@
       var p = m[1].split(',').map(function (s) { return parseFloat(s); });
       return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1];
     }
+    m = c.match(/^hsla?\(([^)]+)\)$/i);
+    if (m) {
+      var q = m[1].split(',').map(function (s) { return parseFloat(s); });
+      var rgb = hslToRgb(q[0], q[1] / 100, q[2] / 100);
+      return [rgb[0], rgb[1], rgb[2], q.length > 3 ? q[3] : 1];
+    }
+    var viaCanvas = canvasColor(c);
+    if (viaCanvas && viaCanvas !== c) return parse(viaCanvas);
     return [136, 136, 136, 1];
   }
-  function isColor(c) { return /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(String(c).trim()) || /^rgba?\(\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*(,\s*[\d.]+\s*)?\)$/.test(String(c).trim()); }
+  function isColor(c) {
+    c = String(c).trim();
+    return HEX_RE.test(c) || RGB_RE.test(c) || HSL_RE.test(c);
+  }
+  // In a browser: what the canvas makes of a colour ('#rrggbb' or 'rgba(...)'),
+  // false when it is not a colour; null without a canvas (Node).
+  var probe = null;
+  function canvasColor(v) {
+    if (probe === null) {
+      probe = false;
+      try { if (doc && doc.createElement) probe = doc.createElement('canvas').getContext('2d') || false; } catch (e) { probe = false; }
+    }
+    if (!probe) return null;
+    probe.fillStyle = '#010203';
+    probe.fillStyle = v;
+    var a = probe.fillStyle;
+    if (a === '#010203') {
+      probe.fillStyle = '#040506';
+      probe.fillStyle = v;
+      if (probe.fillStyle === '#040506') return false;
+    }
+    return a;
+  }
+  function cssOk(prop, v) {
+    try { return root && root.CSS && root.CSS.supports ? root.CSS.supports(prop, v) : true; } catch (e) { return true; }
+  }
   function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
   var rgbCache = {}, strCache = {}, strCacheN = 0;
   function clearColorCache() { rgbCache = {}; strCache = {}; strCacheN = 0; }
@@ -363,9 +604,12 @@
     info: function (name) { return INFO[name] || null; },
     defaults: { light: Object.assign({}, DEFAULTS.light), dark: Object.assign({}, DEFAULTS.dark) },
     mode: function () { return forced || pageMode(); },
+    // the mode the canvas is drawing in right now (cheap; for per-frame use)
+    drawMode: function () { return activeMode; },
     pageMode: pageMode,
     palette: palette,
     color: color,
+    check: check,
     set: set,
     reset: reset,
     overrides: overrides,
@@ -373,7 +617,22 @@
     setMode: setMode,
     css: css,
     onChange: onChange,
-    missing: function () { return Object.keys(missing); },
+    missing: function () { return Object.keys(missing).filter(function (k) { return k.charAt(0) !== '#'; }); },
+    trace: trace,
+    // tuning: speeds and sizes
+    tuningGroups: TUNING_GROUPS,
+    tuningNames: TNAMES.slice(),
+    tuningInfo: function (name) { return TINFO[name] || null; },
+    tuningDefaults: Object.assign({}, TDEF),
+    num: num,
+    setTuning: setTuning,
+    tuningOverrides: function () { return Object.assign({}, tune); },
+    // art problems (see report above)
+    report: report,
+    problems: problems,
+    clearProblems: clearProblems,
+    suggest: suggest,
+    colourHelp: COLOUR_HELP,
     // colour helpers (shared by sprites.js, render.js and art manifests)
     parse: parse,
     isColor: isColor,
